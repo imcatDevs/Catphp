@@ -1,0 +1,62 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--warning);">schedule</i>
+        <div><h4 class="mb-0">Schedule</h4><span class="text-muted caption">Cat\Schedule — Cron 스케줄러</span></div>
+        <span class="badge badge--warning badge--sm ms-auto">schedule()</span>
+    </div>
+
+    <p class="mb-2"><strong>Cron 기반 태스크 스케줄러</strong>입니다. CLI 명령어나 콜백을 정해진 주기로 자동 실행합니다.</p>
+    <p class="mb-3">시스템 crontab에 <code>* * * * * php cli.php schedule:run</code> 한 줄만 등록하면, 나머지 스케줄은 PHP에서 관리합니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">주요 메서드</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:280px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>command(string $cmd)</code></td><td><code>self</code></td><td>CLI 명령어 예약</td></tr>
+                    <tr><td><code>call(callable $cb, string $desc)</code></td><td><code>self</code></td><td>콜백 함수 예약</td></tr>
+                    <tr><td><code>cron(string $expression)</code></td><td><code>self</code></td><td>원시 cron 표현식</td></tr>
+                    <tr><td><code>everyMinute / everyFiveMinutes / hourly</code></td><td><code>self</code></td><td>주기 헬퍼</td></tr>
+                    <tr><td><code>daily / dailyAt(string $time)</code></td><td><code>self</code></td><td>매일 / 지정 시각</td></tr>
+                    <tr><td><code>weekly / weeklyOn(int $day, string $time)</code></td><td><code>self</code></td><td>매주 / 지정 요일</td></tr>
+                    <tr><td><code>monthly / monthlyOn(int $day, string $time)</code></td><td><code>self</code></td><td>매월 / 지정일</td></tr>
+                    <tr><td><code>withoutOverlapping()</code></td><td><code>self</code></td><td>중복 실행 방지</td></tr>
+                    <tr><td><code>description(string $desc)</code></td><td><code>self</code></td><td>태스크 설명</td></tr>
+                    <tr><td><code>run()</code></td><td><code>int</code></td><td>현재 시각 기준 실행</td></tr>
+                    <tr><td><code>list()</code></td><td><code>array</code></td><td>등록된 태스크 목록</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">사용 예제</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// cli.php — 스케줄 등록</span>
+<span class="hl-f">schedule</span>()-&gt;<span class="hl-f">command</span>(<span class="hl-s">'cache:clear'</span>)-&gt;<span class="hl-f">daily</span>()
+    -&gt;<span class="hl-f">description</span>(<span class="hl-s">'매일 캐시 정리'</span>);
+
+<span class="hl-f">schedule</span>()-&gt;<span class="hl-f">call</span>(<span class="hl-k">function</span>() {
+    <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'sessions'</span>)-&gt;<span class="hl-f">where</span>(<span class="hl-s">'expires_at'</span>, <span class="hl-s">'&lt;'</span>, <span class="hl-f">date</span>(<span class="hl-s">'Y-m-d'</span>))-&gt;<span class="hl-f">delete</span>();
+}, <span class="hl-s">'만료 세션 정리'</span>)-&gt;<span class="hl-f">hourly</span>()-&gt;<span class="hl-f">withoutOverlapping</span>();
+
+<span class="hl-f">schedule</span>()-&gt;<span class="hl-f">command</span>(<span class="hl-s">'queue:work --max=100'</span>)
+    -&gt;<span class="hl-f">everyMinute</span>()-&gt;<span class="hl-f">withoutOverlapping</span>();</code></pre>
+
+    <h6 class="mb-2">Crontab 설정</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c"># 시스템 crontab에 한 줄만 등록</span>
+* * * * * cd /path/to/project &amp;&amp; php cli.php schedule:run &gt;&gt; /dev/null 2&gt;&amp;1
+
+<span class="hl-c"># 등록된 스케줄 확인</span>
+php cli.php schedule:list</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>팁:</strong> <code>withoutOverlapping()</code>은 락 파일로 중복 실행을 방지합니다. 장시간 실행되는 태스크에 반드시 적용하세요.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/cli" class="badge badge--soft badge--warning badge--sm" style="cursor:pointer;">Cli</a>
+        <a data-spa="/tool/queue" class="badge badge--soft badge--warning badge--sm" style="cursor:pointer;">Queue</a>
+    </div>
+</div>

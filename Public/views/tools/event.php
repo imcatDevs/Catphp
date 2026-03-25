@@ -1,0 +1,53 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--warning);">bolt</i>
+        <div><h4 class="mb-0">Event</h4><span class="text-muted caption">Cat\Event — 이벤트 시스템</span></div>
+        <span class="badge badge--warning badge--sm ms-auto">event()</span>
+    </div>
+
+    <p class="mb-2"><strong>Pub/Sub 이벤트</strong> 시스템입니다. 리스너를 등록(<code>on</code>/<code>once</code>)하고 이벤트를 발행(<code>emit</code>)하면 등록된 모든 리스너가 순서대로 실행됩니다.</p>
+    <p class="mb-3"><code>on()</code>/<code>once()</code>는 <strong>리스너 ID</strong>를 반환하며, <code>off()</code>로 특정 리스너만 제거할 수 있습니다. <code>once()</code>는 한 번 실행 후 자동 제거됩니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:280px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>on(string $event, callable $fn)</code></td><td><code>int</code></td><td>리스너 등록 (ID 반환)</td></tr>
+                    <tr><td><code>once(string $event, callable $fn)</code></td><td><code>int</code></td><td>1회용 리스너 등록</td></tr>
+                    <tr><td><code>emit(string $event, mixed ...$args)</code></td><td><code>self</code></td><td>이벤트 발행 (모든 리스너 실행)</td></tr>
+                    <tr><td><code>hasListeners(string $event)</code></td><td><code>bool</code></td><td>리스너 존재 여부</td></tr>
+                    <tr><td><code>off(string $event, ?int $id = null)</code></td><td><code>self</code></td><td>리스너 제거 (ID 지정 시 특정, null 시 전체)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">기본 사용법</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 리스너 등록</span>
+<span class="hl-v">$id</span> = <span class="hl-f">event</span>()-&gt;<span class="hl-f">on</span>(<span class="hl-s">'user.created'</span>, <span class="hl-k">function</span>(<span class="hl-k">array</span> <span class="hl-v">$user</span>) {
+    <span class="hl-f">logger</span>()-&gt;<span class="hl-f">info</span>(<span class="hl-s">'회원가입'</span>, <span class="hl-v">$user</span>);
+});
+
+<span class="hl-f">event</span>()-&gt;<span class="hl-f">on</span>(<span class="hl-s">'user.created'</span>, <span class="hl-k">function</span>(<span class="hl-k">array</span> <span class="hl-v">$user</span>) {
+    <span class="hl-f">mailer</span>()-&gt;<span class="hl-f">to</span>(<span class="hl-v">$user</span>[<span class="hl-s">'email'</span>])-&gt;<span class="hl-f">send</span>(<span class="hl-s">'환영합니다!'</span>);
+});
+
+<span class="hl-c">// 이벤트 발행 — 모든 리스너 실행</span>
+<span class="hl-f">event</span>()-&gt;<span class="hl-f">emit</span>(<span class="hl-s">'user.created'</span>, [<span class="hl-s">'id'</span> =&gt; <span class="hl-n">1</span>, <span class="hl-s">'email'</span> =&gt; <span class="hl-s">'cat@php.dev'</span>]);
+
+<span class="hl-c">// 리스너 제거</span>
+<span class="hl-f">event</span>()-&gt;<span class="hl-f">off</span>(<span class="hl-s">'user.created'</span>, <span class="hl-v">$id</span>);</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>활용:</strong> 회원가입 후 이메일 발송, 주문 완료 후 알림, 게시글 작성 후 캐시 무효화 등 비즈니스 로직을 분리하여 코드 결합도를 낮출 수 있습니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/log" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">Log</a>
+        <a data-spa="/tool/telegram" class="badge badge--soft badge--secondary badge--sm" style="cursor:pointer;">Telegram</a>
+    </div>
+</div>

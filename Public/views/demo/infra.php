@@ -1,0 +1,350 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <h3 class="mb-1">인프라</h3>
+    <p class="text-muted mb-4">Redis · Mail · Queue · Storage · Schedule · Notify · Hash · Excel — 캐시, 메일, 큐, 파일, 스케줄, 알림, 해시, 엑셀</p>
+
+    <!-- Redis -->
+    <div class="card card--outlined mb-4" id="demo-redis">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">memory</i> Redis</h5>
+            <span class="badge badge--danger badge--sm">Cat\Redis</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">ext-redis 래퍼. String, Hash, List, Set, Sorted Set, Pub/Sub, remember 캐시 패턴</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// String</span>
+<span class="hl-f">redis</span>()-&gt;<span class="hl-f">set</span>(<span class="hl-s">'user:1:name'</span>, <span class="hl-s">'Cat'</span>, <span class="hl-n">3600</span>);
+<span class="hl-v">$name</span> = <span class="hl-f">redis</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'user:1:name'</span>);
+
+<span class="hl-c">// remember 패턴</span>
+<span class="hl-v">$stats</span> = <span class="hl-f">redis</span>()-&gt;<span class="hl-f">remember</span>(<span class="hl-s">'stats'</span>, <span class="hl-k">fn</span>() =&gt; <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)-&gt;<span class="hl-f">count</span>(), <span class="hl-n">3600</span>);
+
+<span class="hl-c">// Hash</span>
+<span class="hl-f">redis</span>()-&gt;<span class="hl-f">hSet</span>(<span class="hl-s">'user:1'</span>, <span class="hl-s">'email'</span>, <span class="hl-s">'cat@catphp.dev'</span>);
+
+<span class="hl-c">// List + Pub/Sub</span>
+<span class="hl-f">redis</span>()-&gt;<span class="hl-f">rPush</span>(<span class="hl-s">'queue:jobs'</span>, <span class="hl-f">json_encode</span>(<span class="hl-v">$job</span>));
+<span class="hl-f">redis</span>()-&gt;<span class="hl-f">publish</span>(<span class="hl-s">'notifications'</span>, <span class="hl-s">'새 알림!'</span>);
+
+<span class="hl-c">// 원시 Redis 객체</span>
+<span class="hl-v">$raw</span> = <span class="hl-f">redis</span>()-&gt;<span class="hl-f">raw</span>();</code></pre>
+
+            <h6 class="mb-2">데이터 타입별 명령어</h6>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>타입</th><th>주요 명령어</th><th>예시</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="badge badge--primary badge--sm">String</span></td><td>set, get, incr, del</td><td><code>redis()->set('key', 'val', 60)</code></td></tr>
+                    <tr><td><span class="badge badge--info badge--sm">Hash</span></td><td>hSet, hGet, hDel, hGetAll</td><td><code>redis()->hSet('user:1', 'name', 'Cat')</code></td></tr>
+                    <tr><td><span class="badge badge--success badge--sm">List</span></td><td>rPush, lPop, lRange, lLen</td><td><code>redis()->rPush('queue', $job)</code></td></tr>
+                    <tr><td><span class="badge badge--warning badge--sm">Set</span></td><td>sAdd, sMembers, sRem</td><td><code>redis()->sAdd('tags', 'PHP')</code></td></tr>
+                    <tr><td><span class="badge badge--danger badge--sm">Pub/Sub</span></td><td>publish, subscribe</td><td><code>redis()->publish('ch', 'msg')</code></td></tr>
+                </tbody>
+            </table>
+            <div class="alert alert--info mt-2"><span class="alert__message"><strong>요구사항:</strong> PHP ext-redis 확장 + Redis 서버 실행 필요</span></div>
+        </div>
+    </div>
+
+    <!-- Mail -->
+    <div class="card card--outlined mb-4" id="demo-mail">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">email</i> Mail</h5>
+            <span class="badge badge--danger badge--sm">Cat\Mail</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">순수 PHP 소켓 SMTP 클라이언트. 외부 의존성 없이 메일 전송, 첨부파일, 템플릿</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 기본 전송</span>
+<span class="hl-f">mailer</span>()-&gt;<span class="hl-f">to</span>(<span class="hl-s">'user@example.com'</span>)
+    -&gt;<span class="hl-f">subject</span>(<span class="hl-s">'가입을 환영합니다!'</span>)
+    -&gt;<span class="hl-f">body</span>(<span class="hl-s">'&lt;h1&gt;환영합니다&lt;/h1&gt;&lt;p&gt;CatPHP에 가입해주셔서 감사합니다.&lt;/p&gt;'</span>)
+    -&gt;<span class="hl-f">send</span>();
+
+<span class="hl-c">// CC + BCC + 첨부파일</span>
+<span class="hl-f">mailer</span>()-&gt;<span class="hl-f">to</span>(<span class="hl-s">'to@example.com'</span>)
+    -&gt;<span class="hl-f">cc</span>(<span class="hl-s">'cc@example.com'</span>)
+    -&gt;<span class="hl-f">bcc</span>(<span class="hl-s">'bcc@example.com'</span>)
+    -&gt;<span class="hl-f">subject</span>(<span class="hl-s">'월간 리포트'</span>)
+    -&gt;<span class="hl-f">template</span>(<span class="hl-s">'emails/report'</span>, [<span class="hl-s">'month'</span> =&gt; <span class="hl-s">'1월'</span>])
+    -&gt;<span class="hl-f">attach</span>(<span class="hl-s">'/path/to/report.pdf'</span>)
+    -&gt;<span class="hl-f">send</span>();
+
+<span class="hl-c">// 미리보기 (전송 없이 HTML 확인)</span>
+<span class="hl-v">$html</span> = <span class="hl-f">mailer</span>()-&gt;<span class="hl-f">to</span>(<span class="hl-s">'test@example.com'</span>)
+    -&gt;<span class="hl-f">subject</span>(<span class="hl-s">'테스트'</span>)-&gt;<span class="hl-f">body</span>(<span class="hl-s">'Hello'</span>)-&gt;<span class="hl-f">preview</span>();</code></pre>
+
+            <h6 class="mb-2">SMTP 설정</h6>
+            <pre class="demo-code"><code><span class="hl-c">// config/app.php</span>
+<span class="hl-s">'mail'</span> =&gt; [
+    <span class="hl-s">'host'</span>       =&gt; <span class="hl-s">'smtp.gmail.com'</span>,
+    <span class="hl-s">'port'</span>       =&gt; <span class="hl-n">587</span>,
+    <span class="hl-s">'username'</span>   =&gt; <span class="hl-s">'you@gmail.com'</span>,
+    <span class="hl-s">'password'</span>   =&gt; <span class="hl-s">'app-password'</span>,
+    <span class="hl-s">'encryption'</span> =&gt; <span class="hl-s">'tls'</span>,
+    <span class="hl-s">'from_email'</span> =&gt; <span class="hl-s">'no-reply@catphp.dev'</span>,
+    <span class="hl-s">'from_name'</span>  =&gt; <span class="hl-s">'CatPHP'</span>,
+],</code></pre>
+        </div>
+    </div>
+
+    <!-- Queue -->
+    <div class="card card--outlined mb-4" id="demo-queue">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">queue</i> Queue</h5>
+            <span class="badge badge--danger badge--sm">Cat\Queue</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">비동기 작업 큐. Redis/DB 드라이버, 지연 실행, 재시도, 실패 관리</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 핸들러 등록</span>
+<span class="hl-f">queue</span>()-&gt;<span class="hl-f">handle</span>(<span class="hl-s">'send-email'</span>, <span class="hl-k">function</span>(<span class="hl-k">array</span> <span class="hl-v">$payload</span>) {
+    <span class="hl-f">mailer</span>()-&gt;<span class="hl-f">to</span>(<span class="hl-v">$payload</span>[<span class="hl-s">'to'</span>])
+        -&gt;<span class="hl-f">subject</span>(<span class="hl-v">$payload</span>[<span class="hl-s">'subject'</span>])
+        -&gt;<span class="hl-f">body</span>(<span class="hl-v">$payload</span>[<span class="hl-s">'body'</span>])-&gt;<span class="hl-f">send</span>();
+});
+
+<span class="hl-c">// 작업 추가</span>
+<span class="hl-f">queue</span>()-&gt;<span class="hl-f">push</span>(<span class="hl-s">'send-email'</span>, [
+    <span class="hl-s">'to'</span> =&gt; <span class="hl-s">'user@example.com'</span>,
+    <span class="hl-s">'subject'</span> =&gt; <span class="hl-s">'환영합니다'</span>,
+    <span class="hl-s">'body'</span> =&gt; <span class="hl-s">'...'</span>,
+]);
+
+<span class="hl-c">// 5분 후 실행</span>
+<span class="hl-f">queue</span>()-&gt;<span class="hl-f">later</span>(<span class="hl-n">300</span>, <span class="hl-s">'send-email'</span>, <span class="hl-v">$payload</span>);
+
+<span class="hl-c">// 워커 실행</span>
+<span class="hl-f">queue</span>()-&gt;<span class="hl-f">work</span>(<span class="hl-k">null</span>, <span class="hl-n">3</span>, <span class="hl-n">100</span>);  <span class="hl-c">// sleep 3초, 최대 100개</span></code></pre>
+
+            <h6 class="mb-2">작업 흐름 시뮬레이션</h6>
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+                <div class="card card--flat p-2 text-center" style="background:var(--bg-secondary,#f8fafc);min-width:100px;">
+                    <i class="material-icons-outlined text-muted">add_circle</i>
+                    <div class="caption mt-1"><strong>push()</strong></div>
+                    <span class="badge badge--info badge--sm">대기</span>
+                </div>
+                <i class="material-icons-outlined text-muted">arrow_forward</i>
+                <div class="card card--flat p-2 text-center" style="background:var(--bg-secondary,#f8fafc);min-width:100px;">
+                    <i class="material-icons-outlined text-muted">play_circle</i>
+                    <div class="caption mt-1"><strong>pop()</strong></div>
+                    <span class="badge badge--warning badge--sm">처리중</span>
+                </div>
+                <i class="material-icons-outlined text-muted">arrow_forward</i>
+                <div class="card card--flat p-2 text-center" style="background:var(--bg-secondary,#f8fafc);min-width:100px;">
+                    <i class="material-icons-outlined text-muted">check_circle</i>
+                    <div class="caption mt-1"><strong>handle()</strong></div>
+                    <span class="badge badge--success badge--sm">완료</span>
+                </div>
+                <i class="material-icons-outlined text-muted" style="opacity:.4;">arrow_forward</i>
+                <div class="card card--flat p-2 text-center" style="background:var(--bg-secondary,#f8fafc);min-width:100px;opacity:.5;">
+                    <i class="material-icons-outlined text-muted">error</i>
+                    <div class="caption mt-1"><strong>failed()</strong></div>
+                    <span class="badge badge--danger badge--sm">실패</span>
+                </div>
+            </div>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>CLI 명령어</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>php cli.php queue:work</code></td><td>큐 워커 시작</td></tr>
+                    <tr><td><code>php cli.php queue:size</code></td><td>대기 작업 수 확인</td></tr>
+                    <tr><td><code>php cli.php queue:failed</code></td><td>실패 작업 목록</td></tr>
+                    <tr><td><code>php cli.php queue:retry {id}</code></td><td>실패 작업 재시도</td></tr>
+                    <tr><td><code>php cli.php queue:clear</code></td><td>대기 작업 전체 삭제</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Storage -->
+    <div class="card card--outlined mb-4" id="demo-storage">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">folder</i> Storage</h5>
+            <span class="badge badge--danger badge--sm">Cat\Storage</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">파일시스템 추상화. 로컬/S3 드라이버, 체이닝 API, 스트리밍 다운로드</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 로컬 디스크 (기본)</span>
+<span class="hl-f">storage</span>()-&gt;<span class="hl-f">put</span>(<span class="hl-s">'logs/app.log'</span>, <span class="hl-s">'Log entry'</span>);
+<span class="hl-v">$content</span> = <span class="hl-f">storage</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'logs/app.log'</span>);
+<span class="hl-f">storage</span>()-&gt;<span class="hl-f">exists</span>(<span class="hl-s">'logs/app.log'</span>);  <span class="hl-c">// true</span>
+<span class="hl-f">storage</span>()-&gt;<span class="hl-f">delete</span>(<span class="hl-s">'logs/app.log'</span>);
+
+<span class="hl-c">// S3 디스크</span>
+<span class="hl-f">storage</span>()-&gt;<span class="hl-f">disk</span>(<span class="hl-s">'s3'</span>)-&gt;<span class="hl-f">put</span>(<span class="hl-s">'uploads/photo.jpg'</span>, <span class="hl-v">$data</span>);
+<span class="hl-v">$url</span> = <span class="hl-f">storage</span>()-&gt;<span class="hl-f">disk</span>(<span class="hl-s">'s3'</span>)-&gt;<span class="hl-f">url</span>(<span class="hl-s">'uploads/photo.jpg'</span>);
+
+<span class="hl-c">// 파일 목록 + 스트리밍</span>
+<span class="hl-v">$files</span> = <span class="hl-f">storage</span>()-&gt;<span class="hl-f">files</span>(<span class="hl-s">'uploads'</span>, <span class="hl-k">true</span>);  <span class="hl-c">// 재귀</span>
+<span class="hl-f">storage</span>()-&gt;<span class="hl-f">stream</span>(<span class="hl-s">'report.pdf'</span>, <span class="hl-s">'download.pdf'</span>);</code></pre>
+
+            <h6 class="mb-2">메서드 일람</h6>
+            <div class="d-flex flex-wrap gap-1">
+<?php
+$methods = ['put','get','exists','delete','copy','move','size','lastModified','mimeType','url','files','stream','append','disk'];
+foreach ($methods as $m): ?>
+                <span class="badge badge--soft badge--primary badge--sm"><?= $m ?>()</span>
+<?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="card card--outlined mb-4" id="demo-schedule">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">schedule</i> Schedule</h5>
+            <span class="badge badge--danger badge--sm">Cat\Schedule</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">Cron 스케줄러. PHP 코드로 주기적 태스크 등록, 시스템 crontab 한 줄만 설정</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 콜백 태스크 등록 → 스케줄 체이닝</span>
+<span class="hl-f">schedule</span>()-&gt;<span class="hl-f">call</span>(<span class="hl-k">fn</span>() =&gt; <span class="hl-f">cache</span>()-&gt;<span class="hl-f">clear</span>())-&gt;<span class="hl-f">daily</span>();
+<span class="hl-f">schedule</span>()-&gt;<span class="hl-f">call</span>(<span class="hl-k">fn</span>() =&gt; <span class="hl-f">logger</span>()-&gt;<span class="hl-f">info</span>(<span class="hl-s">'Heartbeat'</span>))-&gt;<span class="hl-f">hourly</span>();
+<span class="hl-f">schedule</span>()-&gt;<span class="hl-f">call</span>(<span class="hl-k">fn</span>() =&gt; <span class="hl-f">queue</span>()-&gt;<span class="hl-f">pop</span>())-&gt;<span class="hl-f">everyMinute</span>();
+
+<span class="hl-c">// CLI 명령어 + cron 표현식</span>
+<span class="hl-f">schedule</span>()-&gt;<span class="hl-f">command</span>(<span class="hl-s">'log:rotate'</span>)-&gt;<span class="hl-f">weeklyOn</span>(<span class="hl-n">1</span>, <span class="hl-s">'03:00'</span>); <span class="hl-c">// 매주 월요일 03:00</span>
+
+<span class="hl-c">// 시스템 crontab 설정 (1줄)</span>
+<span class="hl-c">// * * * * * php /path/to/cli.php schedule:run >> /dev/null 2>&1</span></code></pre>
+
+            <h6 class="mb-2">주기 헬퍼</h6>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>헬퍼</th><th>cron 표현식</th><th>실행 주기</th></tr></thead>
+                <tbody>
+                    <tr><td><code>everyMinute()</code></td><td><code>* * * * *</code></td><td>매분</td></tr>
+                    <tr><td><code>everyFiveMinutes()</code></td><td><code>*/5 * * * *</code></td><td>5분마다</td></tr>
+                    <tr><td><code>hourly()</code></td><td><code>0 * * * *</code></td><td>매시 정각</td></tr>
+                    <tr><td><code>daily()</code></td><td><code>0 0 * * *</code></td><td>매일 자정</td></tr>
+                    <tr><td><code>weekly()</code></td><td><code>0 0 * * 0</code></td><td>매주 일요일</td></tr>
+                    <tr><td><code>monthly()</code></td><td><code>0 0 1 * *</code></td><td>매월 1일</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Notify -->
+    <div class="card card--outlined mb-4" id="demo-notify">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">notifications</i> Notify</h5>
+            <span class="badge badge--danger badge--sm">Cat\Notify</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">다채널 알림. Mail + Telegram + DB 동시 발송, 채널별 포맷 자동 변환</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 다채널 알림 발송</span>
+<span class="hl-f">notify</span>()-&gt;<span class="hl-f">to</span>(<span class="hl-s">'user@example.com'</span>)
+    -&gt;<span class="hl-f">via</span>(<span class="hl-s">'mail'</span>, <span class="hl-s">'telegram'</span>)
+    -&gt;<span class="hl-f">send</span>(<span class="hl-s">'새 댓글이 달렸습니다'</span>, <span class="hl-s">'게시글에 새 댓글이 작성되었습니다.'</span>);
+
+<span class="hl-c">// 단일 채널 (Telegram)</span>
+<span class="hl-f">notify</span>()-&gt;<span class="hl-f">to</span>(<span class="hl-s">'@admin_chat'</span>)-&gt;<span class="hl-f">via</span>(<span class="hl-s">'telegram'</span>)
+    -&gt;<span class="hl-f">send</span>(<span class="hl-s">'서버 알림'</span>, <span class="hl-s">'CPU 90% 초과'</span>);
+
+<span class="hl-c">// 간편 발송 (제목만)</span>
+<span class="hl-f">notify</span>()-&gt;<span class="hl-f">to</span>(<span class="hl-s">'user@example.com'</span>)-&gt;<span class="hl-f">alert</span>(<span class="hl-s">'긴급 알림!'</span>);
+
+<span class="hl-c">// 커스텀 채널 등록 (static)</span>
+Cat\Notify<span class="hl-k">::</span><span class="hl-f">channel</span>(<span class="hl-s">'slack'</span>, <span class="hl-k">fn</span>(<span class="hl-v">$to</span>, <span class="hl-v">$subject</span>, <span class="hl-v">$body</span>) =&gt; ...);</code></pre>
+
+            <h6 class="mb-2">반환값 시뮬레이션</h6>
+            <pre class="demo-code mb-2"><code><span class="hl-c">// send() 반환값: 채널별 성공 여부</span>
+[<span class="hl-s">'mail'</span> =&gt; <span class="hl-k">true</span>, <span class="hl-s">'telegram'</span> =&gt; <span class="hl-k">true</span>]</code></pre>
+            <div class="d-flex flex-column gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge--info" style="min-width:80px;">Mail</span>
+                    <span class="badge badge--success badge--sm">전송 완료</span>
+                    <span class="caption text-muted">user@example.com → send('새 댓글이 달렸습니다', '본문')</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge--primary" style="min-width:80px;">Telegram</span>
+                    <span class="badge badge--success badge--sm">전송 완료</span>
+                    <span class="caption text-muted">@admin_chat → "&lt;b&gt;새 댓글이 달렸습니다&lt;/b&gt;\n본문"</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hash -->
+    <div class="card card--outlined mb-4" id="demo-hash">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">fingerprint</i> Hash</h5>
+            <span class="badge badge--danger badge--sm">Cat\Hash</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">파일/문자열 해싱, HMAC 서명, 체크섬 무결성 검증</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 문자열 해시</span>
+<span class="hl-v">$sha256</span> = <span class="hl-f">hasher</span>()-&gt;<span class="hl-f">string</span>(<span class="hl-s">'Hello'</span>);            <span class="hl-c">// SHA-256</span>
+<span class="hl-v">$md5</span>    = <span class="hl-f">hasher</span>()-&gt;<span class="hl-f">string</span>(<span class="hl-s">'Hello'</span>, <span class="hl-s">'md5'</span>);    <span class="hl-c">// MD5</span>
+
+<span class="hl-c">// HMAC 서명</span>
+<span class="hl-v">$hmac</span> = <span class="hl-f">hasher</span>()-&gt;<span class="hl-f">hmac</span>(<span class="hl-s">'payload'</span>, <span class="hl-s">'secret-key'</span>);
+<span class="hl-f">hasher</span>()-&gt;<span class="hl-f">verifyHmac</span>(<span class="hl-s">'payload'</span>, <span class="hl-v">$hmac</span>, <span class="hl-s">'secret-key'</span>);
+
+<span class="hl-c">// 파일 체크섬</span>
+<span class="hl-v">$checksum</span> = <span class="hl-f">hasher</span>()-&gt;<span class="hl-f">file</span>(<span class="hl-s">'/path/to/file.zip'</span>);
+<span class="hl-f">hasher</span>()-&gt;<span class="hl-f">verify</span>(<span class="hl-s">'/path/to/file.zip'</span>, <span class="hl-v">$checksum</span>);</code></pre>
+
+            <h6 class="mb-2">해시 결과 시뮬레이션</h6>
+<?php
+try {
+    $input = 'CatPHP Framework';
+    $sha256 = hasher()->string($input);
+    $md5 = hasher()->string($input, 'md5');
+?>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>알고리즘</th><th>입력</th><th>해시</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="badge badge--primary badge--sm">SHA-256</span></td><td><code><?= htmlspecialchars($input) ?></code></td><td><code style="font-size:.7rem;word-break:break-all;"><?= htmlspecialchars($sha256) ?></code></td></tr>
+                    <tr><td><span class="badge badge--warning badge--sm">MD5</span></td><td><code><?= htmlspecialchars($input) ?></code></td><td><code style="font-size:.7rem;"><?= htmlspecialchars($md5) ?></code></td></tr>
+                </tbody>
+            </table>
+<?php } catch (\Throwable $e) { ?>
+            <div class="alert alert--warning"><span class="alert__message">Hash 오류: <?= htmlspecialchars($e->getMessage()) ?></span></div>
+<?php } ?>
+        </div>
+    </div>
+
+    <!-- Excel -->
+    <div class="card card--outlined mb-4" id="demo-excel">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">table_chart</i> Excel</h5>
+            <span class="badge badge--danger badge--sm">Cat\Excel</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">CSV/XLSX 가져오기·내보내기. 외부 라이브러리 없이 순수 PHP, 스트리밍 대용량 처리</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// CSV 내보내기 (헤더 + 데이터)</span>
+<span class="hl-f">excel</span>()-&gt;<span class="hl-f">headers</span>([<span class="hl-s">'이름'</span>, <span class="hl-s">'이메일'</span>, <span class="hl-s">'역할'</span>])
+    -&gt;<span class="hl-f">from</span>([
+        [<span class="hl-s">'김개발'</span>, <span class="hl-s">'kim@catphp.dev'</span>, <span class="hl-s">'admin'</span>],
+        [<span class="hl-s">'이디자인'</span>, <span class="hl-s">'lee@catphp.dev'</span>, <span class="hl-s">'user'</span>],
+    ])
+    -&gt;<span class="hl-f">download</span>(<span class="hl-s">'users.csv'</span>);
+
+<span class="hl-c">// CSV 가져오기</span>
+<span class="hl-v">$data</span> = <span class="hl-f">excel</span>()-&gt;<span class="hl-f">fromCsv</span>(<span class="hl-s">'uploaded.csv'</span>);
+
+<span class="hl-c">// DB 결과 → CSV / XLSX 다운로드</span>
+<span class="hl-v">$users</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)-&gt;<span class="hl-f">all</span>();
+<span class="hl-f">excel</span>()-&gt;<span class="hl-f">from</span>(<span class="hl-v">$users</span>)-&gt;<span class="hl-f">download</span>(<span class="hl-s">'export.csv'</span>);
+<span class="hl-f">excel</span>()-&gt;<span class="hl-f">from</span>(<span class="hl-v">$users</span>)-&gt;<span class="hl-f">download</span>(<span class="hl-s">'export.xlsx'</span>); <span class="hl-c">// XLSX도 지원</span></code></pre>
+
+            <h6 class="mb-2">내보내기 미리보기</h6>
+            <table class="table table--sm table--bordered table--striped">
+                <thead><tr><th>이름</th><th>이메일</th><th>역할</th><th>가입일</th></tr></thead>
+                <tbody>
+                    <tr><td>김개발</td><td>kim@catphp.dev</td><td>admin</td><td>2024-01-15</td></tr>
+                    <tr><td>이디자인</td><td>lee@catphp.dev</td><td>user</td><td>2024-02-10</td></tr>
+                    <tr><td>박보안</td><td>park@catphp.dev</td><td>moderator</td><td>2024-03-05</td></tr>
+                </tbody>
+            </table>
+            <div class="mt-2">
+                <button class="btn btn--primary btn--sm" onclick="IMCAT.toast.success('users.csv 다운로드 시작 (시뮬레이션)')">
+                    <i class="material-icons-outlined" style="font-size:14px;">download</i> CSV 다운로드
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

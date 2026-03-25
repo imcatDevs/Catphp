@@ -1,0 +1,58 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--secondary);">code</i>
+        <div><h4 class="mb-0">Meta</h4><span class="text-muted caption">Cat\Meta — SEO 메타 태그</span></div>
+        <span class="badge badge--secondary badge--sm ms-auto">meta()</span>
+    </div>
+
+    <p class="mb-2"><strong>SEO 메타 태그</strong>를 체이닝으로 관리합니다. <code>title</code>, <code>description</code>, <code>canonical</code>, <strong>Open Graph</strong>, <strong>Twitter Card</strong>, <strong>JSON-LD</strong> 구조화 데이터를 하나의 도구로 설정합니다.</p>
+    <p class="mb-3"><code>render()</code>로 모든 메타 태그를 HTML로 출력하고, <code>sitemap()</code>으로 XML 사이트맵을 생성합니다. <code>reset()</code>으로 페이지별 메타 데이터를 초기화할 수 있습니다 (뮤터블 구조).</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:300px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>title(string $t)</code></td><td><code>self</code></td><td>페이지 타이틀</td></tr>
+                    <tr><td><code>description(string $d)</code></td><td><code>self</code></td><td>메타 설명</td></tr>
+                    <tr><td><code>canonical(string $url)</code></td><td><code>self</code></td><td>정규 URL</td></tr>
+                    <tr><td><code>og(string $prop, string $val)</code></td><td><code>self</code></td><td>Open Graph 태그</td></tr>
+                    <tr><td><code>twitter(string $prop, string $val)</code></td><td><code>self</code></td><td>Twitter Card 태그</td></tr>
+                    <tr><td><code>jsonLd(array $data)</code></td><td><code>self</code></td><td>JSON-LD 구조화 데이터</td></tr>
+                    <tr><td><code>reset()</code></td><td><code>self</code></td><td>모든 메타 데이터 초기화</td></tr>
+                    <tr><td><code>render()</code></td><td><code>string</code></td><td>메타 태그 HTML 문자열 반환</td></tr>
+                    <tr><td><code>sitemap(array $urls)</code></td><td><code>string</code></td><td>XML 사이트맵 생성</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">사용 예제</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 페이지별 SEO 설정</span>
+<span class="hl-f">meta</span>()-&gt;<span class="hl-f">title</span>(<span class="hl-s">'CatPHP — 경량 PHP 프레임워크'</span>)
+    -&gt;<span class="hl-f">description</span>(<span class="hl-s">'PHP 8.2+ 전용 경량 프레임워크'</span>)
+    -&gt;<span class="hl-f">canonical</span>(<span class="hl-s">'https://catphp.dev'</span>)
+    -&gt;<span class="hl-f">og</span>(<span class="hl-s">'image'</span>, <span class="hl-s">'https://catphp.dev/og.png'</span>)
+    -&gt;<span class="hl-f">twitter</span>(<span class="hl-s">'card'</span>, <span class="hl-s">'summary_large_image'</span>);
+
+<span class="hl-c">// &lt;head&gt; 안에서 출력</span>
+<span class="hl-k">echo</span> <span class="hl-f">meta</span>()-&gt;<span class="hl-f">render</span>();
+
+<span class="hl-c">// 사이트맵 생성</span>
+<span class="hl-v">$xml</span> = <span class="hl-f">meta</span>()-&gt;<span class="hl-f">sitemap</span>([
+    [<span class="hl-s">'loc'</span> =&gt; <span class="hl-s">'https://catphp.dev'</span>, <span class="hl-s">'priority'</span> =&gt; <span class="hl-s">'1.0'</span>],
+    [<span class="hl-s">'loc'</span> =&gt; <span class="hl-s">'https://catphp.dev/docs'</span>, <span class="hl-s">'priority'</span> =&gt; <span class="hl-s">'0.8'</span>],
+]);</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>뮤터블:</strong> Meta는 다른 도구와 달리 <code>$this</code> 기반입니다. 페이지별로 <code>reset()</code>을 호출하고, <code>render()</code>를 <code>&lt;head&gt;</code> 안에 배치하세요.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/geo" class="badge badge--soft badge--secondary badge--sm" style="cursor:pointer;">Geo</a>
+        <a data-spa="/tool/feed" class="badge badge--soft badge--dark badge--sm" style="cursor:pointer;">Feed</a>
+    </div>
+</div>

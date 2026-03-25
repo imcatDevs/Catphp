@@ -1,0 +1,393 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <h3 class="mb-1">모던 도구</h3>
+    <p class="text-muted mb-4">Env · Request · Response · Session · Migration · Captcha · Faker · User — HTTP 추상화, 세션, 마이그레이션, 캡차, 테스트 데이터, 유저 관리</p>
+
+    <!-- Env -->
+    <div class="card card--outlined mb-4" id="demo-env">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">settings</i> Env</h5>
+            <span class="badge badge--primary badge--sm">Cat\Env</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">.env 파일 파서. 환경변수 로드, 타입 캐스팅, 필수 키 검증</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// .env 파일 로드</span>
+<span class="hl-c">// APP_NAME=CatPHP</span>
+<span class="hl-c">// APP_DEBUG=true</span>
+<span class="hl-c">// DB_HOST=localhost</span>
+
+<span class="hl-c">// 읽기 (기본값 지원)</span>
+<span class="hl-v">$name</span>  = <span class="hl-f">env</span>(<span class="hl-s">'APP_NAME'</span>, <span class="hl-s">'MyApp'</span>);    <span class="hl-c">// 'CatPHP'</span>
+<span class="hl-v">$debug</span> = <span class="hl-f">env</span>(<span class="hl-s">'APP_DEBUG'</span>, <span class="hl-k">false</span>);     <span class="hl-c">// true (자동 bool 변환)</span>
+<span class="hl-v">$port</span>  = <span class="hl-f">env</span>(<span class="hl-s">'DB_PORT'</span>, <span class="hl-n">3306</span>);        <span class="hl-c">// 3306 (미설정 → 기본값)</span>
+
+<span class="hl-c">// 필수 키 검증</span>
+<span class="hl-f">env</span>()-&gt;<span class="hl-f">required</span>([<span class="hl-s">'APP_KEY'</span>, <span class="hl-s">'DB_HOST'</span>]);</code></pre>
+
+            <h6 class="mb-2">.env 파일 예시</h6>
+            <pre class="demo-code"><code><span style="color:#86efac;">APP_NAME</span>=CatPHP
+<span style="color:#86efac;">APP_DEBUG</span>=true
+<span style="color:#86efac;">APP_KEY</span>=base64:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+<span style="color:#86efac;">DB_HOST</span>=localhost
+<span style="color:#86efac;">DB_PORT</span>=3306
+<span style="color:#86efac;">DB_NAME</span>=catphp
+<span style="color:#86efac;">DB_USER</span>=root
+<span style="color:#86efac;">DB_PASS</span>=
+
+<span style="color:#86efac;">MAIL_HOST</span>=smtp.gmail.com
+<span style="color:#86efac;">REDIS_HOST</span>=127.0.0.1</code></pre>
+            <div class="alert alert--warning mt-2"><span class="alert__message"><strong>보안:</strong> .env 파일은 반드시 .gitignore에 추가하세요. 절대 버전 관리에 포함하지 마세요.</span></div>
+        </div>
+    </div>
+
+    <!-- Request -->
+    <div class="card card--outlined mb-4" id="demo-request">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">input</i> Request</h5>
+            <span class="badge badge--primary badge--sm">Cat\Request</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">HTTP 요청 추상화. input, query, header, file, bearerToken, method, ajax 감지</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 입력 읽기</span>
+<span class="hl-v">$name</span>  = <span class="hl-f">request</span>()-&gt;<span class="hl-f">input</span>(<span class="hl-s">'name'</span>);           <span class="hl-c">// POST/GET 자동 감지</span>
+<span class="hl-v">$page</span>  = <span class="hl-f">request</span>()-&gt;<span class="hl-f">query</span>(<span class="hl-s">'page'</span>, <span class="hl-n">1</span>);        <span class="hl-c">// GET 파라미터</span>
+<span class="hl-v">$all</span>   = <span class="hl-f">request</span>()-&gt;<span class="hl-f">all</span>();                   <span class="hl-c">// 전체 입력</span>
+
+<span class="hl-c">// 헤더 + 인증</span>
+<span class="hl-v">$token</span> = <span class="hl-f">request</span>()-&gt;<span class="hl-f">bearerToken</span>();          <span class="hl-c">// Authorization: Bearer xxx</span>
+<span class="hl-v">$type</span>  = <span class="hl-f">request</span>()-&gt;<span class="hl-f">header</span>(<span class="hl-s">'Content-Type'</span>);
+
+<span class="hl-c">// 메서드 + 감지</span>
+<span class="hl-f">request</span>()-&gt;<span class="hl-f">method</span>();     <span class="hl-c">// 'GET'</span>
+<span class="hl-f">request</span>()-&gt;<span class="hl-f">isAjax</span>();     <span class="hl-c">// X-Requested-With 확인</span>
+<span class="hl-f">request</span>()-&gt;<span class="hl-f">isSecure</span>();   <span class="hl-c">// HTTPS 여부</span></code></pre>
+
+            <h6 class="mb-2">현재 요청 정보</h6>
+<?php try { ?>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>속성</th><th>값</th></tr></thead>
+                <tbody>
+                    <tr><td><code>method()</code></td><td><span class="badge badge--success badge--sm"><?= htmlspecialchars(request()->method()) ?></span></td></tr>
+                    <tr><td><code>path()</code></td><td><code><?= htmlspecialchars(request()->path()) ?></code></td></tr>
+                    <tr><td><code>isSecure()</code></td><td><code><?= request()->isSecure() ? 'true' : 'false' ?></code></td></tr>
+                    <tr><td><code>isAjax()</code></td><td><code><?= request()->isAjax() ? 'true' : 'false' ?></code></td></tr>
+                    <tr><td><code>header('User-Agent')</code></td><td><code style="font-size:.7rem;word-break:break-all;"><?= htmlspecialchars(request()->header('User-Agent') ?? '(없음)') ?></code></td></tr>
+                    <tr><td><code>ip()</code></td><td><code><?= htmlspecialchars(ip()->address()) ?></code></td></tr>
+                </tbody>
+            </table>
+<?php } catch (\Throwable $e) { ?>
+            <div class="alert alert--warning"><span class="alert__message">Request 오류: <?= htmlspecialchars($e->getMessage()) ?></span></div>
+<?php } ?>
+        </div>
+    </div>
+
+    <!-- Response -->
+    <div class="card card--outlined mb-4" id="demo-response">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">output</i> Response</h5>
+            <span class="badge badge--primary badge--sm">Cat\Response</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">HTTP 응답 빌더. redirect, download, stream, cache, noContent, 커스텀 헤더</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 리다이렉트</span>
+<span class="hl-f">response</span>()-&gt;<span class="hl-f">redirect</span>(<span class="hl-s">'/login'</span>);
+<span class="hl-f">response</span>()-&gt;<span class="hl-f">redirect</span>(<span class="hl-s">'/new-url'</span>, <span class="hl-n">301</span>);  <span class="hl-c">// 영구 이동</span>
+
+<span class="hl-c">// 파일 다운로드</span>
+<span class="hl-f">response</span>()-&gt;<span class="hl-f">download</span>(<span class="hl-s">'storage/report.pdf'</span>, <span class="hl-s">'리포트.pdf'</span>);
+
+<span class="hl-c">// 캐시 헤더</span>
+<span class="hl-f">response</span>()-&gt;<span class="hl-f">cache</span>(<span class="hl-n">3600</span>);     <span class="hl-c">// Cache-Control: max-age=3600</span>
+<span class="hl-f">response</span>()-&gt;<span class="hl-f">noCache</span>();         <span class="hl-c">// no-store, no-cache</span>
+
+<span class="hl-c">// 상태 코드</span>
+<span class="hl-f">response</span>()-&gt;<span class="hl-f">noContent</span>();       <span class="hl-c">// 204 No Content</span>
+<span class="hl-f">response</span>()-&gt;<span class="hl-f">status</span>(<span class="hl-n">403</span>);       <span class="hl-c">// 403 Forbidden</span>
+
+<span class="hl-c">// 커스텀 헤더</span>
+<span class="hl-f">response</span>()-&gt;<span class="hl-f">header</span>(<span class="hl-s">'X-Custom'</span>, <span class="hl-s">'value'</span>)-&gt;<span class="hl-f">send</span>();</code></pre>
+
+            <h6 class="mb-2">응답 타입 비교</h6>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>메서드</th><th>상태</th><th>Content-Type</th><th>용도</th></tr></thead>
+                <tbody>
+                    <tr><td><code>redirect()</code></td><td>302/301</td><td>—</td><td>페이지 이동</td></tr>
+                    <tr><td><code>download()</code></td><td>200</td><td>application/octet-stream</td><td>파일 다운로드</td></tr>
+                    <tr><td><code>stream()</code></td><td>200</td><td>자동 감지</td><td>인라인 파일 표시</td></tr>
+                    <tr><td><code>noContent()</code></td><td>204</td><td>—</td><td>빈 응답 (DELETE 등)</td></tr>
+                    <tr><td><code>cache(3600)</code></td><td>200</td><td>—</td><td>브라우저 캐시 (1시간)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Session -->
+    <div class="card card--outlined mb-4" id="demo-session">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">badge</i> Session</h5>
+            <span class="badge badge--primary badge--sm">Cat\Session</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">세션 관리. get/set, flash (1회성), regenerate (세션 고정 방지), destroy</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 읽기 / 쓰기</span>
+<span class="hl-f">session</span>(<span class="hl-s">'user_id'</span>);                 <span class="hl-c">// 읽기 (shortcut)</span>
+<span class="hl-f">session</span>()-&gt;<span class="hl-f">set</span>(<span class="hl-s">'user_id'</span>, <span class="hl-n">1</span>);        <span class="hl-c">// 쓰기</span>
+<span class="hl-f">session</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'user_id'</span>, <span class="hl-n">0</span>);        <span class="hl-c">// 기본값 포함 읽기</span>
+
+<span class="hl-c">// Flash (1회성 — 다음 요청에서 자동 삭제)</span>
+<span class="hl-f">session</span>()-&gt;<span class="hl-f">flash</span>(<span class="hl-s">'success'</span>, <span class="hl-s">'저장 완료!'</span>);
+<span class="hl-v">$msg</span> = <span class="hl-f">session</span>()-&gt;<span class="hl-f">getFlash</span>(<span class="hl-s">'success'</span>);
+
+<span class="hl-c">// 보안</span>
+<span class="hl-f">session</span>()-&gt;<span class="hl-f">regenerate</span>();  <span class="hl-c">// 세션 ID 재생성 (고정 방지)</span>
+<span class="hl-f">session</span>()-&gt;<span class="hl-f">destroy</span>();     <span class="hl-c">// 완전 삭제 (로그아웃)</span></code></pre>
+
+            <h6 class="mb-2">세션 보안 설정</h6>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>설정</th><th>값</th><th>효과</th></tr></thead>
+                <tbody>
+                    <tr><td><code>cookie_httponly</code></td><td><span class="badge badge--success badge--sm">true</span></td><td>JS에서 세션 쿠키 접근 차단</td></tr>
+                    <tr><td><code>cookie_secure</code></td><td><span class="badge badge--info badge--sm">auto</span></td><td>HTTPS에서만 전송</td></tr>
+                    <tr><td><code>cookie_samesite</code></td><td><span class="badge badge--warning badge--sm">Lax</span></td><td>CSRF 보호</td></tr>
+                    <tr><td><code>use_strict_mode</code></td><td><span class="badge badge--success badge--sm">true</span></td><td>미인식 세션 ID 거부</td></tr>
+                    <tr><td><code>regenerate()</code></td><td>로그인 시 호출</td><td>세션 고정 공격 방지</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Migration -->
+    <div class="card card--outlined mb-4" id="demo-migration">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">storage</i> Migration</h5>
+            <span class="badge badge--primary badge--sm">Cat\Migration</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">DB 스키마 버전 관리. up/down 마이그레이션, 롤백, 상태 확인</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 마이그레이션 파일 예시</span>
+<span class="hl-c">// migrations/2024_01_15_create_users_table.php</span>
+<span class="hl-k">return</span> [
+    <span class="hl-s">'up'</span> =&gt; <span class="hl-k">fn</span>() =&gt; <span class="hl-f">db</span>()-&gt;<span class="hl-f">exec</span>(<span class="hl-s">'
+        CREATE TABLE users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            role ENUM("admin","user") DEFAULT "user",
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    '</span>),
+    <span class="hl-s">'down'</span> =&gt; <span class="hl-k">fn</span>() =&gt; <span class="hl-f">db</span>()-&gt;<span class="hl-f">exec</span>(<span class="hl-s">'DROP TABLE IF EXISTS users'</span>),
+];</code></pre>
+
+            <h6 class="mb-2">CLI 명령어</h6>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>명령어</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>php cli.php migrate</code></td><td>대기 마이그레이션 실행</td></tr>
+                    <tr><td><code>php cli.php migrate:rollback</code></td><td>마지막 배치 롤백</td></tr>
+                    <tr><td><code>php cli.php migrate:status</code></td><td>마이그레이션 상태 확인</td></tr>
+                    <tr><td><code>php cli.php migrate:create {name}</code></td><td>새 마이그레이션 파일 생성</td></tr>
+                    <tr><td><code>php cli.php migrate:fresh</code></td><td>전체 롤백 후 재실행</td></tr>
+                </tbody>
+            </table>
+
+            <h6 class="mt-3 mb-2">상태 시뮬레이션</h6>
+            <pre class="demo-code" style="background:#0c0c0c;"><code><span style="color:#6ee7b7;">$</span> php cli.php migrate:status
+<span style="color:#fde68a;">+----+--------------------------------------+-------+------------+</span>
+<span style="color:#fde68a;">| #  | Migration                            | Batch | Ran at     |</span>
+<span style="color:#fde68a;">+----+--------------------------------------+-------+------------+</span>
+<span style="color:#fde68a;">| 1  | 2024_01_15_create_users_table        |   1   | 01-15 10:30|</span>
+<span style="color:#fde68a;">| 2  | 2024_01_16_create_posts_table        |   1   | 01-15 10:30|</span>
+<span style="color:#fde68a;">| 3  | 2024_02_01_add_avatar_to_users       |   2   | 02-01 14:20|</span>
+<span style="color:#fde68a;">+----+--------------------------------------+-------+------------+</span>
+<span style="color:#86efac;">[OK]</span> 3 migrations ran, 0 pending.</code></pre>
+        </div>
+    </div>
+
+    <!-- Captcha -->
+    <div class="card card--outlined mb-4" id="demo-captcha">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">verified_user</i> Captcha</h5>
+            <span class="badge badge--primary badge--sm">Cat\Captcha</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">이미지/수학 캡차 생성 (GD 라이브러리). 세션 기반 검증, 커스텀 난이도</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 이미지 캡차</span>
+<span class="hl-v">$src</span> = <span class="hl-f">captcha</span>()-&gt;<span class="hl-f">src</span>();   <span class="hl-c">// data:image/png;base64,...</span>
+<span class="hl-k">echo</span> <span class="hl-s">"&lt;img src='{<span class="hl-v">$src</span>}'&gt;"</span>;
+
+<span class="hl-c">// 수학 캡차</span>
+<span class="hl-v">$q</span> = <span class="hl-f">captcha</span>()-&gt;<span class="hl-f">math</span>();  <span class="hl-c">// ['question' =&gt; '3 + 7 = ?', 'answer' =&gt; 10]</span>
+
+<span class="hl-c">// 검증</span>
+<span class="hl-k">if</span> (!<span class="hl-f">captcha</span>()-&gt;<span class="hl-f">verify</span>(<span class="hl-v">$_POST</span>[<span class="hl-s">'captcha'</span>])) {
+    <span class="hl-f">json</span>()-&gt;<span class="hl-f">fail</span>(<span class="hl-s">'캡차 인증 실패'</span>);
+}</code></pre>
+
+            <h6 class="mb-2">① 이미지 캡차 (GD)</h6>
+<?php try { $captchaSrc = captcha()->src(); ?>
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <img src="<?= $captchaSrc ?>" alt="captcha" style="border:1px solid var(--border-color,#ddd);border-radius:6px;">
+                <div>
+                    <code style="font-size:.75rem;word-break:break-all;display:block;max-width:300px;"><?= substr($captchaSrc, 0, 60) ?>…</code>
+                    <span class="badge badge--success badge--sm mt-1">captcha()->src() 성공</span>
+                </div>
+            </div>
+<?php } catch (\Throwable $e) { ?>
+            <div class="alert alert--warning mb-3"><span class="alert__message">이미지 캡차 오류: <?= htmlspecialchars($e->getMessage()) ?></span></div>
+<?php } ?>
+
+            <h6 class="mb-2">② 수학 캡차</h6>
+<?php
+try {
+    $mathCaptcha = captcha()->math();
+?>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="card card--flat p-2" style="background:var(--bg-secondary,#f8fafc);min-width:150px;text-align:center;">
+                    <?= $mathCaptcha['html'] ?>
+                </div>
+                <input type="text" class="form-control" id="captchaInput" placeholder="정답" style="max-width:100px;">
+                <button class="btn btn--primary btn--sm" id="captchaBtn">확인</button>
+            </div>
+            <div id="captchaResult"></div>
+            <script>
+            document.getElementById('captchaBtn')?.addEventListener('click', () => {
+                const input = document.getElementById('captchaInput');
+                const result = document.getElementById('captchaResult');
+                fetch('/api/captcha/verify?answer=' + encodeURIComponent(input.value))
+                    .then(() => {
+                        IMCAT.toast.info('실제 검증은 captcha()->verify() 서버측에서 처리됩니다 (시뮬레이션)');
+                    })
+                    .catch(() => {});
+            });
+            </script>
+<?php } catch (\Throwable $e) { ?>
+            <div class="alert alert--warning"><span class="alert__message">수학 캡차 오류: <?= htmlspecialchars($e->getMessage()) ?></span></div>
+<?php } ?>
+            <div class="alert alert--info mt-2"><span class="alert__message"><strong>요구사항:</strong> 이미지 캡차는 PHP GD 확장 필요. 수학 캡차는 의존성 없음.</span></div>
+        </div>
+    </div>
+
+    <!-- Faker -->
+    <div class="card card--outlined mb-4" id="demo-faker">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">science</i> Faker</h5>
+            <span class="badge badge--primary badge--sm">Cat\Faker</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">테스트 데이터 생성. 한국어/영어 이름, 전화번호, 주소, 이메일, 대량 생성</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 개별 생성</span>
+<span class="hl-f">faker</span>()-&gt;<span class="hl-f">name</span>();       <span class="hl-c">// '김민수'</span>
+<span class="hl-f">faker</span>()-&gt;<span class="hl-f">email</span>();      <span class="hl-c">// 'minsu.kim@example.com'</span>
+<span class="hl-f">faker</span>()-&gt;<span class="hl-f">phone</span>();      <span class="hl-c">// '010-1234-5678'</span>
+<span class="hl-f">faker</span>()-&gt;<span class="hl-f">address</span>();    <span class="hl-c">// '서울시 강남구 역삼동 123-45'</span>
+
+<span class="hl-c">// 대량 생성</span>
+<span class="hl-v">$users</span> = <span class="hl-f">faker</span>()-&gt;<span class="hl-f">make</span>(<span class="hl-n">10</span>, <span class="hl-k">fn</span>() =&gt; [
+    <span class="hl-s">'name'</span>  =&gt; <span class="hl-f">faker</span>()-&gt;<span class="hl-f">name</span>(),
+    <span class="hl-s">'email'</span> =&gt; <span class="hl-f">faker</span>()-&gt;<span class="hl-f">email</span>(),
+    <span class="hl-s">'phone'</span> =&gt; <span class="hl-f">faker</span>()-&gt;<span class="hl-f">phone</span>(),
+]);</code></pre>
+
+            <h6 class="mb-2">실행 결과</h6>
+<?php
+try {
+    $fakeUsers = [];
+    for ($i = 0; $i < 5; $i++) {
+        $fakeUsers[] = [
+            'name'  => faker()->name(),
+            'email' => faker()->email(),
+            'phone' => faker()->phone(),
+        ];
+    }
+?>
+            <table class="table table--sm table--bordered table--striped">
+                <thead><tr><th>#</th><th>이름</th><th>이메일</th><th>전화번호</th></tr></thead>
+                <tbody>
+<?php foreach ($fakeUsers as $i => $u): ?>
+                    <tr>
+                        <td><?= $i + 1 ?></td>
+                        <td><?= htmlspecialchars($u['name']) ?></td>
+                        <td><code><?= htmlspecialchars($u['email']) ?></code></td>
+                        <td><code><?= htmlspecialchars($u['phone']) ?></code></td>
+                    </tr>
+<?php endforeach; ?>
+                </tbody>
+            </table>
+            <div class="alert alert--info mt-2"><span class="alert__message">새로고침할 때마다 다른 데이터가 생성됩니다.</span></div>
+<?php } catch (\Throwable $e) { ?>
+            <div class="alert alert--warning"><span class="alert__message">Faker 오류: <?= htmlspecialchars($e->getMessage()) ?></span></div>
+<?php } ?>
+        </div>
+    </div>
+
+    <!-- User -->
+    <div class="card card--outlined mb-4" id="demo-user">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">person</i> User</h5>
+            <span class="badge badge--primary badge--sm">Cat\User</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">유저 CRUD + 인증 통합. 가입, 로그인, 프로필 수정, 비밀번호 변경</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 회원가입</span>
+<span class="hl-v">$id</span> = <span class="hl-f">user</span>()-&gt;<span class="hl-f">create</span>([
+    <span class="hl-s">'name'</span>     =&gt; <span class="hl-s">'김개발'</span>,
+    <span class="hl-s">'email'</span>    =&gt; <span class="hl-s">'kim@catphp.dev'</span>,
+    <span class="hl-s">'password'</span> =&gt; <span class="hl-s">'secret123'</span>,  <span class="hl-c">// 자동 Argon2id 해싱</span>
+]);
+
+<span class="hl-c">// 로그인 (email + password 검증 → 세션 시작)</span>
+<span class="hl-v">$ok</span> = <span class="hl-f">user</span>()-&gt;<span class="hl-f">attempt</span>(<span class="hl-s">'kim@catphp.dev'</span>, <span class="hl-s">'secret123'</span>);
+
+<span class="hl-c">// 현재 유저</span>
+<span class="hl-v">$me</span> = <span class="hl-f">user</span>()-&gt;<span class="hl-f">current</span>();
+
+<span class="hl-c">// 프로필 수정</span>
+<span class="hl-f">user</span>()-&gt;<span class="hl-f">update</span>(<span class="hl-v">$id</span>, [<span class="hl-s">'name'</span> =&gt; <span class="hl-s">'김CatPHP'</span>]);
+
+<span class="hl-c">// 비밀번호 변경 (update에 password 포함 시 자동 Argon2id 해싱)</span>
+<span class="hl-f">user</span>()-&gt;<span class="hl-f">update</span>(<span class="hl-v">$id</span>, [<span class="hl-s">'password'</span> =&gt; <span class="hl-s">'newPass'</span>]);
+
+<span class="hl-c">// 삭제</span>
+<span class="hl-f">user</span>()-&gt;<span class="hl-f">delete</span>(<span class="hl-v">$id</span>);
+
+<span class="hl-c">// ID로 조회 / 필드로 조회 (XSS 자동 살균)</span>
+<span class="hl-v">$user</span> = <span class="hl-f">user</span>()-&gt;<span class="hl-f">find</span>(<span class="hl-n">1</span>);
+<span class="hl-v">$user</span> = <span class="hl-f">user</span>()-&gt;<span class="hl-f">findBy</span>(<span class="hl-s">'email'</span>, <span class="hl-s">'kim@catphp.dev'</span>);</code></pre>
+
+            <h6 class="mb-2">로그인 플로우 시뮬레이션</h6>
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+                <div class="card card--flat p-2 text-center" style="background:var(--bg-secondary,#f8fafc);min-width:90px;">
+                    <i class="material-icons-outlined">person_add</i>
+                    <div class="caption mt-1">create()</div>
+                </div>
+                <i class="material-icons-outlined text-muted">arrow_forward</i>
+                <div class="card card--flat p-2 text-center" style="background:var(--bg-secondary,#f8fafc);min-width:90px;">
+                    <i class="material-icons-outlined">login</i>
+                    <div class="caption mt-1">attempt()</div>
+                </div>
+                <i class="material-icons-outlined text-muted">arrow_forward</i>
+                <div class="card card--flat p-2 text-center" style="background:var(--bg-secondary,#f8fafc);min-width:90px;">
+                    <i class="material-icons-outlined">lock</i>
+                    <div class="caption mt-1">regenerate()</div>
+                </div>
+                <i class="material-icons-outlined text-muted">arrow_forward</i>
+                <div class="card card--flat p-2 text-center" style="background:var(--bg-secondary,#f8fafc);min-width:90px;">
+                    <i class="material-icons-outlined">check_circle</i>
+                    <div class="caption mt-1">current()</div>
+                </div>
+            </div>
+            <div class="alert alert--success"><span class="alert__message"><strong>보안:</strong> attempt()는 내부적으로 Auth→hashPassword + verifyPassword + Session→regenerate를 자동 처리합니다.</span></div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,63 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--dark);">rss_feed</i>
+        <div><h4 class="mb-0">Feed</h4><span class="text-muted caption">Cat\Feed — RSS/Atom 피드</span></div>
+        <span class="badge badge--dark badge--sm ms-auto">feed()</span>
+    </div>
+
+    <p class="mb-2"><strong>RSS 2.0</strong> 및 <strong>Atom</strong> 형식의 XML 피드를 생성합니다. 블로그 게시글, 뉴스, 팟캐스트 등의 콘텐츠를 피드로 발행할 수 있습니다.</p>
+    <p class="mb-3">각 항목에 <code>&lt;guid isPermaLink="true"&gt;</code> 요소가 자동 포함되어 피드 리더에서 중복을 올바르게 처리합니다. <code>fromQuery()</code>로 DB 결과를 바로 피드 아이템으로 변환할 수 있습니다. 체이닝 메서드는 <strong>clone 기반</strong>입니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:320px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>title(string $title)</code></td><td><code>self</code></td><td>피드 제목</td></tr>
+                    <tr><td><code>description(string $desc)</code></td><td><code>self</code></td><td>피드 설명</td></tr>
+                    <tr><td><code>link(string $url)</code></td><td><code>self</code></td><td>피드 링크</td></tr>
+                    <tr><td><code>items(array $items)</code></td><td><code>self</code></td><td>피드 아이템 배열 설정</td></tr>
+                    <tr><td><code>fromQuery(array $rows, ...)</code></td><td><code>self</code></td><td>DB 쿼리 결과를 아이템으로 변환</td></tr>
+                    <tr><td><code>rss()</code></td><td><code>never</code></td><td>RSS 2.0 출력 (헤더 + echo + exit)</td></tr>
+                    <tr><td><code>atom()</code></td><td><code>never</code></td><td>Atom 출력 (헤더 + echo + exit)</td></tr>
+                    <tr><td><code>render(string $format = 'rss')</code></td><td><code>string</code></td><td>XML 문자열 반환 (exit 없음)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">DB 연동 — fromQuery()</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// DB 결과를 바로 RSS 피드로 출력</span>
+<span class="hl-v">$posts</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'posts'</span>)
+    -&gt;<span class="hl-f">where</span>(<span class="hl-s">'status'</span>, <span class="hl-s">'published'</span>)
+    -&gt;<span class="hl-f">orderBy</span>(<span class="hl-s">'created_at'</span>, <span class="hl-s">'DESC'</span>)
+    -&gt;<span class="hl-f">limit</span>(<span class="hl-n">20</span>)-&gt;<span class="hl-f">all</span>();
+
+<span class="hl-f">feed</span>()-&gt;<span class="hl-f">title</span>(<span class="hl-s">'CatPHP 블로그'</span>)
+    -&gt;<span class="hl-f">link</span>(<span class="hl-s">'https://catphp.dev'</span>)
+    -&gt;<span class="hl-f">description</span>(<span class="hl-s">'PHP 프레임워크 소식'</span>)
+    -&gt;<span class="hl-f">fromQuery</span>(<span class="hl-v">$posts</span>)
+    -&gt;<span class="hl-f">rss</span>();  <span class="hl-c">// Content-Type + echo + exit</span></code></pre>
+
+    <h6 class="mb-2">수동 아이템 + Atom</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// items() 배열로 직접 설정</span>
+<span class="hl-v">$xml</span> = <span class="hl-f">feed</span>()-&gt;<span class="hl-f">title</span>(<span class="hl-s">'릴리스 노트'</span>)
+    -&gt;<span class="hl-f">link</span>(<span class="hl-s">'https://catphp.dev/releases'</span>)
+    -&gt;<span class="hl-f">items</span>([
+        [<span class="hl-s">'title'</span> =&gt; <span class="hl-s">'v2.0'</span>, <span class="hl-s">'content'</span> =&gt; <span class="hl-s">'새 기능...'</span>, <span class="hl-s">'created_at'</span> =&gt; <span class="hl-s">'2024-01-01'</span>],
+    ])
+    -&gt;<span class="hl-f">render</span>(<span class="hl-s">'atom'</span>);  <span class="hl-c">// 문자열 반환 (exit 없음)</span></code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>캐싱:</strong> <code>cache()->remember('feed', fn() => feed()->...->render(), 3600)</code> 패턴으로 피드를 캐싱하면 DB 부하를 줄일 수 있습니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/slug" class="badge badge--soft badge--warning badge--sm" style="cursor:pointer;">Slug</a>
+        <a data-spa="/tool/meta" class="badge badge--soft badge--secondary badge--sm" style="cursor:pointer;">Meta</a>
+        <a data-spa="/tool/cache" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">Cache</a>
+    </div>
+</div>

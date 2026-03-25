@@ -1,0 +1,114 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--primary);">storage</i>
+        <div><h4 class="mb-0">DB</h4><span class="text-muted caption">Cat\DB — PDO 쿼리 빌더</span></div>
+        <span class="badge badge--primary badge--sm ms-auto">db()</span>
+    </div>
+
+    <p class="mb-2">PDO 기반의 경량 쿼리 빌더입니다. <strong>지연 연결(Lazy Connection)</strong> 방식으로 실제 쿼리가 실행될 때만 DB에 연결하므로, DB를 사용하지 않는 요청에서는 연결 오버헤드가 전혀 없습니다.</p>
+    <p class="mb-3">모든 쿼리는 <strong>prepared statement</strong>를 사용하여 SQL Injection을 원천 차단하며, 테이블·컬럼명에도 <code>validateIdentifier()</code> 정규식 검증을 수행합니다. 체이닝 API로 직관적인 쿼리 작성이 가능하고, 복잡한 쿼리는 <code>raw()</code>로 직접 실행할 수 있습니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">설정 — config/app.php</h6></div>
+        <pre class="demo-code" style="border-radius:0 0 8px 8px;"><code><span class="hl-s">'db'</span> =&gt; [
+    <span class="hl-s">'driver'</span>   =&gt; <span class="hl-s">'mysql'</span>,          <span class="hl-c">// mysql | sqlite | pgsql</span>
+    <span class="hl-s">'host'</span>     =&gt; <span class="hl-s">'127.0.0.1'</span>,
+    <span class="hl-s">'port'</span>     =&gt; <span class="hl-n">3306</span>,
+    <span class="hl-s">'database'</span> =&gt; <span class="hl-s">'catphp'</span>,
+    <span class="hl-s">'username'</span> =&gt; <span class="hl-s">'root'</span>,
+    <span class="hl-s">'password'</span> =&gt; <span class="hl-s">''</span>,
+    <span class="hl-s">'charset'</span>  =&gt; <span class="hl-s">'utf8mb4'</span>,
+    <span class="hl-s">'options'</span>  =&gt; [],               <span class="hl-c">// PDO 추가 옵션</span>
+]</code></pre>
+    </div>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:220px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>table(string $name)</code></td><td><code>self</code></td><td>대상 테이블 선택. 체이닝의 시작점</td></tr>
+                    <tr><td><code>select(string ...$cols)</code></td><td><code>self</code></td><td>SELECT 컬럼 지정. 미지정 시 <code>*</code></td></tr>
+                    <tr><td><code>where(string $col, mixed $op, mixed $val?)</code></td><td><code>self</code></td><td>AND 조건. 2인자면 <code>=</code> 자동. 연산자 화이트리스트 적용</td></tr>
+                    <tr><td><code>orWhere(string $col, mixed $op, mixed $val?)</code></td><td><code>self</code></td><td>OR 조건 추가</td></tr>
+                    <tr><td><code>whereIn(string $col, array $vals)</code></td><td><code>self</code></td><td>IN 절 조건 (배열 바인딩)</td></tr>
+                    <tr><td><code>whereNull(string $col)</code></td><td><code>self</code></td><td>IS NULL 조건</td></tr>
+                    <tr><td><code>whereNotNull(string $col)</code></td><td><code>self</code></td><td>IS NOT NULL 조건</td></tr>
+                    <tr><td><code>orderBy(string $col, string $dir)</code></td><td><code>self</code></td><td>정렬. <code>'ASC'</code> 또는 <code>'DESC'</code></td></tr>
+                    <tr><td><code>limit(int $n)</code></td><td><code>self</code></td><td>결과 개수 제한</td></tr>
+                    <tr><td><code>offset(int $n)</code></td><td><code>self</code></td><td>결과 시작 위치</td></tr>
+                    <tr><td><code>first()</code></td><td><code>?array</code></td><td>단건 조회. 결과 없으면 <code>null</code></td></tr>
+                    <tr><td><code>all()</code></td><td><code>array</code></td><td>전체 결과 배열 반환</td></tr>
+                    <tr><td><code>count()</code></td><td><code>int</code></td><td><code>COUNT(*)</code> 실행</td></tr>
+                    <tr><td><code>insert(array $data)</code></td><td><code>string</code></td><td>삽입 후 <code>lastInsertId</code> 반환</td></tr>
+                    <tr><td><code>update(array $data)</code></td><td><code>int</code></td><td>수정된 행 수 반환. <code>where</code> 필수</td></tr>
+                    <tr><td><code>delete()</code></td><td><code>int</code></td><td>삭제된 행 수 반환. <code>where</code> 필수</td></tr>
+                    <tr><td><code>raw(string $sql, array $params)</code></td><td><code>PDOStatement</code></td><td>직접 SQL 실행 (prepared)</td></tr>
+                    <tr><td><code>transaction(callable $fn)</code></td><td><code>mixed</code></td><td>트랜잭션 래핑. 예외 시 자동 롤백</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">기본 CRUD</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// SELECT — 단건 조회</span>
+<span class="hl-v">$user</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)-&gt;<span class="hl-f">where</span>(<span class="hl-s">'id'</span>, <span class="hl-n">1</span>)-&gt;<span class="hl-f">first</span>();
+
+<span class="hl-c">// SELECT — 조건 + 정렬 + 페이징</span>
+<span class="hl-v">$posts</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'posts'</span>)
+    -&gt;<span class="hl-f">select</span>(<span class="hl-s">'id'</span>, <span class="hl-s">'title'</span>, <span class="hl-s">'created_at'</span>)
+    -&gt;<span class="hl-f">where</span>(<span class="hl-s">'status'</span>, <span class="hl-s">'published'</span>)
+    -&gt;<span class="hl-f">orderBy</span>(<span class="hl-s">'created_at'</span>, <span class="hl-s">'DESC'</span>)
+    -&gt;<span class="hl-f">limit</span>(<span class="hl-n">10</span>)-&gt;<span class="hl-f">offset</span>(<span class="hl-n">0</span>)
+    -&gt;<span class="hl-f">all</span>();
+
+<span class="hl-c">// INSERT</span>
+<span class="hl-v">$id</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)-&gt;<span class="hl-f">insert</span>([
+    <span class="hl-s">'name'</span>  =&gt; <span class="hl-s">'Cat'</span>,
+    <span class="hl-s">'email'</span> =&gt; <span class="hl-s">'cat@php.dev'</span>,
+]);
+
+<span class="hl-c">// UPDATE</span>
+<span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)-&gt;<span class="hl-f">where</span>(<span class="hl-s">'id'</span>, <span class="hl-n">1</span>)-&gt;<span class="hl-f">update</span>([<span class="hl-s">'name'</span> =&gt; <span class="hl-s">'Updated'</span>]);
+
+<span class="hl-c">// DELETE</span>
+<span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)-&gt;<span class="hl-f">where</span>(<span class="hl-s">'id'</span>, <span class="hl-n">99</span>)-&gt;<span class="hl-f">delete</span>();</code></pre>
+
+    <h6 class="mb-2">고급 쿼리</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// OR 조건 + IN 절</span>
+<span class="hl-v">$rows</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)
+    -&gt;<span class="hl-f">where</span>(<span class="hl-s">'role'</span>, <span class="hl-s">'admin'</span>)
+    -&gt;<span class="hl-f">orWhere</span>(<span class="hl-s">'role'</span>, <span class="hl-s">'moderator'</span>)
+    -&gt;<span class="hl-f">all</span>();
+
+<span class="hl-v">$rows</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)-&gt;<span class="hl-f">whereIn</span>(<span class="hl-s">'id'</span>, [<span class="hl-n">1</span>, <span class="hl-n">2</span>, <span class="hl-n">3</span>])-&gt;<span class="hl-f">all</span>();
+
+<span class="hl-c">// 트랜잭션 — 예외 시 자동 롤백</span>
+<span class="hl-f">db</span>()-&gt;<span class="hl-f">transaction</span>(<span class="hl-k">function</span>() {
+    <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'accounts'</span>)-&gt;<span class="hl-f">where</span>(<span class="hl-s">'id'</span>, <span class="hl-n">1</span>)-&gt;<span class="hl-f">update</span>([<span class="hl-s">'balance'</span> =&gt; <span class="hl-n">100</span>]);
+    <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'accounts'</span>)-&gt;<span class="hl-f">where</span>(<span class="hl-s">'id'</span>, <span class="hl-n">2</span>)-&gt;<span class="hl-f">update</span>([<span class="hl-s">'balance'</span> =&gt; <span class="hl-n">200</span>]);
+});
+
+<span class="hl-c">// Raw SQL — 복잡한 JOIN 등</span>
+<span class="hl-v">$stmt</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">raw</span>(
+    <span class="hl-s">'SELECT u.*, COUNT(p.id) as post_count FROM users u LEFT JOIN posts p ON u.id = p.user_id GROUP BY u.id'</span>,
+    []
+);</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>보안 기능:</strong> 연산자 화이트리스트(<code>=, &lt;, &gt;, &lt;=, &gt;=, !=, LIKE, IN</code>)와 <code>validateIdentifier()</code>로 테이블·컬럼명에 대한 SQL Injection을 차단합니다. <code>where</code> 없이 <code>update()</code>/<code>delete()</code>는 실행되지 않습니다.</span>
+    </div>
+    <div class="alert alert--warning mb-3">
+        <span class="alert__message"><strong>팁:</strong> <code>db()</code>는 싱글턴이므로 체이닝 후 반드시 <code>first()</code>/<code>all()</code>/<code>insert()</code> 등으로 실행해야 다음 쿼리에서 이전 조건이 초기화됩니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/cache" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">Cache</a>
+        <a data-spa="/tool/paginate" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">Paginate</a>
+        <a data-spa="/tool/search" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">Search</a>
+        <a data-spa="/tool/tag" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">Tag</a>
+    </div>
+</div>

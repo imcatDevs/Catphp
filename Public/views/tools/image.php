@@ -1,0 +1,51 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--secondary);">image</i>
+        <div><h4 class="mb-0">Image</h4><span class="text-muted caption">Cat\Image — 이미지 처리</span></div>
+        <span class="badge badge--secondary badge--sm ms-auto">image()</span>
+    </div>
+
+    <p class="mb-2"><strong>GD 기반</strong> 이미지 처리 도구입니다. 리사이즈, 크롭, 워터마크(텍스트/이미지), 형식 변환을 체이닝 API로 제공합니다.</p>
+    <p class="mb-3">JPEG, PNG, GIF, WebP 형식을 지원하며, 워터마크는 <strong>TrueType 폰트</strong>를 사용할 수 있습니다. <code>width()</code>/<code>height()</code> 게터로 현재 이미지 크기를 확인할 수 있습니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:300px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>open(string $path)</code></td><td><code>self</code></td><td>이미지 파일 열기</td></tr>
+                    <tr><td><code>resize(int $w, int $h)</code></td><td><code>self</code></td><td>리사이즈 (직접 크기 지정)</td></tr>
+                    <tr><td><code>thumbnail(int $maxW, int $maxH)</code></td><td><code>self</code></td><td>비율 유지 썸네일</td></tr>
+                    <tr><td><code>crop(int $x, int $y, int $w, int $h)</code></td><td><code>self</code></td><td>크롭</td></tr>
+                    <tr><td><code>watermark(string $text, int $x, int $y, int $fontSize, ?string $fontPath)</code></td><td><code>self</code></td><td>텍스트 워터마크 (TrueType 지원)</td></tr>
+                    <tr><td><code>save(string $path)</code></td><td><code>bool</code></td><td>파일로 저장 (확장자로 형식 자동 감지)</td></tr>
+                    <tr><td><code>convert(string $outputPath)</code></td><td><code>bool</code></td><td>포맷 변환 (save 래퍼)</td></tr>
+                    <tr><td><code>width()</code></td><td><code>int</code></td><td>현재 너비</td></tr>
+                    <tr><td><code>height()</code></td><td><code>int</code></td><td>현재 높이</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">사용 예제</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 썸네일 생성 (비율 유지)</span>
+<span class="hl-f">image</span>()-&gt;<span class="hl-f">open</span>(<span class="hl-s">'uploads/photo.jpg'</span>)
+    -&gt;<span class="hl-f">thumbnail</span>(<span class="hl-n">300</span>, <span class="hl-n">300</span>)
+    -&gt;<span class="hl-f">save</span>(<span class="hl-s">'uploads/thumb_photo.jpg'</span>);
+
+<span class="hl-c">// 워터마크 추가 + WebP 변환</span>
+<span class="hl-f">image</span>()-&gt;<span class="hl-f">open</span>(<span class="hl-s">'uploads/photo.jpg'</span>)
+    -&gt;<span class="hl-f">watermark</span>(<span class="hl-s">'&copy; CatPHP'</span>, <span class="hl-n">10</span>, <span class="hl-n">10</span>, <span class="hl-n">16</span>)
+    -&gt;<span class="hl-f">save</span>(<span class="hl-s">'uploads/photo.webp'</span>);</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>지원 형식:</strong> JPEG, PNG, GIF, WebP. <code>save()</code>에서 확장자로 형식을 자동 결정합니다. WebP 변환 시 용량이 30~50% 절감됩니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/upload" class="badge badge--soft badge--success badge--sm" style="cursor:pointer;">Upload</a>
+    </div>
+</div>

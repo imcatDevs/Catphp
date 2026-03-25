@@ -1,0 +1,52 @@
+# ─── Storage (런타임 데이터) ───
+storage/app/*
+storage/cache/*
+storage/logs/*
+storage/firewall/*
+storage/rate/*
+!storage/**/.gitkeep
+
+# ─── 업로드 ───
+Public/uploads/*
+!Public/uploads/.gitkeep
+
+# ─── 설정 백업 ───
+config/*.bak.*
+
+# ─── 릴리스 아티팩트 ───
+releases/*.zip
+releases/*.tar.gz
+
+# ─── 의존성 ───
+vendor/
+composer.lock
+node_modules/
+
+# ─── 환경 설정 (비밀키 포함) ───
+.env
+.env.*
+!.env.example
+
+# ─── IDE ───
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# ─── OS ───
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ─── 로그 ───
+*.log
+npm-debug.log*
+
+# ─── PHP / 테스트 ───
+.phpunit.cache/
+.php-cs-fixer.cache
+
+# ─── Windsurf (개인) ───
+.windsurf/

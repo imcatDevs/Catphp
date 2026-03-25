@@ -1,0 +1,46 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--info);">notifications</i>
+        <div><h4 class="mb-0">Notify</h4><span class="text-muted caption">Cat\Notify — 다채널 알림</span></div>
+        <span class="badge badge--info badge--sm ms-auto">notify()</span>
+    </div>
+
+    <p class="mb-2"><strong>다채널 알림 시스템</strong>입니다. 이메일, 텔레그램, 슬랙 등 여러 채널로 동시에 알림을 발송합니다.</p>
+    <p class="mb-3"><code>via()</code>로 채널을 선택하고, <code>send()</code>로 일괄 발송합니다. 채널을 지정하지 않으면 설정된 기본 채널로 발송됩니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:280px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>to(string ...$recipients)</code></td><td><code>self</code></td><td>수신자 설정</td></tr>
+                    <tr><td><code>via(string ...$channels)</code></td><td><code>self</code></td><td>채널 선택 (mail, telegram, slack 등)</td></tr>
+                    <tr><td><code>send(string $subject, string $body)</code></td><td><code>array</code></td><td>발송 (채널별 성공 여부 반환)</td></tr>
+                    <tr><td><code>alert(string $message)</code></td><td><code>array</code></td><td>간편 발송 (기본 채널)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">사용 예제</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 여러 채널로 동시 발송</span>
+<span class="hl-f">notify</span>()
+    -&gt;<span class="hl-f">to</span>(<span class="hl-s">'admin@example.com'</span>)
+    -&gt;<span class="hl-f">via</span>(<span class="hl-s">'mail'</span>, <span class="hl-s">'telegram'</span>)
+    -&gt;<span class="hl-f">send</span>(<span class="hl-s">'서버 경고'</span>, <span class="hl-s">'디스크 사용량 90% 초과'</span>);
+
+<span class="hl-c">// 간편 알림 (기본 채널)</span>
+<span class="hl-f">notify</span>()-&gt;<span class="hl-f">alert</span>(<span class="hl-s">'배포 완료: v2.1.0'</span>);</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>연동:</strong> Mail, Telegram 도구가 내부적으로 사용됩니다. 각 채널의 설정이 <code>config/app.php</code>에 올바르게 입력되어야 합니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/mail" class="badge badge--soft badge--info badge--sm" style="cursor:pointer;">Mail</a>
+        <a data-spa="/tool/telegram" class="badge badge--soft badge--secondary badge--sm" style="cursor:pointer;">Telegram</a>
+    </div>
+</div>

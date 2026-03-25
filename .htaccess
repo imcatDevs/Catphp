@@ -1,0 +1,14 @@
+RewriteEngine On
+
+# 내부 디렉토리/파일 웹 접근 차단
+RewriteRule ^catphp/ - [F,L]
+RewriteRule ^config/ - [F,L]
+RewriteRule ^storage/ - [F,L]
+RewriteRule ^lang/ - [F,L]
+RewriteRule ^tests/ - [F,L]
+RewriteRule ^cli\.php$ - [F,L]
+RewriteRule ^AGENTS\.md$ - [F,L]
+
+# Public/index.php로 모든 요청 전달
+RewriteCond %{REQUEST_URI} !^/Public/
+RewriteRule ^(.*)$ Public/index.php [QSA,L]

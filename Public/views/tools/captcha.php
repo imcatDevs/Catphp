@@ -1,0 +1,57 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--success);">verified_user</i>
+        <div><h4 class="mb-0">Captcha</h4><span class="text-muted caption">Cat\Captcha — 이미지/수학 캡차</span></div>
+        <span class="badge badge--success badge--sm ms-auto">captcha()</span>
+    </div>
+
+    <p class="mb-2"><strong>GD 기반 이미지 캡차</strong> 및 <strong>수학 캡차</strong>를 제공합니다. 봇 자동 가입/스팸을 방지합니다.</p>
+    <p class="mb-3">세션에 정답을 저장하고, <code>verify()</code>로 사용자 입력을 검증합니다. 대소문자 구분 없이 비교합니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:300px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>image()</code></td><td><code>never</code></td><td>이미지 캡차 직접 출력 (PNG)</td></tr>
+                    <tr><td><code>src()</code></td><td><code>string</code></td><td>base64 data URI (img src용)</td></tr>
+                    <tr><td><code>html(string $id, string $refreshUrl)</code></td><td><code>string</code></td><td>캡차 HTML 위젯</td></tr>
+                    <tr><td><code>math()</code></td><td><code>array</code></td><td>수학 캡차 {question, html}</td></tr>
+                    <tr><td><code>verify(string $input)</code></td><td><code>bool</code></td><td>사용자 입력 검증</td></tr>
+                    <tr><td><code>size(int $width, int $height)</code></td><td><code>self</code></td><td>이미지 크기 설정</td></tr>
+                    <tr><td><code>length(int $n)</code></td><td><code>self</code></td><td>코드 길이 설정</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">이미지 캡차</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 폼에 캡차 삽입</span>
+<span class="hl-k">echo</span> <span class="hl-s">'&lt;img src="'</span> . <span class="hl-f">captcha</span>()-&gt;<span class="hl-f">src</span>() . <span class="hl-s">'" alt="captcha"&gt;'</span>;
+<span class="hl-k">echo</span> <span class="hl-s">'&lt;input name="captcha" placeholder="위 코드 입력"&gt;'</span>;
+
+<span class="hl-c">// HTML 위젯 (새로고침 버튼 포함)</span>
+<span class="hl-k">echo</span> <span class="hl-f">captcha</span>()-&gt;<span class="hl-f">html</span>(<span class="hl-s">'captcha'</span>, <span class="hl-s">'/api/captcha/refresh'</span>);</code></pre>
+
+    <h6 class="mb-2">수학 캡차 + 검증</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 수학 캡차 ("7 + 3 = ?")</span>
+<span class="hl-v">$math</span> = <span class="hl-f">captcha</span>()-&gt;<span class="hl-f">math</span>();
+<span class="hl-k">echo</span> <span class="hl-v">$math</span>[<span class="hl-s">'html'</span>];  <span class="hl-c">// 질문 HTML</span>
+
+<span class="hl-c">// POST 핸들러에서 검증</span>
+<span class="hl-k">if</span> (!<span class="hl-f">captcha</span>()-&gt;<span class="hl-f">verify</span>(<span class="hl-v">$_POST</span>[<span class="hl-s">'captcha'</span>])) {
+    <span class="hl-f">json</span>()-&gt;<span class="hl-f">fail</span>(<span class="hl-s">'캡차가 일치하지 않습니다'</span>);
+}</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>요구사항:</strong> <code>ext-gd</code> PHP 확장이 필요합니다. 수학 캡차는 GD 없이도 동작합니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/csrf" class="badge badge--soft badge--danger badge--sm" style="cursor:pointer;">Csrf</a>
+        <a data-spa="/tool/valid" class="badge badge--soft badge--success badge--sm" style="cursor:pointer;">Valid</a>
+    </div>
+</div>

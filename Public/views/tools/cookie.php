@@ -1,0 +1,56 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--success);">cookie</i>
+        <div><h4 class="mb-0">Cookie</h4><span class="text-muted caption">Cat\Cookie — 보안 쿠키 관리</span></div>
+        <span class="badge badge--success badge--sm ms-auto">cookie()</span>
+    </div>
+
+    <p class="mb-2"><strong>보안 쿠키</strong> 관리 도구입니다. 쿠키 값을 <strong>Encrypt 도구와 연동</strong>하여 자동 암호화/복호화하며, <code>HttpOnly</code>, <code>Secure</code>, <code>SameSite</code> 속성을 기본 적용합니다.</p>
+    <p class="mb-3">사용자가 브라우저 개발자 도구에서 쿠키 값을 확인해도 암호화된 문자열만 보이므로, 세션 토큰이나 사용자 설정 등 민감한 데이터를 안전하게 저장할 수 있습니다. 배열/객체 값은 자동으로 JSON 변환됩니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:260px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>get(string $name, mixed $default = null)</code></td><td><code>mixed</code></td><td>쿠키 읽기 (자동 복호화)</td></tr>
+                    <tr><td><code>set(string $name, mixed $value, int $ttl = 86400)</code></td><td><code>bool</code></td><td>쿠키 설정 (암호화 + 보안 속성 자동)</td></tr>
+                    <tr><td><code>del(string $name)</code></td><td><code>bool</code></td><td>쿠키 삭제</td></tr>
+                    <tr><td><code>has(string $name)</code></td><td><code>bool</code></td><td>쿠키 존재 여부 확인</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">기본 사용법</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 쿠키 설정 (7일, 암호화 자동)</span>
+<span class="hl-f">cookie</span>()-&gt;<span class="hl-f">set</span>(<span class="hl-s">'locale'</span>, <span class="hl-s">'ko'</span>, <span class="hl-n">604800</span>);
+
+<span class="hl-c">// 쿠키 읽기 (자동 복호화, 없으면 기본값)</span>
+<span class="hl-v">$locale</span> = <span class="hl-f">cookie</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'locale'</span>, <span class="hl-s">'en'</span>);
+
+<span class="hl-c">// 쿠키 존재 확인 + 삭제</span>
+<span class="hl-k">if</span> (<span class="hl-f">cookie</span>()-&gt;<span class="hl-f">has</span>(<span class="hl-s">'locale'</span>)) {
+    <span class="hl-f">cookie</span>()-&gt;<span class="hl-f">del</span>(<span class="hl-s">'locale'</span>);
+}</code></pre>
+
+    <h6 class="mb-2">Geo 연동 — 언어 설정 저장</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 언어 전환 시 쿠키에 저장</span>
+<span class="hl-f">cookie</span>()-&gt;<span class="hl-f">set</span>(<span class="hl-s">'lang'</span>, <span class="hl-v">$_GET</span>[<span class="hl-s">'lang'</span>] ?? <span class="hl-s">'ko'</span>, <span class="hl-n">86400</span> * <span class="hl-n">365</span>);
+
+<span class="hl-c">// 다음 요청에서 자동 적용</span>
+<span class="hl-v">$lang</span> = <span class="hl-f">cookie</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'lang'</span>, <span class="hl-s">'ko'</span>);
+<span class="hl-f">geo</span>()-&gt;<span class="hl-f">locale</span>(<span class="hl-v">$lang</span>);</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>보안 기본값:</strong> <code>HttpOnly: true</code> (JS 접근 차단), <code>Secure: auto</code> (HTTPS에서 자동), <code>SameSite: Lax</code> (CSRF 보호)</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/encrypt" class="badge badge--soft badge--danger badge--sm" style="cursor:pointer;">Encrypt</a>
+        <a data-spa="/tool/geo" class="badge badge--soft badge--secondary badge--sm" style="cursor:pointer;">Geo</a>
+    </div>
+</div>

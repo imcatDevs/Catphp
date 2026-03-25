@@ -1,0 +1,54 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--dark);">text_fields</i>
+        <div><h4 class="mb-0">Text</h4><span class="text-muted caption">Cat\Text — 텍스트 유틸</span></div>
+        <span class="badge badge--dark badge--sm ms-auto">text()</span>
+    </div>
+
+    <p class="mb-2"><strong>텍스트 처리</strong> 유틸리티 모음입니다. 발췌문 생성, 읽기 시간 계산, 단어/문자 수 카운트, HTML 태그 제거, 텍스트 자르기 등 블로그·CMS에서 자주 사용하는 기능을 제공합니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:280px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>excerpt(string $text, int $len = 200)</code></td><td><code>string</code></td><td>발췌문 생성 (HTML 제거, 단어 경계 자르기)</td></tr>
+                    <tr><td><code>readingTime(string $text)</code></td><td><code>string</code></td><td>읽기 시간 ("N분" 형태). 한국어 500자/분 기준</td></tr>
+                    <tr><td><code>wordCount(string $text)</code></td><td><code>int</code></td><td>단어 수</td></tr>
+                    <tr><td><code>charCount(string $text, bool $includeSpaces)</code></td><td><code>int</code></td><td>문자 수 (공백 포함 여부 선택)</td></tr>
+                    <tr><td><code>stripTags(string $text)</code></td><td><code>string</code></td><td>HTML 태그 제거</td></tr>
+                    <tr><td><code>truncate(string $text, int $len, string $end)</code></td><td><code>string</code></td><td>텍스트 자르기 (말줄임 추가)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">사용 예제</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-v">$html</span> = <span class="hl-s">'&lt;p&gt;CatPHP는 PHP 8.2+ 전용 &lt;strong&gt;경량 프레임워크&lt;/strong&gt;입니다...'</span>;
+
+<span class="hl-c">// 발췌문 (100자)</span>
+<span class="hl-f">text</span>()-&gt;<span class="hl-f">excerpt</span>(<span class="hl-v">$html</span>, <span class="hl-n">100</span>);
+<span class="hl-c">// → "CatPHP는 PHP 8.2+ 전용 경량 프레임워크입니다..."</span>
+
+<span class="hl-c">// 읽기 시간</span>
+<span class="hl-f">text</span>()-&gt;<span class="hl-f">readingTime</span>(<span class="hl-v">$longArticle</span>);  <span class="hl-c">// → "5분"</span>
+
+<span class="hl-c">// 단어/문자 수</span>
+<span class="hl-f">text</span>()-&gt;<span class="hl-f">wordCount</span>(<span class="hl-v">$body</span>);   <span class="hl-c">// → 1234</span>
+<span class="hl-f">text</span>()-&gt;<span class="hl-f">charCount</span>(<span class="hl-v">$body</span>);   <span class="hl-c">// → 5678</span>
+
+<span class="hl-c">// HTML 태그 제거</span>
+<span class="hl-f">text</span>()-&gt;<span class="hl-f">stripTags</span>(<span class="hl-v">$html</span>);</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>팁:</strong> <code>readingTime()</code>은 한국어(CJK) 기준 분당 500자, 영어 기준 분당 200단어로 계산합니다. <code>excerpt()</code>는 단어 중간을 자르지 않고 공백 경계에서 잘라냅니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/feed" class="badge badge--soft badge--dark badge--sm" style="cursor:pointer;">Feed</a>
+        <a data-spa="/tool/search" class="badge badge--soft badge--secondary badge--sm" style="cursor:pointer;">Search</a>
+    </div>
+</div>

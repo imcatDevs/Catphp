@@ -1,0 +1,243 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--primary);">bolt</i>
+        <div><h4 class="mb-0">Swoole</h4><span class="text-muted caption">Cat\Swoole — 고성능 비동기 HTTP/WebSocket 서버</span></div>
+        <span class="badge badge--primary badge--sm ms-auto">swoole()</span>
+    </div>
+
+    <p class="mb-2"><strong>Swoole 확장 기반 상주 프로세스 서버</strong>입니다. CatPHP Router와 자동 통합되며, 코루틴·연결 풀·태스크 워커·WebSocket·Hot Reload를 지원합니다.</p>
+    <p class="mb-3">PHP-FPM 대비 <strong>10~100배</strong> 높은 처리량을 달성합니다. 요청마다 프레임워크를 재부팅하지 않아 메모리와 I/O를 절약합니다.</p>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>4대 원칙:</strong>
+        ⚡ <em>빠른 속도</em> — 상주 프로세스, require/config 1회 부팅, 연결 풀 재사용 |
+        🔧 <em>사용 편리</em> — <code>swoole()->http()->start()</code> 한 줄로 시작 |
+        📖 <em>쉬운 학습</em> — http/websocket/task/co 4가지 핵심 개념 |
+        🔒 <em>보안</em> — 요청 격리(슈퍼글로벌 초기화), Graceful Shutdown, input() 살균 자동 적용</span>
+    </div>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">서버 시작/관리</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:320px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>http()</code></td><td><code>self</code></td><td>HTTP 서버 모드</td></tr>
+                    <tr><td><code>websocket()</code></td><td><code>self</code></td><td>WebSocket 서버 모드 (HTTP 겸용)</td></tr>
+                    <tr><td><code>listen(string $host, int $port)</code></td><td><code>self</code></td><td>바인드 주소 설정</td></tr>
+                    <tr><td><code>workers(int $num)</code></td><td><code>self</code></td><td>워커 프로세스 수</td></tr>
+                    <tr><td><code>taskWorkers(int $num)</code></td><td><code>self</code></td><td>태스크 워커 수</td></tr>
+                    <tr><td><code>daemonize(bool $enable = true)</code></td><td><code>self</code></td><td>백그라운드 데몬 모드</td></tr>
+                    <tr><td><code>ssl(string $cert, string $key)</code></td><td><code>self</code></td><td>HTTPS/WSS SSL 인증서</td></tr>
+                    <tr><td><code>staticFiles(string $root)</code></td><td><code>self</code></td><td>정적 파일 서빙 활성화</td></tr>
+                    <tr><td><code>set(array $settings)</code></td><td><code>self</code></td><td>Swoole 설정 직접 지정</td></tr>
+                    <tr><td><code>onBoot(Closure $cb)</code></td><td><code>self</code></td><td>워커 시작 시 부트스트랩 (라우트 정의)</td></tr>
+                    <tr><td><code>use(callable $mw)</code></td><td><code>self</code></td><td>요청 미들웨어 등록</td></tr>
+                    <tr><td><code>start()</code></td><td><code>void</code></td><td>서버 시작 (블로킹)</td></tr>
+                    <tr><td><code>stop()</code></td><td><code>bool</code></td><td>서버 중지 (PID 기반, static)</td></tr>
+                    <tr><td><code>reload()</code></td><td><code>bool</code></td><td>워커 리로드 (static)</td></tr>
+                    <tr><td><code>status()</code></td><td><code>array</code></td><td>실행 상태 조회 (static)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">WebSocket 메시지/룸</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:320px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>onWsOpen(callable $cb)</code></td><td><code>self</code></td><td>연결 열림 콜백</td></tr>
+                    <tr><td><code>onWsMessage(callable $cb)</code></td><td><code>self</code></td><td>메시지 수신 콜백</td></tr>
+                    <tr><td><code>onWsClose(callable $cb)</code></td><td><code>self</code></td><td>연결 닫힘 콜백</td></tr>
+                    <tr><td><code>push(int $fd, string|array $data)</code></td><td><code>bool</code></td><td>특정 FD에 메시지 전송</td></tr>
+                    <tr><td><code>broadcast(string|array $data, ?int $exclude)</code></td><td><code>int</code></td><td>전체 브로드캐스트</td></tr>
+                    <tr><td><code>join(int $fd, string $room)</code></td><td><code>self</code></td><td>룸 참가</td></tr>
+                    <tr><td><code>leave(int $fd, string $room)</code></td><td><code>self</code></td><td>룸 퇴장</td></tr>
+                    <tr><td><code>toRoom(string $room, string|array $data)</code></td><td><code>int</code></td><td>룸 내 브로드캐스트</td></tr>
+                    <tr><td><code>roomMembers(string $room)</code></td><td><code>array</code></td><td>룸 멤버 FD 목록</td></tr>
+                    <tr><td><code>roomList()</code></td><td><code>array</code></td><td>전체 룸 목록 + 인원</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">태스크 워커 (비동기 백그라운드)</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:360px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>handle(string $name, callable $handler)</code></td><td><code>self</code></td><td>태스크 핸들러 등록</td></tr>
+                    <tr><td><code>task(string $name, array $payload)</code></td><td><code>int|false</code></td><td>비동기 태스크 전송</td></tr>
+                    <tr><td><code>taskWait(string $name, array $payload, float $timeout)</code></td><td><code>mixed</code></td><td>동기 태스크 (결과 대기)</td></tr>
+                    <tr><td><code>taskCo(array $tasks, float $timeout)</code></td><td><code>array</code></td><td>병렬 태스크 동시 실행</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">코루틴 + 연결 풀</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:400px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>co(callable $cb)</code></td><td><code>int</code></td><td>코루틴 생성</td></tr>
+                    <tr><td><code>sleep(float $sec)</code></td><td><code>void</code></td><td>코루틴 sleep (비블로킹)</td></tr>
+                    <tr><td><code>channel(int $cap)</code></td><td><code>Channel</code></td><td>코루틴 채널 (프로듀서-컨슈머)</td></tr>
+                    <tr><td><code>waitGroup()</code></td><td><code>WaitGroup</code></td><td>여러 코루틴 완료 대기</td></tr>
+                    <tr><td><code>parallel(array $callables, float $timeout)</code></td><td><code>array</code></td><td>코루틴 병렬 실행 + 결과 수집</td></tr>
+                    <tr><td><code>createPool(string $name, callable $factory, int $size)</code></td><td><code>self</code></td><td>커스텀 연결 풀 생성</td></tr>
+                    <tr><td><code>createDbPool(?int $size)</code></td><td><code>self</code></td><td>DB 연결 풀 자동 생성 (config 기반)</td></tr>
+                    <tr><td><code>createRedisPool(?int $size)</code></td><td><code>self</code></td><td>Redis 연결 풀 자동 생성</td></tr>
+                    <tr><td><code>poolGet(string $name, float $timeout)</code></td><td><code>mixed</code></td><td>풀에서 연결 가져오기</td></tr>
+                    <tr><td><code>poolPut(string $name, mixed $conn)</code></td><td><code>void</code></td><td>풀에 연결 반환</td></tr>
+                    <tr><td><code>poolStats(string $name)</code></td><td><code>array</code></td><td>풀 상태 (capacity/available/in_use)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">타이머 + 서버 정보</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:300px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>tick(int $ms, callable $cb)</code></td><td><code>int</code></td><td>반복 타이머 (밀리초)</td></tr>
+                    <tr><td><code>after(int $ms, callable $cb)</code></td><td><code>int</code></td><td>1회 타이머</td></tr>
+                    <tr><td><code>clearTimer(int $id)</code></td><td><code>bool</code></td><td>타이머 해제</td></tr>
+                    <tr><td><code>clearAllTimers()</code></td><td><code>void</code></td><td>전체 타이머 해제</td></tr>
+                    <tr><td><code>stats()</code></td><td><code>array</code></td><td>서버 통계</td></tr>
+                    <tr><td><code>connectionCount()</code></td><td><code>int</code></td><td>활성 연결 수</td></tr>
+                    <tr><td><code>raw()</code></td><td><code>Server|null</code></td><td>Swoole 서버 인스턴스 (고급)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">HTTP 서버 — 기본 사용</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// swoole-server.php (또는 cli.php에서 swoole:start)</span>
+<span class="hl-f">swoole</span>()
+    -&gt;<span class="hl-f">http</span>()
+    -&gt;<span class="hl-f">listen</span>(<span class="hl-s">'0.0.0.0'</span>, <span class="hl-n">9501</span>)
+    -&gt;<span class="hl-f">workers</span>(<span class="hl-n">4</span>)
+    -&gt;<span class="hl-f">onBoot</span>(<span class="hl-k">function</span>() {
+        <span class="hl-c">// CatPHP 라우트 자동 통합</span>
+        <span class="hl-f">router</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'/'</span>, <span class="hl-k">fn</span>() =&gt; <span class="hl-s">'Hello from Swoole!'</span>);
+        <span class="hl-f">router</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'/api/users'</span>, <span class="hl-k">fn</span>() =&gt; <span class="hl-f">json</span>()-&gt;<span class="hl-f">ok</span>(<span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)-&gt;<span class="hl-f">get</span>()));
+    })
+    -&gt;<span class="hl-f">start</span>();</code></pre>
+
+    <h6 class="mb-2">WebSocket 채팅 — 룸 기반</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-f">swoole</span>()
+    -&gt;<span class="hl-f">websocket</span>()
+    -&gt;<span class="hl-f">onWsOpen</span>(<span class="hl-k">fn</span>(<span class="hl-v">$fd</span>) =&gt; <span class="hl-f">swoole</span>()-&gt;<span class="hl-f">join</span>(<span class="hl-v">$fd</span>, <span class="hl-s">'lobby'</span>))
+    -&gt;<span class="hl-f">onWsMessage</span>(<span class="hl-k">function</span>(<span class="hl-t">int</span> <span class="hl-v">$fd</span>, <span class="hl-t">string</span> <span class="hl-v">$data</span>) {
+        <span class="hl-v">$msg</span> = <span class="hl-f">json_decode</span>(<span class="hl-v">$data</span>, <span class="hl-k">true</span>);
+
+        <span class="hl-k">match</span>(<span class="hl-v">$msg</span>[<span class="hl-s">'type'</span>] ?? <span class="hl-s">''</span>) {
+            <span class="hl-s">'join'</span>  =&gt; <span class="hl-f">swoole</span>()-&gt;<span class="hl-f">join</span>(<span class="hl-v">$fd</span>, <span class="hl-v">$msg</span>[<span class="hl-s">'room'</span>]),
+            <span class="hl-s">'chat'</span>  =&gt; <span class="hl-f">swoole</span>()-&gt;<span class="hl-f">toRoom</span>(<span class="hl-v">$msg</span>[<span class="hl-s">'room'</span>], [
+                <span class="hl-s">'from'</span> =&gt; <span class="hl-v">$fd</span>, <span class="hl-s">'text'</span> =&gt; <span class="hl-v">$msg</span>[<span class="hl-s">'text'</span>]
+            ]),
+            <span class="hl-k">default</span> =&gt; <span class="hl-f">swoole</span>()-&gt;<span class="hl-f">push</span>(<span class="hl-v">$fd</span>, [<span class="hl-s">'error'</span> =&gt; <span class="hl-s">'unknown type'</span>]),
+        };
+    })
+    -&gt;<span class="hl-f">onWsClose</span>(<span class="hl-k">fn</span>(<span class="hl-v">$fd</span>) =&gt; <span class="hl-f">swoole</span>()-&gt;<span class="hl-f">leaveAll</span>(<span class="hl-v">$fd</span>))
+    -&gt;<span class="hl-f">start</span>();</code></pre>
+
+    <h6 class="mb-2">태스크 워커 — 비동기 이메일 발송</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 태스크 핸들러 등록 (onBoot 내부)</span>
+<span class="hl-f">swoole</span>()-&gt;<span class="hl-f">handle</span>(<span class="hl-s">'email'</span>, <span class="hl-k">function</span>(<span class="hl-t">array</span> <span class="hl-v">$payload</span>) {
+    <span class="hl-f">mailer</span>()-&gt;<span class="hl-f">to</span>(<span class="hl-v">$payload</span>[<span class="hl-s">'to'</span>])
+        -&gt;<span class="hl-f">subject</span>(<span class="hl-v">$payload</span>[<span class="hl-s">'subject'</span>])
+        -&gt;<span class="hl-f">body</span>(<span class="hl-v">$payload</span>[<span class="hl-s">'body'</span>])
+        -&gt;<span class="hl-f">send</span>();
+    <span class="hl-k">return</span> <span class="hl-k">true</span>;
+});
+
+<span class="hl-c">// 요청 핸들러에서 비동기 태스크 전송</span>
+<span class="hl-f">router</span>()-&gt;<span class="hl-f">post</span>(<span class="hl-s">'/api/register'</span>, <span class="hl-k">function</span>() {
+    <span class="hl-c">// DB 저장...</span>
+    <span class="hl-f">swoole</span>()-&gt;<span class="hl-f">task</span>(<span class="hl-s">'email'</span>, [
+        <span class="hl-s">'to'</span>      =&gt; <span class="hl-f">input</span>(<span class="hl-s">'email'</span>),
+        <span class="hl-s">'subject'</span> =&gt; <span class="hl-s">'가입 환영!'</span>,
+        <span class="hl-s">'body'</span>    =&gt; <span class="hl-s">'환영합니다.'</span>,
+    ]);
+    <span class="hl-f">json</span>()-&gt;<span class="hl-f">ok</span>([<span class="hl-s">'registered'</span> =&gt; <span class="hl-k">true</span>]);
+});</code></pre>
+
+    <h6 class="mb-2">코루틴 병렬 실행 + 연결 풀</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// onBoot에서 연결 풀 생성</span>
+<span class="hl-f">swoole</span>()-&gt;<span class="hl-f">createDbPool</span>(<span class="hl-n">8</span>);
+
+<span class="hl-c">// 코루틴 내에서 연결 풀 사용</span>
+<span class="hl-f">swoole</span>()-&gt;<span class="hl-f">co</span>(<span class="hl-k">function</span>() {
+    <span class="hl-v">$pdo</span> = <span class="hl-f">swoole</span>()-&gt;<span class="hl-f">poolGet</span>(<span class="hl-s">'db'</span>);
+    <span class="hl-k">try</span> {
+        <span class="hl-v">$stmt</span> = <span class="hl-v">$pdo</span>-&gt;<span class="hl-f">prepare</span>(<span class="hl-s">'SELECT * FROM users WHERE id = ?'</span>);
+        <span class="hl-v">$stmt</span>-&gt;<span class="hl-f">execute</span>([<span class="hl-n">1</span>]);
+        <span class="hl-v">$user</span> = <span class="hl-v">$stmt</span>-&gt;<span class="hl-f">fetch</span>();
+    } <span class="hl-k">finally</span> {
+        <span class="hl-f">swoole</span>()-&gt;<span class="hl-f">poolPut</span>(<span class="hl-s">'db'</span>, <span class="hl-v">$pdo</span>); <span class="hl-c">// 반드시 반환!</span>
+    }
+});
+
+<span class="hl-c">// 병렬 실행 (여러 API 동시 호출)</span>
+<span class="hl-v">$results</span> = <span class="hl-f">swoole</span>()-&gt;<span class="hl-f">parallel</span>([
+    <span class="hl-s">'users'</span>  =&gt; <span class="hl-k">fn</span>() =&gt; <span class="hl-f">http</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'https://api.example.com/users'</span>),
+    <span class="hl-s">'orders'</span> =&gt; <span class="hl-k">fn</span>() =&gt; <span class="hl-f">http</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'https://api.example.com/orders'</span>),
+]);</code></pre>
+
+    <h6 class="mb-2">CLI 명령어</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c"># HTTP 서버 시작</span>
+php cli.php swoole:start
+php cli.php swoole:start --port=8080 --host=127.0.0.1
+
+<span class="hl-c"># WebSocket 서버</span>
+php cli.php swoole:start --type=websocket
+
+<span class="hl-c"># 데몬 모드</span>
+php cli.php swoole:start --daemon
+
+<span class="hl-c"># 서버 관리</span>
+php cli.php swoole:status
+php cli.php swoole:reload   <span class="hl-c"># 워커 리로드 (코드 반영)</span>
+php cli.php swoole:stop     <span class="hl-c"># Graceful Shutdown</span></code></pre>
+
+    <h6 class="mb-2">설정</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// config/app.php</span>
+<span class="hl-s">'swoole'</span> =&gt; [
+    <span class="hl-s">'host'</span>             =&gt; <span class="hl-s">'0.0.0.0'</span>,
+    <span class="hl-s">'port'</span>             =&gt; <span class="hl-n">9501</span>,
+    <span class="hl-s">'worker_num'</span>       =&gt; <span class="hl-n">0</span>,          <span class="hl-c">// 0 = CPU 코어 수 자동</span>
+    <span class="hl-s">'task_worker_num'</span>  =&gt; <span class="hl-n">4</span>,
+    <span class="hl-s">'max_request'</span>      =&gt; <span class="hl-n">10000</span>,      <span class="hl-c">// 워커당 최대 요청 (메모리 누수 방지)</span>
+    <span class="hl-s">'enable_coroutine'</span> =&gt; <span class="hl-k">true</span>,
+    <span class="hl-s">'hot_reload'</span>       =&gt; <span class="hl-k">false</span>,      <span class="hl-c">// 개발 전용</span>
+    <span class="hl-s">'ssl_cert'</span>         =&gt; <span class="hl-s">''</span>,
+    <span class="hl-s">'ssl_key'</span>          =&gt; <span class="hl-s">''</span>,
+    <span class="hl-s">'pool'</span>             =&gt; [<span class="hl-s">'db'</span> =&gt; <span class="hl-n">0</span>, <span class="hl-s">'redis'</span> =&gt; <span class="hl-n">0</span>],
+],</code></pre>
+
+    <div class="alert alert--warning mb-3">
+        <span class="alert__message"><strong>요구 사항:</strong> Swoole 확장이 필요합니다 (<code>pecl install swoole</code>). OpenSwoole도 호환됩니다. PHP-FPM 환경에서는 사용하지 마세요.</span>
+    </div>
+
+    <div class="alert alert--danger mb-3">
+        <span class="alert__message"><strong>보안 — 요청 격리:</strong> 매 요청마다 <code>$_GET</code>, <code>$_POST</code>, <code>$_SERVER</code>, <code>$_COOKIE</code>를 초기화하고 <code>input()</code> 캐시를 리셋합니다. 상주 프로세스에서 이전 요청 데이터가 남지 않습니다. 연결 풀 사용 시 반드시 <code>poolPut()</code>으로 반환하세요.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/router" class="badge badge--soft badge--info badge--sm" style="cursor:pointer;">Router</a>
+        <a data-spa="/tool/db" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">DB</a>
+        <a data-spa="/tool/redis" class="badge badge--soft badge--danger badge--sm" style="cursor:pointer;">Redis</a>
+        <a data-spa="/tool/queue" class="badge badge--soft badge--warning badge--sm" style="cursor:pointer;">Queue</a>
+        <a data-spa="/tool/json" class="badge badge--soft badge--success badge--sm" style="cursor:pointer;">Json</a>
+    </div>
+</div>

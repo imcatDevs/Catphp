@@ -1,0 +1,66 @@
+<?php declare(strict_types=1); defined('CATPHP') || exit; ?>
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--danger);">language</i>
+        <div><h4 class="mb-0">Ip</h4><span class="text-muted caption">Cat\Ip — 클라이언트 IP · GeoIP</span></div>
+        <span class="badge badge--danger badge--sm ms-auto">ip()</span>
+    </div>
+
+    <p class="mb-2">클라이언트의 실제 IP 주소를 안전하게 감지하고, <strong>GeoIP 위치 정보</strong>(국가, 도시, 좌표)를 조회합니다. <code>trusted_proxies</code> 설정을 통해 신뢰할 수 있는 프록시/로드밸런서의 <code>X-Forwarded-For</code> 헤더만 참조하여 IP 스푸핑을 방지합니다.</p>
+    <p class="mb-3">프록시 환경에서는 <code>X-Forwarded-For</code>, <code>X-Real-IP</code>, <code>CF-Connecting-IP</code>(Cloudflare) 순으로 체크하며, 프록시가 없는 환경에서는 <code>REMOTE_ADDR</code>을 반환합니다. <code>isInRange()</code>로 IP가 CIDR 범위에 포함되는지 확인할 수 있습니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">설정 — config/app.php</h6></div>
+        <pre class="demo-code" style="border-radius:0 0 8px 8px;"><code><span class="hl-s">'ip'</span> =&gt; [
+    <span class="hl-s">'trusted_proxies'</span> =&gt; [<span class="hl-s">'127.0.0.1'</span>, <span class="hl-s">'10.0.0.0/8'</span>],
+]</code></pre>
+    </div>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:260px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>address()</code></td><td><code>string</code></td><td>클라이언트 실제 IP 주소 반환</td></tr>
+                    <tr><td><code>country(?string $ip = null)</code></td><td><code>?string</code></td><td>국가 코드 (예: <code>'KR'</code>)</td></tr>
+                    <tr><td><code>city(?string $ip = null)</code></td><td><code>?string</code></td><td>도시명</td></tr>
+                    <tr><td><code>location(?string $ip = null)</code></td><td><code>?array</code></td><td>위도/경도 <code>['lat'=>..., 'lon'=>...]</code></td></tr>
+                    <tr><td><code>info(?string $ip = null)</code></td><td><code>array</code></td><td>GeoIP 전체 정보</td></tr>
+                    <tr><td><code>isInRange(string $ip, string $cidr)</code></td><td><code>bool</code></td><td>IP가 CIDR 범위에 포함되는지 확인</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">기본 사용법</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// ip()는 Cat\Ip 객체를 반환 — address()로 IP 문자열 획득</span>
+<span class="hl-v">$clientIp</span> = <span class="hl-f">ip</span>()-&gt;<span class="hl-f">address</span>();
+
+<span class="hl-c">// Rate limiting + 로깅에 활용</span>
+<span class="hl-f">rate</span>()-&gt;<span class="hl-f">limit</span>(<span class="hl-s">'api'</span>, <span class="hl-n">60</span>, <span class="hl-n">100</span>);
+<span class="hl-f">logger</span>()-&gt;<span class="hl-f">info</span>(<span class="hl-s">'API 요청'</span>, [<span class="hl-s">'ip'</span> =&gt; <span class="hl-f">ip</span>()-&gt;<span class="hl-f">address</span>()]);</code></pre>
+
+    <h6 class="mb-2">GeoIP 활용</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 국가별 분기 처리</span>
+<span class="hl-v">$country</span> = <span class="hl-f">ip</span>()-&gt;<span class="hl-f">country</span>();
+<span class="hl-k">if</span> (<span class="hl-v">$country</span> === <span class="hl-s">'KR'</span>) {
+    <span class="hl-f">geo</span>()-&gt;<span class="hl-f">locale</span>(<span class="hl-s">'ko'</span>);
+}
+
+<span class="hl-c">// CIDR 범위 확인</span>
+<span class="hl-k">if</span> (<span class="hl-f">ip</span>()-&gt;<span class="hl-f">isInRange</span>(<span class="hl-f">ip</span>()-&gt;<span class="hl-f">address</span>(), <span class="hl-s">'192.168.0.0/16'</span>)) {
+    <span class="hl-c">// 내부망 접속</span>
+}</code></pre>
+
+    <div class="alert alert--warning mb-3">
+        <span class="alert__message"><strong>보안:</strong> <code>trusted_proxies</code>를 설정하지 않으면 <code>X-Forwarded-For</code> 헤더를 무시하고 <code>REMOTE_ADDR</code>만 사용합니다. Cloudflare 뒤에 있다면 <code>CF-Connecting-IP</code>가 우선됩니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/firewall" class="badge badge--soft badge--danger badge--sm" style="cursor:pointer;">Firewall</a>
+        <a data-spa="/tool/rate" class="badge badge--soft badge--info badge--sm" style="cursor:pointer;">Rate</a>
+        <a data-spa="/tool/geo" class="badge badge--soft badge--secondary badge--sm" style="cursor:pointer;">Geo</a>
+    </div>
+</div>

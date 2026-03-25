@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# views PHP 직접 접근 차단
+RewriteRule ^views/ - [F,L]
+
+# 실제 파일/디렉토리가 아니면 index.php로 전달
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
