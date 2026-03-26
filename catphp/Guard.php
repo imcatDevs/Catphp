@@ -39,6 +39,15 @@ final class Guard
         // 제로폭/불가시 유니코드 선제거
         $cleaned = preg_replace('/[\x00\x{200B}\x{200C}\x{200D}\x{FEFF}\x{00AD}]/u', '', $input) ?? $input;
 
+        // 이중/삼중 URL 인코딩 우회 방어: 최대 3회 디코딩
+        for ($i = 0; $i < 3; $i++) {
+            $decoded = rawurldecode($cleaned);
+            if ($decoded === $cleaned) {
+                break;
+            }
+            $cleaned = $decoded;
+        }
+
         $dangerous = [
             '../', '..\\',
             '%2e%2e', '%2E%2E',                 // URL 인코딩
@@ -73,12 +82,27 @@ final class Guard
         // ── 0. 선처리: null 바이트 + 제로폭 유니코드 문자 제거 ──
         $cleaned = preg_replace('/[\x00\x{200B}\x{200C}\x{200D}\x{FEFF}\x{00AD}]/u', '', $input) ?? $input;
 
-        // ── 1. HTML 엔티티 디코딩 후 재검사 (&#106;avascript: 등 우회 방어) ──
-        $decoded = html_entity_decode($cleaned, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // ── 1. HTML 엔티티 디코딩 반복 후 재검사 (이중/삼중 인코딩 우회 방어) ──
+        $decoded = $cleaned;
+        for ($i = 0; $i < 3; $i++) {
+            $prev = $decoded;
+            $decoded = html_entity_decode($decoded, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if ($decoded === $prev) {
+                break; // 더 이상 디코딩할 엔티티 없음
+            }
+        }
         if ($decoded !== $cleaned) {
             $decoded = $this->xssClean($decoded);
-            // 디코딩 결과에서 위험 패턴 발견되면 디코딩된 결과를 사용
-            if ($decoded !== html_entity_decode($cleaned, ENT_QUOTES | ENT_HTML5, 'UTF-8')) {
+            // 디코딩+살균 결과가 원본 디코딩과 다르면 위험 패턴 발견된 것
+            $fullyDecoded = $cleaned;
+            for ($i = 0; $i < 3; $i++) {
+                $prev = $fullyDecoded;
+                $fullyDecoded = html_entity_decode($fullyDecoded, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if ($fullyDecoded === $prev) {
+                    break;
+                }
+            }
+            if ($decoded !== $fullyDecoded) {
                 $cleaned = $decoded;
             }
         }

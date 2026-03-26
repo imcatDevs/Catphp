@@ -54,7 +54,7 @@ final class Cache
             return $default;
         }
 
-        $data = unserialize($content, ['allowed_classes' => false]);
+        $data = json_decode($content, true, 16);
         if (!is_array($data) || !isset($data['expires']) || !array_key_exists('value', $data)) {
             return $default;
         }
@@ -75,10 +75,10 @@ final class Cache
         $file = $this->filePath($key);
         $ttl ??= $this->defaultTtl;
 
-        $data = serialize([
+        $data = json_encode([
             'expires' => $ttl > 0 ? time() + $ttl : 0,
             'value'   => $value,
-        ]);
+        ], JSON_UNESCAPED_UNICODE);
 
         return file_put_contents($file, $data, LOCK_EX) !== false;
     }

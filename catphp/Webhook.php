@@ -214,7 +214,12 @@ final class Webhook
             return null;
         }
 
-        $data = json_decode($this->receivedBody, true);
+        // JSON DoS 방어: 크기 1MB + 깊이 32 제한 (Request.php와 동일)
+        if (strlen($this->receivedBody) > 1_048_576) {
+            return null;
+        }
+
+        $data = json_decode($this->receivedBody, true, 32);
         return is_array($data) ? $data : null;
     }
 

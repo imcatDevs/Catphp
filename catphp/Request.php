@@ -88,8 +88,13 @@ final class Request
     {
         if ($this->jsonCache === null) {
             $raw = $this->raw();
-            $decoded = json_decode($raw, true);
-            $this->jsonCache = is_array($decoded) ? $decoded : [];
+            // JSON body 크기 제한 (1MB) + 깊이 제한 (32) — DoS 방어
+            if ($raw === '' || strlen($raw) > 1_048_576) {
+                $this->jsonCache = [];
+            } else {
+                $decoded = json_decode($raw, true, 32);
+                $this->jsonCache = is_array($decoded) ? $decoded : [];
+            }
         }
 
         if ($key === null) {
@@ -220,17 +225,15 @@ final class Request
     public function url(): string
     {
         $scheme = $this->isSecure() ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        return $scheme . '://' . $host . $this->path();
+        return $scheme . '://' . $this->safeHost() . $this->path();
     }
 
     /** 전체 URL + 쿼리스트링 */
     public function fullUrl(): string
     {
         $scheme = $this->isSecure() ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
-        return $scheme . '://' . $host . $uri;
+        return $scheme . '://' . $this->safeHost() . $uri;
     }
 
     /** 쿼리스트링 */
@@ -403,7 +406,34 @@ final class Request
     /** 호스트명 */
     public function host(): string
     {
-        return $_SERVER['HTTP_HOST'] ?? 'localhost';
+        return $this->safeHost();
+    }
+
+    /** Host 헤더 살균 (Host 오염 공격 방어) */
+    private function safeHost(): string
+    {
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+        // config('app.url') 설정이 있으면 해당 호스트만 신뢰
+        $appUrl = \config('app.url');
+        if ($appUrl !== null && $appUrl !== '') {
+            $trusted = (string) parse_url($appUrl, PHP_URL_HOST);
+            if ($trusted !== '' && $trusted !== $host) {
+                // 포트 포함 비교
+                $trustedPort = parse_url($appUrl, PHP_URL_PORT);
+                $trustedFull = $trustedPort ? "{$trusted}:{$trustedPort}" : $trusted;
+                if ($trustedFull !== $host) {
+                    return $trustedFull;
+                }
+            }
+        }
+
+        // 유효한 호스트 형식만 허용 (도메인/IP + 선택적 포트)
+        if (!preg_match('/^[a-zA-Z0-9.\-]+(:\d{1,5})?$/', $host)) {
+            return 'localhost';
+        }
+
+        return $host;
     }
 
     /** 스키마 (http/https) */

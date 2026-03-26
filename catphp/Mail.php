@@ -209,9 +209,11 @@ final class Mail
             $body .= "\r\n";
 
             foreach ($this->attachments as $att) {
+                $safeName = self::sanitizeMimeValue($att['name']);
+                $safeMime = self::sanitizeMimeValue($att['mime']);
                 $body .= "--{$boundary}\r\n";
-                $body .= "Content-Type: {$att['mime']}; name=\"{$att['name']}\"\r\n";
-                $body .= "Content-Disposition: attachment; filename=\"{$att['name']}\"\r\n";
+                $body .= "Content-Type: {$safeMime}; name=\"{$safeName}\"\r\n";
+                $body .= "Content-Disposition: attachment; filename=\"{$safeName}\"\r\n";
                 $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
                 $body .= chunk_split(base64_encode(file_get_contents($att['path'])));
             }
@@ -354,5 +356,11 @@ final class Mail
     {
         $parts = explode('@', $email);
         return $parts[1] ?? 'localhost';
+    }
+
+    /** MIME 헤더 값 살균 (CRLF/NULL/따옴표 인젝션 방어) */
+    private static function sanitizeMimeValue(string $value): string
+    {
+        return str_replace(['"', "\r", "\n", "\0"], '', $value);
     }
 }

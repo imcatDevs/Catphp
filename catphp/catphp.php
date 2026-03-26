@@ -532,9 +532,13 @@ if (!function_exists('input')) {
             // JSON body 감지
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
             if (str_contains($contentType, 'application/json')) {
-                $json = json_decode(file_get_contents('php://input'), true, 64);
-                if (is_array($json)) {
-                    $_cache = array_merge($_cache, $json);
+                $body = file_get_contents('php://input');
+                // JSON body 크기 제한 (1MB) — DoS 방어
+                if ($body !== false && strlen($body) <= 1_048_576) {
+                    $json = json_decode($body, true, 32);
+                    if (is_array($json)) {
+                        $_cache = array_merge($_cache, $json);
+                    }
                 }
             }
         }
@@ -554,7 +558,12 @@ if (!function_exists('redirect')) {
     function redirect(string $url, int $code = 302): never
     {
         // CRLF 헤더 인젝션 방어
-        $url = str_replace(["\r", "\n", "\0"], '', $url);
+        $url = str_replace(["\r", "\n", "\0", "\t"], '', $url);
+
+        // Protocol-relative URL 차단 (//attacker.com 우회 방어)
+        if (str_starts_with($url, '//')) {
+            $url = '/';
+        }
 
         // 오픈 리다이렉트 방어: 외부 URL 차단
         if (preg_match('#^https?://#i', $url)) {

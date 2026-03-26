@@ -30,8 +30,12 @@ final class Encrypt
         }
 
         $key = str_starts_with($rawKey, 'base64:')
-            ? base64_decode(substr($rawKey, 7))
+            ? base64_decode(substr($rawKey, 7), true) // strict mode
             : $rawKey;
+
+        if ($key === false || $key === '') {
+            throw new \RuntimeException('encrypt.key의 Base64 형식이 올바르지 않습니다.');
+        }
 
         // 키 길이가 SODIUM_CRYPTO_SECRETBOX_KEYBYTES가 아니면 해시로 맞춤
         if (strlen($key) !== SODIUM_CRYPTO_SECRETBOX_KEYBYTES) {
