@@ -3,7 +3,7 @@
 | 항목 | 값 |
 | --- | --- |
 | 클래스 | `Cat\Perm` |
-| 파일 | `catphp/Perm.php` (95줄) |
+| 파일 | `catphp/Perm.php` (99줄) |
 | Shortcut | `perm()` |
 | 싱글턴 | `getInstance()` |
 | 의존 도구 | `Cat\Auth` (현재 사용자), `Cat\Json` (미들웨어 에러 응답) |

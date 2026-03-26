@@ -4,8 +4,8 @@ CatPHP의 웹 애플리케이션 계층. 유저 관리, 권한, 플래시 메시
 
 | 도구 | Shortcut | 클래스 | 줄 수 |
 | --- | --- | --- | --- |
-| User | `user()` | `Cat\User` | 287 |
-| Perm | `perm()` | `Cat\Perm` | 95 |
+| User | `user()` | `Cat\User` | 307 |
+| Perm | `perm()` | `Cat\Perm` | 99 |
 | Flash | `flash()` | `Cat\Flash` | 66 |
 | Meta | `meta()` | `Cat\Meta` | 140 |
 | Geo | `geo()` | `Cat\Geo` | 241 |
@@ -153,7 +153,7 @@ if (perm()->cannot('users.delete')) {
 ### Perm 역할 관리
 
 ```php
-// 역할 할당 (세션 갱신)
+// 역할 할당 (세션 갱신 — 미등록 역할 시 InvalidArgumentException)
 perm()->assign('editor');
 
 // 등록된 역할 목록
