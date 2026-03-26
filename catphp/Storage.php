@@ -24,26 +24,34 @@ final class Storage
     /** 현재 디스크 (체이닝용) */
     private ?string $currentDisk = null;
 
-    /** 경로 트래버설 방어 — root 밖 접근 차단 */
+    /** 경로 트래버설 방어 — root 밖 접근 차단 (세그먼트 기반 정규화) */
     private function safePath(string $path): string
     {
         $path = str_replace(['\\', "\0"], ['/', ''], $path);
 
-        // ../ 세그먼트 명시적 차단 (반복 치환으로 이중 인코딩 방어)
-        while (str_contains($path, '../') || str_contains($path, '..\\') || $path === '..') {
-            $path = str_replace(['../', '..\\'], '', $path);
-            if ($path === '..') {
-                $path = '';
+        // 세그먼트 기반 정규화 — '..' 및 '.' 세그먼트 제거
+        $segments = explode('/', $path);
+        $safe = [];
+        foreach ($segments as $seg) {
+            if ($seg === '..' ) {
+                // root 밖으로 나가면 차단
+                if (empty($safe)) {
+                    throw new \RuntimeException("경로 트래버설 차단: {$path}");
+                }
+                array_pop($safe);
+            } elseif ($seg !== '' && $seg !== '.') {
+                $safe[] = $seg;
             }
         }
 
-        if ($path === '' || $path === '.') {
+        $normalized = implode('/', $safe);
+        if ($normalized === '') {
             throw new \RuntimeException("경로 트래버설 차단: 유효하지 않은 경로");
         }
 
         // realpath 기반 이중 검증 (디렉토리가 존재하는 경우)
         $root = realpath($this->diskConfig()['root'] ?? '') ?: ($this->diskConfig()['root'] ?? '');
-        $full = $root . '/' . ltrim($path, '/');
+        $full = $root . '/' . $normalized;
         $realDir = realpath(dirname($full));
         if ($realDir !== false) {
             $realRoot = realpath($root);
@@ -52,7 +60,7 @@ final class Storage
             }
         }
 
-        return $path;
+        return $normalized;
     }
 
     private function __construct()

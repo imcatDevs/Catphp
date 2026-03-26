@@ -203,7 +203,8 @@ final class Queue
             foreach ($failed as $item) {
                 if (is_array($item) && ($item['id'] ?? '') === $id) {
                     // List에서 삭제 (lRem: count=1 → 좌→우 첫 번째 매칭 삭제)
-                    \redis()->raw()->lRem($this->prefixed('queue:failed'), $item, 1);
+                    // raw()는 OPT_PREFIX가 이미 설정된 연결 — 수동 프리픽스 불필요
+                    \redis()->raw()->lRem('queue:failed', $item, 1);
                     $item['attempts'] = 0;
                     $this->enqueue($item);
                     return true;

@@ -351,6 +351,18 @@ final class Backup
             throw new \RuntimeException('SQLite 복원 실패: 파일 복사 오류');
         }
 
+        // WAL/SHM 보조 파일도 복원 (존재 시) — backupSqlite()와 대칭
+        foreach (['-wal', '-shm'] as $suffix) {
+            $auxBackup = $path . $suffix;
+            $auxTarget = $dbPath . $suffix;
+            if (is_file($auxBackup)) {
+                copy($auxBackup, $auxTarget);
+            } elseif (is_file($auxTarget)) {
+                // 백업에 WAL/SHM이 없으면 기존 것 삭제 (불일치 방지)
+                @unlink($auxTarget);
+            }
+        }
+
         return true;
     }
 

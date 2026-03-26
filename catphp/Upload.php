@@ -91,9 +91,9 @@ final class Upload
             throw new \RuntimeException("파일 MIME 타입이 확장자와 일치하지 않습니다: {$mime}");
         }
 
-        // 최종 파일명 생성
+        // 최종 파일명 생성 (암호학적 랜덤으로 예측 불가능)
         if ($filename === null) {
-            $filename = uniqid() . '_' . $safeName;
+            $filename = bin2hex(random_bytes(8)) . '_' . $safeName;
         }
 
         // 디렉토리 보장
