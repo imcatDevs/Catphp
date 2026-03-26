@@ -3,7 +3,7 @@
 | 항목 | 값 |
 | --- | --- |
 | 클래스 | `Cat\User` |
-| 파일 | `catphp/User.php` (287줄) |
+| 파일 | `catphp/User.php` (307줄) |
 | Shortcut | `user()` |
 | 싱글턴 | `getInstance()` |
 | 의존 도구 | `Cat\DB`, `Cat\Auth`, `Cat\Guard` |

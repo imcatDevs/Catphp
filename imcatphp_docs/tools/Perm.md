@@ -29,7 +29,7 @@
 | `can` | `can(string $permission): bool` | `bool` | 현재 사용자 권한 확인 |
 | `cannot` | `cannot(string $permission): bool` | `bool` | 권한 없음 확인 |
 | `roles` | `roles(): array` | `array` | 등록된 역할 목록 |
-| `assign` | `assign(string $role): void` | `void` | 현재 사용자에게 역할 할당 (세션 갱신) |
+| `assign` | `assign(string $role): void` | `void` | 현재 사용자에게 역할 할당 (세션 갱신, 미등록 역할 시 예외) |
 | `middleware` | `middleware(string ...$allowedRoles): callable` | `callable` | 역할 기반 접근 제어 미들웨어 |
 
 ---
@@ -123,11 +123,17 @@ middleware('admin', 'editor')
 
 ### assign() 동작
 
-세션의 유저 데이터에 `role` 필드를 갱신하고 `auth()->login()`으로 세션 재저장:
+1. 설정된 역할 목록(`perm.roles`)에 존재하는지 검증 → 미등록 역할이면 `InvalidArgumentException` 발생
+2. 세션의 유저 데이터에 `role` 필드를 갱신하고 `auth()->login()`으로 세션 재저장
 
 ```php
-$user['role'] = $role;
-auth()->login($user);
+// 미등록 역할 할당 시
+perm()->assign('superadmin');
+// → InvalidArgumentException: 등록되지 않은 역할: superadmin
+
+// 정상 할당
+perm()->assign('editor');
+// → 세션 role 갱신 + auth()->login() 재저장
 ```
 
 ---

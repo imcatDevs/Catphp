@@ -3,7 +3,7 @@
 | 항목 | 값 |
 | --- | --- |
 | 클래스 | `Cat\Guard` |
-| 파일 | `catphp/Guard.php` (355줄) |
+| 파일 | `catphp/Guard.php` (521줄) |
 | Shortcut | `guard()` |
 | 싱글턴 | `getInstance()` |
 | 의존 도구 | `Cat\Ip` (공격 IP 로깅), `Cat\Log` (로깅), `Cat\Firewall` (자동 차단) |
@@ -146,6 +146,7 @@ xss($input)
 - **Null 바이트**: `%00`, `\0`
 - **Tomcat 스타일**: `..;/`
 - **반복 패턴**: 치환 후 새로운 `../` 생성 방어 (while 루프)
+- **세그먼트 탐지**: `test/..`, 단독 `..` 등 슬래시 없는 `..` 세그먼트 분할 제거
 
 ### 파일명 위험 확장자
 

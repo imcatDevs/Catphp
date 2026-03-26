@@ -142,7 +142,8 @@ Catppuccin Mocha 테마 기반 컬러 출력:
 ```text
 dd()
 ├─ dump(...$vars)
-├─ debug_backtrace(IGNORE_ARGS, 3)
+├─ debug_backtrace(IGNORE_ARGS, 2)
+├─ frame[0] = dd()를 호출한 지점 (실제 호출 위치)
 └─ 파일:줄번호 표시
 ```
 

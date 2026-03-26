@@ -142,8 +142,8 @@ render()
 모든 출력값에 `htmlspecialchars(ENT_QUOTES, 'UTF-8')` 적용:
 
 - title, description, canonical URL
-- OG 태그 content
-- Twitter 태그 content
+- OG 태그 **property명 + content** 모두 이스케이프
+- Twitter 태그 **name + content** 모두 이스케이프
 - sitemap URL (`ENT_XML1`)
 
 ### JSON-LD 보안
