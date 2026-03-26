@@ -132,7 +132,9 @@ final class Session
     public function flash(string $key, mixed $value): self
     {
         $_SESSION[$key] = $value;
-        $_SESSION['_flash_new'][] = $key;
+        if (!in_array($key, $_SESSION['_flash_new'] ?? [], true)) {
+            $_SESSION['_flash_new'][] = $key;
+        }
         return $this;
     }
 

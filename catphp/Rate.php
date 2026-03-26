@@ -117,6 +117,43 @@ final class Rate
         return is_file($file) && unlink($file);
     }
 
+    /**
+     * 만료 파일 가비지 컬렉션 (확률적 실행)
+     *
+     * 기본 1% 확률로 실행하여 성능 영향 최소화.
+     * 1시간 이상 변경 없는 파일 삭제.
+     */
+    public function gc(int $probability = 1, int $maxAge = 3600): void
+    {
+        if (random_int(1, 100) > $probability) {
+            return;
+        }
+
+        $dir = \config('rate.path') ?? __DIR__ . '/../storage/rate';
+        $files = glob($dir . '/*.json');
+        if ($files === false) {
+            return;
+        }
+
+        $threshold = time() - $maxAge;
+        foreach ($files as $file) {
+            if (filemtime($file) < $threshold) {
+                @unlink($file);
+            }
+        }
+
+        // block 파일도 정리
+        $locks = glob($dir . '/*.lock');
+        if ($locks !== false) {
+            foreach ($locks as $lock) {
+                $expiresAt = (int) @file_get_contents($lock);
+                if ($expiresAt > 0 && $expiresAt < time()) {
+                    @unlink($lock);
+                }
+            }
+        }
+    }
+
     /** rate 파일 경로 생성 */
     private function ratePath(string $key, string $ip): string
     {
@@ -128,6 +165,9 @@ final class Rate
                 mkdir($dir, 0755, true);
             }
             $dirChecked = true;
+
+            // 확률적 GC 실행 (1%)
+            $this->gc();
         }
 
         return $dir . '/' . md5("{$key}:{$ip}") . '.json';

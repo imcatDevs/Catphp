@@ -284,10 +284,24 @@ final class Request
         return $headers;
     }
 
-    /** Bearer 토큰 추출 */
+    /** Bearer 토큰 추출 (Apache CGI/FastCGI 환경 폴백 포함) */
     public function bearerToken(): ?string
     {
         $auth = $this->header('Authorization');
+
+        // Apache mod_rewrite 환경 폴백
+        if (($auth === null || $auth === '') && function_exists('apache_request_headers')) {
+            $apacheHeaders = apache_request_headers();
+            if ($apacheHeaders !== false) {
+                foreach ($apacheHeaders as $name => $value) {
+                    if (strcasecmp($name, 'Authorization') === 0) {
+                        $auth = $value;
+                        break;
+                    }
+                }
+            }
+        }
+
         if ($auth !== null && str_starts_with($auth, 'Bearer ')) {
             return substr($auth, 7);
         }
@@ -319,9 +333,15 @@ final class Request
         if (($_SERVER['HTTPS'] ?? '') === 'on') {
             return true;
         }
-        // 리버스 프록시
-        if ($this->header('X-Forwarded-Proto') === 'https') {
-            return true;
+        // 리버스 프록시 헤더는 trusted_proxies 설정이 있을 때만 신뢰
+        $trustedProxies = (array) \config('request.trusted_proxies', []);
+        if (!empty($trustedProxies)) {
+            $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '';
+            if (in_array($remoteAddr, $trustedProxies, true) || in_array('*', $trustedProxies, true)) {
+                if ($this->header('X-Forwarded-Proto') === 'https') {
+                    return true;
+                }
+            }
         }
         return (int) ($_SERVER['SERVER_PORT'] ?? 80) === 443;
     }
@@ -336,18 +356,9 @@ final class Request
             return \ip()->address();
         }
 
-        // 폴백: 직접 판단
-        $headers = ['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'];
-        foreach ($headers as $h) {
-            $val = $_SERVER[$h] ?? null;
-            if ($val !== null && $val !== '') {
-                $ip = trim(explode(',', $val)[0]);
-                if (filter_var($ip, FILTER_VALIDATE_IP)) {
-                    return $ip;
-                }
-            }
-        }
-        return '0.0.0.0';
+        // 폴백: REMOTE_ADDR만 신뢰 (프록시 헤더는 위조 가능 — Ip 도구 사용 권장)
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '0.0.0.0';
     }
 
     /** User-Agent */
