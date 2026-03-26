@@ -69,6 +69,13 @@ final class Guard
             $cleaned = str_replace(['../', '..\\'], '', $cleaned);
         }
 
+        // 슬래시 없는 '..' 세그먼트 탐지 (test/.. 또는 단독 .. 우회 방어)
+        $segments = explode('/', str_replace('\\', '/', $cleaned));
+        if (in_array('..', $segments, true)) {
+            $cleaned = implode('/', array_filter($segments, fn(string $s) => $s !== '..'));
+            $this->reportAttack('path_traversal', $input);
+        }
+
         if ($cleaned !== $input) {
             $this->reportAttack('path_traversal', $input);
         }

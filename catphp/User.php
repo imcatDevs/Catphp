@@ -272,11 +272,6 @@ final class User
         return $user;
     }
 
-    /**
-     * 입력 데이터 살균 (쓰기 전) — Guard::cleanArray() + trim
-     *
-     * password 필드는 살균에서 제외 (해싱 전 원본 유지 필요).
-     */
     /** 비밀번호 해시 여부 판단 (password_get_info 대신 명시적 프리픽스 검사) */
     private static function isHashed(string $value): bool
     {
@@ -290,6 +285,7 @@ final class User
     /** @var list<string> 살균 제외 비밀번호 필드명 */
     private const PASSWORD_FIELDS = ['password', 'passwd', 'password_hash', 'pass', 'secret'];
 
+    /** 입력 데이터 살균 (쓰기 전) — Guard::cleanArray() + trim, password 필드 제외 */
     private function sanitizeInput(array $data): array
     {
         // Guard 종합 살균 (비밀번호 관련 필드 제외)

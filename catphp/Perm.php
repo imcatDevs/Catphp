@@ -67,6 +67,10 @@ final class Perm
     /** 사용자에게 역할 할당 (Auth 연동 — 세션 재생성 포함) */
     public function assign(string $role): void
     {
+        if (!in_array($role, $this->roles, true)) {
+            throw new \InvalidArgumentException("등록되지 않은 역할: {$role}");
+        }
+
         $user = \auth()->user();
         if ($user !== null) {
             $user['role'] = $role;

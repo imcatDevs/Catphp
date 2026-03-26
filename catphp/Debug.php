@@ -63,9 +63,9 @@ final class Debug
     {
         $this->dump(...$vars);
 
-        // 호출 위치 표시
-        $traces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3);
-        $trace = $traces[array_key_last($traces)] ?? [];
+        // 호출 위치 표시 (frame 0 = dd()를 호출한 지점)
+        $traces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $trace = $traces[0] ?? [];
         $file = $trace['file'] ?? 'unknown';
         $line = $trace['line'] ?? 0;
 

@@ -98,13 +98,15 @@ final class Meta
         }
 
         foreach ($this->ogTags as $prop => $content) {
+            $p = htmlspecialchars($prop, ENT_QUOTES, 'UTF-8');
             $c = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
-            $html .= "<meta property=\"og:{$prop}\" content=\"{$c}\">\n";
+            $html .= "<meta property=\"og:{$p}\" content=\"{$c}\">\n";
         }
 
         foreach ($this->twitterTags as $name => $content) {
+            $n = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
             $c = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
-            $html .= "<meta name=\"twitter:{$name}\" content=\"{$c}\">\n";
+            $html .= "<meta name=\"twitter:{$n}\" content=\"{$c}\">\n";
         }
 
         if ($this->jsonLdData !== null) {
