@@ -22,10 +22,10 @@
             <table class="table table--sm mb-0">
                 <thead><tr><th style="min-width:250px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
                 <tbody>
-                    <tr><td><code>ban(string $ip)</code></td><td><code>self</code></td><td>IP 차단 (블랙리스트 추가)</td></tr>
-                    <tr><td><code>deny(string $ip)</code></td><td><code>self</code></td><td><code>ban()</code> 별칭</td></tr>
-                    <tr><td><code>unban(string $ip)</code></td><td><code>self</code></td><td>IP 차단 해제</td></tr>
-                    <tr><td><code>isDenied(string $ip)</code></td><td><code>bool</code></td><td>차단 여부 확인</td></tr>
+                    <tr><td><code>ban(string $ipOrCidr, ?string $reason)</code></td><td><code>self</code></td><td>IP/CIDR 차단 (블랙리스트 추가, 사유 로깅)</td></tr>
+                    <tr><td><code>deny(string $ipOrCidr)</code></td><td><code>self</code></td><td><code>ban()</code> 별칭</td></tr>
+                    <tr><td><code>unban(string $ipOrCidr)</code></td><td><code>self</code></td><td>IP/CIDR 차단 해제</td></tr>
+                    <tr><td><code>isDenied(string $ip)</code></td><td><code>bool</code></td><td>차단 여부 확인 (CIDR 범위 매칭 포함)</td></tr>
                     <tr><td><code>allow(string $ipOrCidr)</code></td><td><code>self</code></td><td>화이트리스트에 추가 (CIDR 지원)</td></tr>
                     <tr><td><code>isAllowed(string $ip)</code></td><td><code>bool</code></td><td>허용 여부 확인 (화이트리스트 우선)</td></tr>
                     <tr><td><code>bannedList()</code></td><td><code>array</code></td><td>차단 IP 목록 반환</td></tr>
@@ -39,8 +39,8 @@
     <pre class="demo-code mb-3"><code><span class="hl-c">// IP 차단</span>
 <span class="hl-f">firewall</span>()-&gt;<span class="hl-f">ban</span>(<span class="hl-s">'203.0.113.50'</span>);
 
-<span class="hl-c">// CIDR 범위 차단 (허용 목록에 추가 후 deny로 개별 IP 차단)</span>
-<span class="hl-f">firewall</span>()-&gt;<span class="hl-f">ban</span>(<span class="hl-s">'203.0.113.100'</span>);
+<span class="hl-c">// CIDR 범위 차단 (서브넷 전체 차단)</span>
+<span class="hl-f">firewall</span>()-&gt;<span class="hl-f">ban</span>(<span class="hl-s">'10.0.0.0/8'</span>, <span class="hl-s">'스캐너 대역 차단'</span>);
 
 <span class="hl-c">// 차단 해제</span>
 <span class="hl-f">firewall</span>()-&gt;<span class="hl-f">unban</span>(<span class="hl-s">'203.0.113.50'</span>);

@@ -95,33 +95,33 @@ final class Firewall
         return $this;
     }
 
-    /** IP 차단 등록 */
-    public function deny(string $ip): self
+    /** IP/CIDR 차단 등록 */
+    public function deny(string $ipOrCidr): self
     {
-        return $this->ban($ip);
+        return $this->ban($ipOrCidr);
     }
 
-    /** IP 차단 */
-    public function ban(string $ip, ?string $reason = null): self
+    /** IP/CIDR 차단 */
+    public function ban(string $ipOrCidr, ?string $reason = null): self
     {
-        self::validateIp($ip);
-        $this->atomicUpdate(function () use ($ip): void {
-            $this->banned[$ip] = time();
+        self::validateIpOrCidr($ipOrCidr);
+        $this->atomicUpdate(function () use ($ipOrCidr): void {
+            $this->banned[$ipOrCidr] = time();
         });
 
         if ($reason !== null && class_exists('Cat\\Log', false)) {
-            \logger()->warn("IP 차단: {$ip} — {$reason}");
+            \logger()->warn("IP 차단: {$ipOrCidr} — {$reason}");
         }
 
         return $this;
     }
 
-    /** IP 차단 해제 */
-    public function unban(string $ip): self
+    /** IP/CIDR 차단 해제 */
+    public function unban(string $ipOrCidr): self
     {
-        self::validateIp($ip);
-        $this->atomicUpdate(function () use ($ip): void {
-            unset($this->banned[$ip]);
+        self::validateIpOrCidr($ipOrCidr);
+        $this->atomicUpdate(function () use ($ipOrCidr): void {
+            unset($this->banned[$ipOrCidr]);
         });
         return $this;
     }
@@ -157,12 +157,26 @@ final class Firewall
         $this->loaded = true;
     }
 
-    /** IP 주소 형식 검증 */
-    private static function validateIp(string $ip): void
+    /** IP 또는 CIDR 형식 검증 */
+    private static function validateIpOrCidr(string $value): void
     {
-        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
-            throw new \InvalidArgumentException("유효하지 않은 IP 주소: {$ip}");
+        // 개별 IP
+        if (filter_var($value, FILTER_VALIDATE_IP)) {
+            return;
         }
+
+        // CIDR (192.168.0.0/24, 2001:db8::/32)
+        if (str_contains($value, '/')) {
+            [$subnet, $bits] = explode('/', $value, 2);
+            if (filter_var($subnet, FILTER_VALIDATE_IP) && ctype_digit($bits)) {
+                $maxBits = str_contains($subnet, ':') ? 128 : 32;
+                if ((int) $bits >= 0 && (int) $bits <= $maxBits) {
+                    return;
+                }
+            }
+        }
+
+        throw new \InvalidArgumentException("유효하지 않은 IP/CIDR: {$value}");
     }
 
     /** IP 허용 여부 확인 */
@@ -183,11 +197,24 @@ final class Firewall
         return !$this->isDenied($ip);
     }
 
-    /** IP 차단 여부 확인 */
+    /** IP 차단 여부 확인 (개별 IP + CIDR 범위 매칭) */
     public function isDenied(string $ip): bool
     {
         $this->load();
-        return isset($this->banned[$ip]);
+
+        // 정확 매칭 (O(1))
+        if (isset($this->banned[$ip])) {
+            return true;
+        }
+
+        // CIDR 범위 매칭
+        foreach (array_keys($this->banned) as $entry) {
+            if (str_contains($entry, '/') && $this->isInCidr($ip, $entry)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** 차단 IP 목록 반환 */

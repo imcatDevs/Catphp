@@ -46,7 +46,10 @@
 <span class="hl-v">$token</span> = <span class="hl-f">request</span>()-&gt;<span class="hl-f">bearerToken</span>();</code></pre>
 
     <div class="alert alert--info mb-3">
-        <span class="alert__message"><strong>팁:</strong> <code>ip()</code>는 Ip 도구가 로드되어 있으면 <code>trusted_proxies</code> 설정을 존중하여 위임합니다.</span>
+        <span class="alert__message"><strong>IP 감지:</strong> <code>ip()</code>는 Ip 도구가 로드되어 있으면 <code>trusted_proxies</code> 설정을 존중하여 위임합니다. Ip 도구가 없으면 <code>REMOTE_ADDR</code>만 사용합니다 (프록시 헤더 스푸핑 방지).</span>
+    </div>
+    <div class="alert alert--warning mb-3">
+        <span class="alert__message"><strong>보안:</strong> <code>isSecure()</code>는 <code>X-Forwarded-Proto</code> 헤더를 <code>config('request.trusted_proxies')</code>에 설정된 IP에서만 신뢰합니다. <code>bearerToken()</code>은 Apache CGI/FastCGI 환경에서도 Authorization 헤더를 감지합니다.</span>
     </div>
 
     <div class="d-flex gap-1 flex-wrap">

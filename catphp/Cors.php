@@ -105,14 +105,19 @@ final class Cors
         );
     }
 
-    /** readonly 프로퍼티 호환 복제 (내부) */
+    /** readonly 프로퍼티 호환 복제 + 싱글턴 캐시 갱신 */
     private function cloneWith(?array $origins = null, ?array $methods = null, ?array $allowedHeaders = null): self
     {
-        return new self(
+        $new = new self(
             $origins ?? $this->origins,
             $methods ?? $this->methods,
             $allowedHeaders ?? $this->allowedHeaders,
             $this->maxAge,
         );
+
+        // 싱글턴 캐시 갱신 — cors()->origins([...])->handle() 이후 cors()->handle() 호출 시에도 설정 유지
+        self::$instance = $new;
+
+        return $new;
     }
 }

@@ -6,7 +6,7 @@
         <span class="badge badge--primary badge--sm ms-auto">router()</span>
     </div>
 
-    <p class="mb-2">경량 HTTP 라우터입니다. <strong>GET/POST/PUT/PATCH/DELETE/OPTIONS</strong> 메서드를 지원하며, <code>{param}</code> 동적 파라미터, 접두사 그룹, 글로벌 미들웨어를 제공합니다.</p>
+    <p class="mb-2">경량 HTTP 라우터입니다. <strong>GET/POST/PUT/PATCH/DELETE/OPTIONS</strong> 메서드를 지원하며, <code>{param}</code> 동적 파라미터, 접두사 그룹, 글로벌 미들웨어를 제공합니다. HTML 폼에서 <code>_method</code> 필드 또는 <code>X-HTTP-Method-Override</code> 헤더로 PUT/PATCH/DELETE 오버라이드를 지원합니다.</p>
     <p class="mb-3">핸들러가 <strong>string을 반환</strong>하면 Router가 자동으로 <code>echo</code> 출력하고, <strong>void</strong>이면 핸들러 내부에서 직접 출력합니다(<code>json()->ok()</code> 등). 트레일링 슬래시는 자동 정규화되며, <code>HEAD</code> 요청은 <code>GET</code> 핸들러로 폴백합니다.</p>
 
     <div class="card card--outlined mb-3">

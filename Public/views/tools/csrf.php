@@ -6,8 +6,8 @@
         <span class="badge badge--danger badge--sm ms-auto">csrf()</span>
     </div>
 
-    <p class="mb-2"><strong>Cross-Site Request Forgery</strong> 공격을 방어합니다. 세션 기반 일회용 토큰을 생성하고, 폼 제출 시 토큰 일치 여부를 검증합니다.</p>
-    <p class="mb-3"><code>field()</code>로 hidden input을 자동 생성하고, <code>middleware()</code>로 POST/PUT/PATCH/DELETE 요청에 자동 검증을 적용할 수 있습니다. 토큰은 세션에 저장되며 검증 후 재생성됩니다.</p>
+    <p class="mb-2"><strong>Cross-Site Request Forgery</strong> 공격을 방어합니다. 세션 기반 토큰을 생성하고, 폼 제출 시 토큰 일치 여부를 검증합니다.</p>
+    <p class="mb-3"><code>field()</code>로 hidden input을 자동 생성하고, <code>middleware()</code>로 POST/PUT/PATCH/DELETE 요청에 자동 검증을 적용할 수 있습니다. 토큰은 세션에 저장되며, <strong>per-request XOR 마스킹</strong>으로 BREACH 공격을 방어합니다.</p>
 
     <div class="card card--outlined mb-3">
         <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
@@ -15,9 +15,10 @@
             <table class="table table--sm mb-0">
                 <thead><tr><th style="min-width:200px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
                 <tbody>
-                    <tr><td><code>token()</code></td><td><code>string</code></td><td>현재 CSRF 토큰 반환 (없으면 생성)</td></tr>
-                    <tr><td><code>field()</code></td><td><code>string</code></td><td><code>&lt;input type="hidden"&gt;</code> HTML 생성</td></tr>
-                    <tr><td><code>verify()</code></td><td><code>bool</code></td><td>요청의 토큰 검증 (POST body 또는 X-CSRF-Token 헤더)</td></tr>
+                    <tr><td><code>token()</code></td><td><code>string</code></td><td>원본 CSRF 토큰 반환 (없으면 생성)</td></tr>
+                    <tr><td><code>maskedToken()</code></td><td><code>string</code></td><td>마스킹된 토큰 (BREACH 방어, 매 호출 다른 값)</td></tr>
+                    <tr><td><code>field()</code></td><td><code>string</code></td><td><code>&lt;input type="hidden"&gt;</code> HTML (마스킹된 토큰 사용)</td></tr>
+                    <tr><td><code>verify()</code></td><td><code>bool</code></td><td>토큰 검증 (마스킹 + 원본 모두 지원)</td></tr>
                     <tr><td><code>middleware()</code></td><td><code>callable</code></td><td>자동 검증 미들웨어 (실패 시 403)</td></tr>
                 </tbody>
             </table>
@@ -46,6 +47,9 @@
 
     <div class="alert alert--warning mb-3">
         <span class="alert__message"><strong>주의:</strong> CSRF 미들웨어는 GET/HEAD/OPTIONS 요청은 건너뛰고, POST/PUT/PATCH/DELETE만 검증합니다. API 전용 라우트에서는 JWT 인증으로 대체하는 것이 일반적입니다.</span>
+    </div>
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>BREACH 방어:</strong> <code>field()</code>와 <code>maskedToken()</code>은 매 호출마다 랜덤 XOR 마스크를 생성하여 토큰 값을 변경합니다. HTTPS + gzip 환경에서 응답 압축률 차이로 토큰을 추출하는 BREACH 공격을 방지합니다. <code>verify()</code>는 마스킹된 토큰과 원본 토큰 모두 검증합니다.</span>
     </div>
 
     <div class="d-flex gap-1 flex-wrap">

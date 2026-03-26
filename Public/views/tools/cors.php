@@ -7,7 +7,7 @@
     </div>
 
     <p class="mb-2"><strong>Cross-Origin Resource Sharing</strong> 헤더를 관리합니다. 허용 Origin, HTTP 메서드, 커스텀 헤더를 체이닝으로 설정하고, <code>handle()</code>로 Preflight(OPTIONS) 요청을 자동 처리합니다.</p>
-    <p class="mb-3">체이닝 메서드는 <strong>clone 기반</strong>으로 싱글턴 상태를 변경하지 않으므로, 라우트별로 다른 CORS 정책을 적용할 수 있습니다. 와일드카드 Origin(<code>*</code>)과 Credentials 헤더의 동시 사용은 보안상 차단됩니다.</p>
+    <p class="mb-3">체이닝 메서드(<code>origins()</code>, <code>methods()</code>, <code>headers()</code>)로 설정을 변경하면 <strong>싱글턴 캐시가 자동 갱신</strong>되어 이후 <code>cors()->handle()</code> 호출에도 반영됩니다. 와일드카드 Origin(<code>*</code>)과 Credentials 헤더의 동시 사용은 보안상 차단됩니다.</p>
 
     <div class="card card--outlined mb-3">
         <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>

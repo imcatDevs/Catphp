@@ -26,6 +26,7 @@
                     <tr><td><code>check(string $key, int $window, int $max)</code></td><td><code>bool</code></td><td>제한 확인만 (카운터 미증가)</td></tr>
                     <tr><td><code>remaining(string $key, int $window, int $max)</code></td><td><code>int</code></td><td>남은 요청 횟수</td></tr>
                     <tr><td><code>reset(string $key)</code></td><td><code>bool</code></td><td>카운터 초기화</td></tr>
+                    <tr><td><code>gc(int $probability, int $maxAge)</code></td><td><code>void</code></td><td>만료 파일 정리 (기본 1% 확률, 1시간 초과)</td></tr>
                 </tbody>
             </table>
         </div>
@@ -48,6 +49,9 @@
 
     <div class="alert alert--warning mb-3">
         <span class="alert__message"><strong>팁:</strong> <code>limit()</code>는 호출할 때마다 카운터가 증가합니다. 같은 요청에서 여러 번 호출하면 횟수가 여러 번 소모되므로 주의하세요. <code>check()</code>는 조회만 하고 카운터를 증가시키지 않습니다.</span>
+    </div>
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>자동 정리:</strong> 만료된 rate/block 파일은 요청 시 1% 확률로 자동 정리(GC)됩니다. <code>rate()->gc(100)</code>을 호출하면 100% 확률로 즉시 정리할 수 있습니다.</span>
     </div>
 
     <div class="d-flex gap-1 flex-wrap">
