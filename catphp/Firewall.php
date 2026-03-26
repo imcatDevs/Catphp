@@ -102,12 +102,17 @@ final class Firewall
     }
 
     /** IP 차단 */
-    public function ban(string $ip): self
+    public function ban(string $ip, ?string $reason = null): self
     {
         self::validateIp($ip);
-        $this->load();
-        $this->banned[$ip] = time();
-        $this->save();
+        $this->atomicUpdate(function () use ($ip): void {
+            $this->banned[$ip] = time();
+        });
+
+        if ($reason !== null && class_exists('Cat\\Log', false)) {
+            \logger()->warn("IP 차단: {$ip} — {$reason}");
+        }
+
         return $this;
     }
 
@@ -115,10 +120,41 @@ final class Firewall
     public function unban(string $ip): self
     {
         self::validateIp($ip);
-        $this->load();
-        unset($this->banned[$ip]);
-        $this->save();
+        $this->atomicUpdate(function () use ($ip): void {
+            unset($this->banned[$ip]);
+        });
         return $this;
+    }
+
+    /** 원자적 read-modify-write (flock 배타 락) */
+    private function atomicUpdate(callable $modifier): void
+    {
+        $this->ensureDir();
+        $file = $this->bannedFile();
+
+        $fp = fopen($file, 'c+');
+        if ($fp === false) {
+            return;
+        }
+
+        flock($fp, LOCK_EX);
+        $raw = stream_get_contents($fp);
+        if ($raw !== false && $raw !== '') {
+            $data = json_decode($raw, true);
+            if (is_array($data)) {
+                $this->banned = $data;
+            }
+        }
+
+        $modifier();
+
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, json_encode($this->banned, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        flock($fp, LOCK_UN);
+        fclose($fp);
+
+        $this->loaded = true;
     }
 
     /** IP 주소 형식 검증 */

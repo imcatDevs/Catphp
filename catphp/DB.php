@@ -78,10 +78,14 @@ final class DB
             \PDO::ATTR_EMULATE_PREPARES   => false,
         ]);
 
-        // SQLite PRAGMA 적용 (config 설정이 있는 경우)
+        // SQLite PRAGMA 적용 (config 설정이 있는 경우, 화이트리스트 검증)
         if ($driver === 'sqlite') {
             if (isset($cfg['journal_mode'])) {
-                $this->pdo->exec('PRAGMA journal_mode = ' . $cfg['journal_mode']);
+                $allowed = ['DELETE', 'WAL', 'TRUNCATE', 'PERSIST', 'MEMORY', 'OFF'];
+                $mode = strtoupper((string) $cfg['journal_mode']);
+                if (in_array($mode, $allowed, true)) {
+                    $this->pdo->exec('PRAGMA journal_mode = ' . $mode);
+                }
             }
             if (isset($cfg['foreign_keys'])) {
                 $this->pdo->exec('PRAGMA foreign_keys = ' . ($cfg['foreign_keys'] ? 'ON' : 'OFF'));
@@ -90,7 +94,11 @@ final class DB
                 $this->pdo->exec('PRAGMA busy_timeout = ' . (int) $cfg['busy_timeout']);
             }
             if (isset($cfg['synchronous'])) {
-                $this->pdo->exec('PRAGMA synchronous = ' . $cfg['synchronous']);
+                $allowed = ['OFF', 'NORMAL', 'FULL', 'EXTRA'];
+                $sync = strtoupper((string) $cfg['synchronous']);
+                if (in_array($sync, $allowed, true)) {
+                    $this->pdo->exec('PRAGMA synchronous = ' . $sync);
+                }
             }
         }
 
@@ -174,6 +182,9 @@ final class DB
     /** WHERE IN 조건 */
     public function whereIn(string $column, array $values): self
     {
+        if (empty($values)) {
+            throw new \InvalidArgumentException('whereIn은 비어 있지 않은 배열이 필요합니다.');
+        }
         self::validateIdentifier($column);
         $q = $this->clone();
         $q->wheres[] = [$column, 'IN', $values, 'AND'];
@@ -183,6 +194,9 @@ final class DB
     /** WHERE NOT IN 조건 */
     public function whereNotIn(string $column, array $values): self
     {
+        if (empty($values)) {
+            throw new \InvalidArgumentException('whereNotIn은 비어 있지 않은 배열이 필요합니다.');
+        }
         self::validateIdentifier($column);
         $q = $this->clone();
         $q->wheres[] = [$column, 'NOT IN', $values, 'AND'];
@@ -325,9 +339,13 @@ final class DB
     public function count(): int
     {
         [$whereSql, $bindings] = $this->buildWhere();
-        $sql = "SELECT COUNT(*) FROM {$this->table}{$whereSql}";
+
+        // GROUP BY가 있으면 서브쿼리로 감싸서 정확한 행 수 반환
         if ($this->groupByCol !== '') {
-            $sql .= " GROUP BY {$this->groupByCol}";
+            $inner = "SELECT 1 FROM {$this->table}{$whereSql} GROUP BY {$this->groupByCol}";
+            $sql = "SELECT COUNT(*) FROM ({$inner}) AS _grouped";
+        } else {
+            $sql = "SELECT COUNT(*) FROM {$this->table}{$whereSql}";
         }
 
         $stmt = $this->pdo()->prepare($sql);

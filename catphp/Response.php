@@ -184,6 +184,11 @@ final class Response
     /** 리다이렉트 */
     public function redirect(string $url, int $status = 302): never
     {
+        // Protocol-relative URL 차단 (//attacker.com 우회 방어)
+        if (str_starts_with($url, '//')) {
+            $url = '/';
+        }
+
         // 오픈 리다이렉트 방어: 외부 URL 차단 (config으로 허용 도메인 설정 가능)
         if (preg_match('#^https?://#i', $url)) {
             $allowed = (array) \config('response.allowed_hosts', []);

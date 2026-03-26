@@ -239,7 +239,16 @@ final class Router
     /** 요청 디스패치 */
     public function dispatch(): void
     {
-        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+
+        // _method 오버라이드 (HTML 폼에서 PUT/PATCH/DELETE 지원)
+        if ($method === 'POST') {
+            $override = $_POST['_method'] ?? $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ?? null;
+            if ($override !== null) {
+                $method = strtoupper($override);
+            }
+        }
+
         $rawUri = $_SERVER['REQUEST_URI'] ?? '/';
         // null 바이트 제거 + parse_url 실패 방어
         $rawUri = str_replace("\0", '', $rawUri);

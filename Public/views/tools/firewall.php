@@ -39,8 +39,8 @@
     <pre class="demo-code mb-3"><code><span class="hl-c">// IP 차단</span>
 <span class="hl-f">firewall</span>()-&gt;<span class="hl-f">ban</span>(<span class="hl-s">'203.0.113.50'</span>);
 
-<span class="hl-c">// CIDR 범위 차단 (영구)</span>
-<span class="hl-f">firewall</span>()-&gt;<span class="hl-f">ban</span>(<span class="hl-s">'10.0.0.0/8'</span>);
+<span class="hl-c">// CIDR 범위 차단 (허용 목록에 추가 후 deny로 개별 IP 차단)</span>
+<span class="hl-f">firewall</span>()-&gt;<span class="hl-f">ban</span>(<span class="hl-s">'203.0.113.100'</span>);
 
 <span class="hl-c">// 차단 해제</span>
 <span class="hl-f">firewall</span>()-&gt;<span class="hl-f">unban</span>(<span class="hl-s">'203.0.113.50'</span>);

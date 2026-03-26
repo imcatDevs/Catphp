@@ -245,9 +245,7 @@ final class Auth
     {
         $this->apiPayload = null;
         \session()->forget('_catphp_user');
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            session_destroy();
-        }
+        \session()->destroy();
     }
 
     // ── 내부 ──
