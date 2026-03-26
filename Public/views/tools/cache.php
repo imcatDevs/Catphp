@@ -6,8 +6,8 @@
         <span class="badge badge--primary badge--sm ms-auto">cache()</span>
     </div>
 
-    <p class="mb-2">파일 기반 키-값 캐시입니다. <strong>TTL(유효 기간)</strong> 지원, <code>LOCK_EX</code>로 동시 쓰기 충돌을 방지하며, <code>serialize/unserialize</code>로 배열·객체도 저장할 수 있습니다.</p>
-    <p class="mb-3"><code>remember()</code> 패턴을 사용하면 캐시가 있으면 즉시 반환, 없으면 콜백을 실행하여 결과를 저장하는 단일 호출로 캐시 로직을 간결하게 작성할 수 있습니다. <code>unserialize</code>는 <code>allowed_classes: false</code>로 객체 인젝션을 차단합니다.</p>
+    <p class="mb-2">파일 기반 키-값 캐시입니다. <strong>TTL(유효 기간)</strong> 지원, <code>LOCK_EX</code>로 동시 쓰기 충돌을 방지하며, <strong>JSON 직렬화</strong>로 배열·스칼라 값을 안전하게 저장합니다.</p>
+    <p class="mb-3"><code>remember()</code> 패턴을 사용하면 캐시가 있으면 즉시 반환, 없으면 콜백을 실행하여 결과를 저장하는 단일 호출로 캐시 로직을 간결하게 작성할 수 있습니다.</p>
 
     <div class="card card--outlined mb-3">
         <div class="card__header"><h6 class="card__title mb-0">설정 — config/app.php</h6></div>
@@ -55,7 +55,7 @@
 <span class="hl-f">cache</span>()-&gt;<span class="hl-f">del</span>(<span class="hl-s">'site:stats'</span>);</code></pre>
 
     <div class="alert alert--info mb-3">
-        <span class="alert__message"><strong>보안:</strong> <code>unserialize()</code>는 <code>allowed_classes: false</code>로 실행되어, 캐시 파일에 악성 객체가 주입되더라도 PHP 객체 인젝션이 차단됩니다.</span>
+        <span class="alert__message"><strong>보안:</strong> JSON 직렬화를 사용하여 PHP 역직렬화 공격(객체 인젝션, 메모리 폭발 DoS)을 원천 차단합니다. 캐시 파일이 변조되어도 <code>json_decode()</code>는 안전합니다.</span>
     </div>
     <div class="alert alert--warning mb-3">
         <span class="alert__message"><strong>팁:</strong> <code>storage/cache</code> 디렉토리의 쓰기 권한을 확인하세요. 디렉토리가 없으면 자동 생성을 시도하지만, 상위 디렉토리 권한이 필요합니다.</span>

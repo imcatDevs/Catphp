@@ -49,7 +49,7 @@
     -&gt;<span class="hl-f">send</span>();</code></pre>
 
     <div class="alert alert--warning mb-3">
-        <span class="alert__message"><strong>보안:</strong> SMTP 비밀번호는 <code>config/app.php</code>에 저장하세요. <code>#[\SensitiveParameter]</code>로 스택 트레이스에서 보호됩니다.</span>
+        <span class="alert__message"><strong>보안:</strong> SMTP 비밀번호는 <code>config/app.php</code>에 저장하세요. <code>#[\SensitiveParameter]</code>로 스택 트레이스에서 보호됩니다. 첨부파일명과 MIME 타입은 CRLF/NULL/따옴표 인젝션으로부터 자동 살균됩니다.</span>
     </div>
 
     <div class="d-flex gap-1 flex-wrap">

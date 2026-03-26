@@ -7,7 +7,7 @@
     </div>
 
     <p class="mb-2">입력 데이터에 대한 <strong>종합 보안 도구</strong>입니다. XSS, SQL Injection, 경로 순회(Path Traversal) 등 일반적인 웹 공격을 탐지하고 차단합니다.</p>
-    <p class="mb-3"><code>middleware()</code>로 모든 요청에 자동 적용할 수 있으며, 공격 탐지 시 커스텀 핸들러(<code>onAttack</code>)를 호출합니다. XSS 이벤트 핸들러 정규식으로 <code>onclick</code>, <code>onerror</code> 등 인라인 이벤트도 차단합니다.</p>
+    <p class="mb-3"><code>middleware()</code>로 모든 요청에 자동 적용할 수 있으며, <code>auto_ban</code> 활성 시 <strong>공격 유형별 가중치 점수</strong>를 누적하여 <strong>4단계 단계적 차단</strong>(5분 → 30분 → 1시간 → 영구 밴)을 자동 적용합니다.</p>
 
     <div class="card card--outlined mb-3">
         <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
@@ -26,7 +26,8 @@
                     <tr><td><code>maxBodySize(?string $size)</code></td><td><code>bool</code></td><td>요청 본문 크기 제한 확인 (예: <code>'2M'</code>)</td></tr>
                     <tr><td><code>all()</code></td><td><code>array</code></td><td>전체 입력 살균 후 배열 반환</td></tr>
                     <tr><td><code>onAttack(callable $fn)</code></td><td><code>self</code></td><td>공격 탐지 시 콜백 등록</td></tr>
-                    <tr><td><code>middleware()</code></td><td><code>callable</code></td><td>자동 보호 미들웨어</td></tr>
+                    <tr><td><code>isBlocked(?string $ip)</code></td><td><code>bool</code></td><td>IP 일시 차단 상태 확인</td></tr>
+                    <tr><td><code>middleware()</code></td><td><code>callable</code></td><td>자동 보호 미들웨어 (일시 차단 IP 검사 포함)</td></tr>
                 </tbody>
             </table>
         </div>
@@ -41,18 +42,26 @@
 <span class="hl-c">// 전체 입력 정화</span>
 <span class="hl-f">guard</span>()-&gt;<span class="hl-f">all</span>();</code></pre>
 
-    <h6 class="mb-2">미들웨어 + 공격 로깅</h6>
-    <pre class="demo-code mb-3"><code><span class="hl-c">// 공격 탐지 시 로깅 + IP 차단</span>
-<span class="hl-f">guard</span>()-&gt;<span class="hl-f">onAttack</span>(<span class="hl-k">function</span>(<span class="hl-k">string</span> <span class="hl-v">$type</span>, <span class="hl-k">string</span> <span class="hl-v">$ip</span>) {
-    <span class="hl-f">logger</span>()-&gt;<span class="hl-f">warn</span>(<span class="hl-s">'공격 탐지'</span>, [<span class="hl-s">'type'</span> =&gt; <span class="hl-v">$type</span>, <span class="hl-s">'ip'</span> =&gt; <span class="hl-v">$ip</span>]);
-    <span class="hl-f">firewall</span>()-&gt;<span class="hl-f">ban</span>(<span class="hl-v">$ip</span>);
-});
+    <h6 class="mb-2">미들웨어 + 단계적 차단</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 글로벌 미들웨어 등록 (auto_ban 활성 시 단계적 차단 자동 적용)</span>
+<span class="hl-f">router</span>()-&gt;<span class="hl-f">use</span>(<span class="hl-f">guard</span>()-&gt;<span class="hl-f">middleware</span>());
 
-<span class="hl-c">// 글로벌 미들웨어 등록</span>
-<span class="hl-f">router</span>()-&gt;<span class="hl-f">use</span>(<span class="hl-f">guard</span>()-&gt;<span class="hl-f">middleware</span>());</code></pre>
+<span class="hl-c">// 단계적 차단 기준 (10분 윈도우 누적 점수):</span>
+<span class="hl-c">//   LEVEL 1:  5점 → 5분 일시 차단   (XSS 3회 또는 SQL인젝션 1회)</span>
+<span class="hl-c">//   LEVEL 2: 15점 → 30분 차단     (SQL인젝션 3회)</span>
+<span class="hl-c">//   LEVEL 3: 30점 → 1시간 차단    (SQL인젝션 6회)</span>
+<span class="hl-c">//   LEVEL 4: 50점 → Firewall 영구 밴 (SQL인젝션 10회)</span>
+
+<span class="hl-c">// 공격 탐지 콜백 (선택 — 단계적 차단과 별도로 동작)</span>
+<span class="hl-f">guard</span>()-&gt;<span class="hl-f">onAttack</span>(<span class="hl-k">function</span>(<span class="hl-k">string</span> <span class="hl-v">$type</span>, <span class="hl-k">string</span> <span class="hl-v">$ip</span>) {
+    <span class="hl-f">logger</span>()-&gt;<span class="hl-f">warn</span>(<span class="hl-s">공격 탐지</span>, [<span class="hl-s">'type'</span> =&gt; <span class="hl-v">$type</span>, <span class="hl-s">'ip'</span> =&gt; <span class="hl-v">$ip</span>]);
+});</code></pre>
 
     <div class="alert alert--info mb-3">
         <span class="alert__message"><strong>방어 범위:</strong> XSS (<code>&lt;script&gt;</code>, 인라인 이벤트), SQL Injection (보조), Path Traversal (<code>../</code>, null byte), HTTP Header Injection (<code>\r\n</code>), 파일명 공격, 본문 크기 초과</span>
+    </div>
+    <div class="alert alert--warning mb-3">
+        <span class="alert__message"><strong>단계적 차단:</strong> <code>auto_ban: true</code> 설정 시 공격 유형별 가중치(SQL=5, Path=4, Header=4, File=3, XSS=2)를 10분 윈도우로 누적하여 점수 구간에 따라 자동 차단합니다. <code>isBlocked()</code>로 현재 IP의 차단 상태를 확인할 수 있습니다.</span>
     </div>
 
     <div class="d-flex gap-1 flex-wrap">

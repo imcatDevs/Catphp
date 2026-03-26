@@ -181,9 +181,25 @@ final class User
 
     // ── 인증 통합 ──
 
-    /** 이메일+비밀번호로 로그인 시도 (타이밍 공격 방어 포함) */
+    /**
+     * 이메일+비밀번호로 로그인 시도 (타이밍 공격 + 브루트포스 방어)
+     *
+     * 브루트포스 방어:
+     *   - IP 기준 5분간 10회 실패 시 차단 (Rate 도구 연동)
+     *   - IP 기준 30분간 50회 실패 시 Firewall 자동 밴
+     */
     public function attempt(string $email, #[\SensitiveParameter] string $password, string $emailColumn = 'email'): bool
     {
+        // 브루트포스 방어: IP 기준 레이트 리미트 (5분/10회)
+        if (!\rate()->limit('login', 300, 10)) {
+            // 극단적 남용 감지: 30분/50회 초과 시 Firewall 자동 밴
+            // limit()으로 기록 + 검사 (check()는 조회만 하여 카운터 미증가)
+            if (class_exists('Cat\\Firewall', false) && !\rate()->limit('login_ban', 1800, 50)) {
+                \firewall()->ban(\ip()->address(), '브루트포스 로그인 시도 자동 차단');
+            }
+            return false;
+        }
+
         $user = $this->rawBy($emailColumn, $email);
 
         // 타이밍 공격 방어: 유저 미존재 시에도 동일한 시간을 소비하여 존재 여부 유추 차단
@@ -193,6 +209,10 @@ final class User
         if ($user === null || !$verified) {
             return false;
         }
+
+        // 로그인 성공 시 레이트 리미트 초기화
+        \rate()->reset('login');
+        \rate()->reset('login_ban');
 
         // hidden 필드 제거 후 세션 저장
         $safe = $this->removeHidden($user);

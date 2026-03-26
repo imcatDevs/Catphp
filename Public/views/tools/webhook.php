@@ -33,7 +33,7 @@
                 <tbody>
                     <tr><td><code>receive()</code></td><td><code>self</code></td><td>php://input에서 body + 서명 헤더 읽기</td></tr>
                     <tr><td><code>isValid(?string $secret = null)</code></td><td><code>bool</code></td><td>서명 검증 (hash_equals)</td></tr>
-                    <tr><td><code>getPayload()</code></td><td><code>?array</code></td><td>수신 페이로드 (JSON 디코딩)</td></tr>
+                    <tr><td><code>getPayload()</code></td><td><code>?array</code></td><td>수신 페이로드 (JSON 디코딩, 1MB/깊이32 제한)</td></tr>
                     <tr><td><code>getRawBody()</code></td><td><code>string</code></td><td>수신 원본 body</td></tr>
                 </tbody>
             </table>

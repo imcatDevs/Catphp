@@ -339,6 +339,13 @@ final class Guard
     public function middleware(): callable
     {
         return function (): ?bool {
+            // 공격 탐지 일시 차단 확인
+            if ($this->autoBan && $this->isBlocked()) {
+                http_response_code(403);
+                echo '<!DOCTYPE html><html><body><h1>403 Forbidden</h1></body></html>';
+                exit;
+            }
+
             // 요청 크기 확인
             if (!$this->maxBodySize()) {
                 http_response_code(413);
@@ -354,14 +361,50 @@ final class Guard
         };
     }
 
-    /** 공격 보고 (로깅 + 콜백 + 자동 차단) */
+    /**
+     * 공격 유형별 위험도 가중치
+     *
+     * 높을수록 위험 — 적은 횟수로 차단 임계값 도달.
+     * 예: sql_injection(가중치 5) 2회 = 누적 10점 → LEVEL 2 차단 돌파.
+     */
+    private const ATTACK_WEIGHT = [
+        'sql_injection'    => 5,
+        'path_traversal'   => 4,
+        'header_injection' => 4,
+        'dangerous_file'   => 3,
+        'xss'              => 2,
+    ];
+
+    /**
+     * 단계적 차단 룰 (누적 점수 기준)
+     *
+     * 각 레벨은 [누적 점수 임계값, 차단 시간(초), 설명].
+     * 0 = 영구 밴 (Firewall).
+     */
+    private const BAN_LEVELS = [
+        ['score' =>  5, 'duration' =>  300, 'label' => 'LEVEL 1: 5분 일시 차단'],
+        ['score' => 15, 'duration' => 1800, 'label' => 'LEVEL 2: 30분 차단'],
+        ['score' => 30, 'duration' => 3600, 'label' => 'LEVEL 3: 1시간 차단'],
+        ['score' => 50, 'duration' =>    0, 'label' => 'LEVEL 4: 영구 밴'],
+    ];
+
+    /**
+     * 공격 보고 — 횟수 기반 단계적 차단
+     *
+     * 1. 공격 유형별 가중치로 누적 점수 계산
+     * 2. 점수 구간에 따라 단계적 대응 (일시 차단 → 영구 밴)
+     * 3. 로깅 + 콜백 + Rate/Firewall 연동
+     */
     private function reportAttack(string $type, string $input): void
     {
         $ip = \ip()->address();
+        $weight = self::ATTACK_WEIGHT[$type] ?? 2;
 
         // 로깅
         if (class_exists('Cat\\Log', false)) {
-            \logger()->warn("공격 감지: [{$type}] IP={$ip}", ['input' => mb_substr($input, 0, 200)]);
+            \logger()->warn("공격 감지: [{$type}] IP={$ip} (가중치:{$weight})", [
+                'input' => mb_substr($input, 0, 200),
+            ]);
         }
 
         // 콜백 호출
@@ -369,10 +412,109 @@ final class Guard
             ($this->attackCallback)($type, $ip);
         }
 
-        // 자동 IP 차단
-        if ($this->autoBan && class_exists('Cat\\Firewall', false)) {
-            \firewall()->ban($ip);
+        if (!$this->autoBan) {
+            return;
+        }
+
+        // 누적 점수 기록 (Rate 파일 기반 — 10분 윈도우)
+        $score = $this->recordAttackScore($ip, $weight);
+
+        // 단계적 차단 적용 (높은 레벨부터 검사)
+        foreach (array_reverse(self::BAN_LEVELS) as $level) {
+            if ($score >= $level['score']) {
+                if ($level['duration'] === 0) {
+                    // 영구 밴
+                    if (class_exists('Cat\\Firewall', false)) {
+                        \firewall()->ban($ip, "자동 차단: {$level['label']} (점수:{$score})");
+                    }
+                } else {
+                    // 일시 차단: Rate limit으로 해당 시간 동안 차단
+                    $this->enforceBlock($ip, $level['duration']);
+                }
+
+                if (class_exists('Cat\\Log', false)) {
+                    \logger()->error("{$level['label']} — IP={$ip}, 누적={$score}점", ['type' => $type]);
+                }
+                break;
+            }
         }
     }
 
+    /**
+     * 공격 점수 기록 + 누적 합산 반환
+     *
+     * storage/rate/attack_{hash}.json에 [timestamp, weight] 쌍 기록.
+     * 10분 윈도우 슬라이딩.
+     */
+    private function recordAttackScore(string $ip, int $weight): int
+    {
+        $dir = \config('rate.path') ?? __DIR__ . '/../storage/rate';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        $file = $dir . '/attack_' . md5($ip) . '.json';
+        $now = time();
+        $window = 600; // 10분
+
+        $fp = fopen($file, 'c+');
+        if ($fp === false) {
+            return $weight;
+        }
+
+        flock($fp, LOCK_EX);
+        $raw = stream_get_contents($fp);
+        $data = ($raw !== '' && $raw !== false) ? json_decode($raw, true) : null;
+
+        if (!is_array($data) || !isset($data['hits'])) {
+            $data = ['hits' => []];
+        }
+
+        // 윈도우 밖 기록 제거 + 새 기록 추가
+        $data['hits'] = array_values(array_filter(
+            $data['hits'],
+            fn(array $h) => $h[0] > ($now - $window)
+        ));
+        $data['hits'][] = [$now, $weight];
+
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, json_encode($data));
+        flock($fp, LOCK_UN);
+        fclose($fp);
+
+        // 누적 점수 합산
+        return array_sum(array_column($data['hits'], 1));
+    }
+
+    /** 일시 차단 적용 (차단 만료 시각을 파일에 기록) */
+    private function enforceBlock(string $ip, int $duration): void
+    {
+        $dir = \config('rate.path') ?? __DIR__ . '/../storage/rate';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        $file = $dir . '/block_' . md5($ip) . '.lock';
+        file_put_contents($file, (string) (time() + $duration), LOCK_EX);
+    }
+
+    /** IP가 현재 일시 차단 상태인지 확인 */
+    public function isBlocked(?string $ip = null): bool
+    {
+        $ip ??= \ip()->address();
+        $dir = \config('rate.path') ?? __DIR__ . '/../storage/rate';
+        $file = $dir . '/block_' . md5($ip) . '.lock';
+
+        if (!is_file($file)) {
+            return false;
+        }
+
+        $expiresAt = (int) file_get_contents($file);
+        if ($expiresAt > time()) {
+            return true;
+        }
+
+        // 만료된 블록 파일 정리
+        @unlink($file);
+        return false;
+    }
 }

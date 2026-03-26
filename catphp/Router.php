@@ -291,23 +291,8 @@ final class Router
             }
         }
 
-        // 4. 404
-        http_response_code(404);
-        if ($this->notFoundHandler) {
-            $result = ($this->notFoundHandler)();
-            if (is_string($result)) {
-                echo $result;
-            }
-            return;
-        }
-
-        $isApi = str_starts_with($uri, '/api/');
-        if ($isApi) {
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['ok' => false, 'error' => ['message' => 'Not Found', 'code' => 404]], JSON_UNESCAPED_UNICODE);
-        } else {
-            echo '<h1>404 Not Found</h1>';
-        }
+        // 4. 404 — 무차별 경로 탐색 공격 방어
+        $this->handle404($uri);
     }
 
     /** 동적 라우트 매칭 (내부) — 타입 캐스팅 포함 */
@@ -389,5 +374,59 @@ final class Router
         }
 
         return $realFile;
+    }
+
+    /**
+     * 404 처리 + 무차별 경로 탐색 공격 방어
+     *
+     * - IP 기준 1분간 30회 404 → 일시 차단
+     * - IP 기준 10분간 100회 404 → Firewall 자동 밴
+     * - 위험 경로 패턴(.env, wp-admin 등) → 즉시 카운트 가중
+     */
+    private function handle404(string $uri): void
+    {
+        // 위험 경로 패턴 탐지 (스캐너/봇이 자주 탐색하는 경로)
+        $suspicious = (bool) preg_match(
+            '#(?:\.env|wp-(?:admin|login|content)|phpmyadmin|\.git|\.DS_Store|/\.ht|/config\.|/vendor/|/node_modules/)#i',
+            $uri
+        );
+
+        // 의심 경로는 가중치 적용: 1회 = 5회 카운팅 (scan/ban 모두)
+        $weight = $suspicious ? 5 : 1;
+        for ($i = 0; $i < $weight; $i++) {
+            \rate()->limit('404ban', 600, 100);
+        }
+
+        // IP 기준 레이트 리미트 (1분/30회)
+        if (!\rate()->limit('404scan', 60, $suspicious ? 6 : 30)) {
+            // 극단적 남용: 10분/100회 초과 시 Firewall 자동 밴
+            // limit()으로 기록 + 검사 (check()는 조회만 하여 카운터 미증가)
+            if (class_exists('Cat\\Firewall', false) && !\rate()->limit('404ban', 600, 100)) {
+                \firewall()->ban(\ip()->address(), '무차별 경로 탐색 공격 자동 차단');
+            }
+
+            // 차단: 403 상태 코드 + 최소 응답
+            http_response_code(403);
+            echo '<!DOCTYPE html><html><body><h1>403 Forbidden</h1></body></html>';
+            return;
+        }
+
+        // 일반 404 응답
+        http_response_code(404);
+        if ($this->notFoundHandler) {
+            $result = ($this->notFoundHandler)();
+            if (is_string($result)) {
+                echo $result;
+            }
+            return;
+        }
+
+        $isApi = str_starts_with($uri, '/api/');
+        if ($isApi) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['ok' => false, 'error' => ['message' => 'Not Found', 'code' => 404]], JSON_UNESCAPED_UNICODE);
+        } else {
+            echo '<h1>404 Not Found</h1>';
+        }
     }
 }

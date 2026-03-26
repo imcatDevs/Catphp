@@ -136,7 +136,7 @@ try {
             <span class="badge badge--danger badge--sm">Cat\Guard</span>
         </div>
         <div class="card__body">
-            <p class="mb-3">XSS/SQL 인젝션 살균, 경로 트래버설 차단, 미들웨어 자동 보호</p>
+            <p class="mb-3">XSS/SQL 인젝션 살균, 경로 트래버설 차단, 미들웨어 자동 보호, <strong>공격 유형별 가중치 기반 4단계 단계적 차단</strong></p>
 
             <pre class="demo-code mb-3"><code><span class="hl-c">// 개별 살균</span>
 <span class="hl-v">$safe</span> = <span class="hl-f">guard</span>()-&gt;<span class="hl-f">xss</span>(<span class="hl-s">'&lt;script&gt;alert(1)&lt;/script&gt;Hello'</span>);

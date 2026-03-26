@@ -27,7 +27,7 @@
                     <tr><td><code>create(array $data)</code></td><td><code>string|false</code></td><td>유저 생성 (비밀번호 자동 해싱)</td></tr>
                     <tr><td><code>update(int|string $id, array $data)</code></td><td><code>int</code></td><td>유저 수정</td></tr>
                     <tr><td><code>delete(int|string $id)</code></td><td><code>int</code></td><td>유저 삭제</td></tr>
-                    <tr><td><code>attempt(string $email, string $pw)</code></td><td><code>bool</code></td><td>이메일+비밀번호 로그인</td></tr>
+                    <tr><td><code>attempt(string $email, string $pw)</code></td><td><code>bool</code></td><td>이메일+비밀번호 로그인 (브루트포스 방어 내장)</td></tr>
                     <tr><td><code>refresh()</code></td><td><code>?array</code></td><td>현재 유저 세션 새로고침</td></tr>
                 </tbody>
             </table>
@@ -42,7 +42,7 @@
     <span class="hl-s">'password'</span> =&gt; <span class="hl-s">'secret123'</span>,
 ]);
 
-<span class="hl-c">// 로그인</span>
+<span class="hl-c">// 로그인 (IP당 5분/10회 제한, 30분/50회 초과 시 Firewall 자동 밴)</span>
 <span class="hl-k">if</span> (<span class="hl-f">user</span>()-&gt;<span class="hl-f">attempt</span>(<span class="hl-v">$email</span>, <span class="hl-v">$password</span>)) {
     <span class="hl-f">response</span>()-&gt;<span class="hl-f">redirect</span>(<span class="hl-s">'/dashboard'</span>);
 }
@@ -52,6 +52,9 @@
 
     <div class="alert alert--warning mb-3">
         <span class="alert__message"><strong>보안:</strong> <code>current()</code>/<code>find()</code> 등 조회 메서드는 자동 XSS 살균이 적용됩니다. 비밀번호 검증 등 내부 로직에서는 <code>raw()</code>/<code>rawBy()</code>를 사용하세요.</span>
+    </div>
+    <div class="alert alert--danger mb-3">
+        <span class="alert__message"><strong>브루트포스 방어:</strong> <code>attempt()</code>는 IP 기준 레이트 리미트(5분/10회)를 내장합니다. 제한 초과 시 자동 차단되며, 30분간 50회 초과 시 Firewall 영구 밴이 적용됩니다. 로그인 성공 시 카운터가 초기화됩니다.</span>
     </div>
 
     <div class="d-flex gap-1 flex-wrap">

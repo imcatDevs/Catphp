@@ -50,11 +50,15 @@
 
     <h6 class="mb-2">Rate 연동 — 자동 차단</h6>
     <pre class="demo-code mb-3"><code><span class="hl-c">// Rate limit 초과 시 자동 IP 차단</span>
+<span class="hl-c">// limit()은 카운터 증가 + 확인, check()는 조회만 (카운터 미증가)</span>
 <span class="hl-v">$clientIp</span> = <span class="hl-f">ip</span>()-&gt;<span class="hl-f">address</span>();
-<span class="hl-k">if</span> (!<span class="hl-f">rate</span>()-&gt;<span class="hl-f">check</span>(<span class="hl-s">'api'</span>, <span class="hl-n">60</span>, <span class="hl-n">100</span>)) {
+<span class="hl-k">if</span> (!<span class="hl-f">rate</span>()-&gt;<span class="hl-f">limit</span>(<span class="hl-s">'api'</span>, <span class="hl-n">60</span>, <span class="hl-n">100</span>)) {
     <span class="hl-f">firewall</span>()-&gt;<span class="hl-f">ban</span>(<span class="hl-v">$clientIp</span>);
     <span class="hl-f">logger</span>()-&gt;<span class="hl-f">warn</span>(<span class="hl-s">'Rate limit 초과 — IP 차단'</span>, [<span class="hl-s">'ip'</span> =&gt; <span class="hl-v">$clientIp</span>]);
 }
+
+<span class="hl-c">// 자동 연동: Guard(auto_ban), User(attempt), Router(404)가</span>
+<span class="hl-c">// 조건 충족 시 Firewall 자동 밴을 내장합니다.</span>
 
 <span class="hl-c">// 차단 목록 조회 (관리자 대시보드)</span>
 <span class="hl-v">$banned</span> = <span class="hl-f">firewall</span>()-&gt;<span class="hl-f">bannedList</span>();</code></pre>
