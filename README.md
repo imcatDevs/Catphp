@@ -182,4 +182,4 @@ opcache.preload_user=www-data
 
 ## 라이선스
 
-MIT
+[Apache License 2.0](LICENSE)
