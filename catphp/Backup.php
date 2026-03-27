@@ -384,8 +384,14 @@ final class Backup
         exec($cmd . ' 2>&1', $output, $code);
 
         if ($code !== 0) {
-            $msg = implode("\n", $output);
-            throw new \RuntimeException("백업/복원 명령 실패 (code={$code}): {$msg}");
+            // 상세 에러는 로그에만 기록 (DB 자격 증명 노출 방지)
+            if (class_exists('Cat\\Log', false)) {
+                \logger()->error('백업/복원 명령 실패', [
+                    'code' => $code,
+                    'output' => implode("\n", $output),
+                ]);
+            }
+            throw new \RuntimeException("백업/복원 명령 실패 (code={$code}). 관리자 로그를 확인하세요.");
         }
     }
 }

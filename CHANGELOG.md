@@ -11,6 +11,7 @@
 - **Auth**: `getInstance()` — HMAC 시크릿 32바이트 미만 시 경고 로그 추가 (브루트포스 방어)
 - **Router**: `dispatch()` — `_method` 오버라이드에 허용 HTTP 메서드 화이트리스트 추가
 - **Upload**: `save()` — finfo MIME 탐지 실패 시 업로드 거부로 변경 (기존: 검증 건너뜀)
+- **Backup**: `execCommand()` — 에러 메시지에서 DB 자격 증명 노출 방지 (상세 에러는 로그에만 기록)
 
 ## [v1.0.3] — 2026-03-26
 
