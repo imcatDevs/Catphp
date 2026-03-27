@@ -69,7 +69,7 @@
 | [Stepper](modules/stepper.md) | `stepper` | Stepper, VerticalStepper |
 | [Scroll](modules/scroll.md) | `scroll` | VirtualScroll, Scrollspy, InfiniteScroll, SmoothScroll, BackToTop |
 | [Pagination](modules/pagination.md) | `pagination` | Pagination |
-| [Theme](modules/theme.md) | `theme` | Theme, initTheme |
+| [Theme](modules/theme.md) | `theme` | Theme, createTheme, initTheme |
 | [Advanced UI](modules/advanced-ui.md) | `advanced-ui` | SplitPane, QRCode, CopyToClipboard, CodeBlock, SimpleColorPicker |
 | [Social](modules/social.md) | `social` | ChatUI, Comments, Reactions, SocialFeed, ShareButtons |
 | [ImageList](modules/imagelist.md) | `imagelist` | ImageList, ImageLightbox, ImageCompare, LazyImage |
@@ -78,6 +78,13 @@
 | [Security Input](modules/security-input.md) | `security-input` | OTPInput, PinInput |
 | [Text Editors](modules/text-editors.md) | `text-editors` | RichTextEditor, MarkdownEditor, TextareaAutosize |
 | [Media Viewer](modules/media-viewer.md) | `media-viewer` | VideoPlayer, AudioPlayer, ImageViewer, EmbedVideo |
+
+### 성능, 보안, 커뮤니티, 영어 문서
+
+- [성능 최적화 가이드](performance/optimization-guide.md) — VirtualScroll, 무한 스크롤, 캐싱, 압축
+- [보안 가이드](security/csp-guide.md) — CSP, XSS, CSRF, 보안 업데이트
+- [커뮤니티 가이드](community/plugin-guide.md) — 플러그인 개발, 커뮤니티 참여
+- [영어 문서](../README.en.md) — 프로젝트 개요, 시작하기
 
 ### AI / 레퍼런스
 

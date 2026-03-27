@@ -36,11 +36,11 @@ final class Guard
     /** 경로 트래버실 차단 */
     public function path(string $input): string
     {
-        // 제로폭/불가시 유니코드 선제거
+        // ── 0. 제로폭/불가시 유니코드 + null 바이트 선제거 ──
         $cleaned = preg_replace('/[\x00\x{200B}\x{200C}\x{200D}\x{FEFF}\x{00AD}]/u', '', $input) ?? $input;
 
-        // 이중/삼중 URL 인코딩 우회 방어: 최대 3회 디코딩
-        for ($i = 0; $i < 3; $i++) {
+        // ── 1. 완전 디코딩: URL 인코딩이 수렴할 때까지 반복 (최대 10회, 무한 루프 방지) ──
+        for ($i = 0; $i < 10; $i++) {
             $decoded = rawurldecode($cleaned);
             if ($decoded === $cleaned) {
                 break;
@@ -48,34 +48,44 @@ final class Guard
             $cleaned = $decoded;
         }
 
+        // ── 2. 오버롱 UTF-8 / Tomcat-style / null 잔여 패턴 제거 ──
+        // 디코딩 완료 후에도 남을 수 있는 바이너리/비표준 시퀀스 치환
         $dangerous = [
-            '../', '..\\',
-            '%2e%2e', '%2E%2E',                 // URL 인코딩
-            '%2e%2E', '%2E%2e',                 // 혼합 케이스 URL 인코딩
-            '%252e%252e',                        // 이중 인코딩
-            '%c0%ae', '%c0%2e',                 // 유니코드 오버롱 .
-            '%c1%1c', '%c0%af',                 // 유니코드 오버롱 / \
-            '%e0%80%ae',                         // 3바이트 오버롱 .
-            '%f0%80%80%ae',                      // 4바이트 오버롱 .
-            '..;/',                              // Tomcat-style
-            '..%5c', '..%2f',                   // 인코딩된 구분자
-            '%00', "\0",                         // Null 바이트
-            '....//','....\\\\',                 // 이중 트래버설
+            "\xc0\xae", "\xc0\x2e",             // 오버롱 .
+            "\xc1\x1c", "\xc0\xaf",             // 오버롱 / \
+            "\xe0\x80\xae",                      // 3바이트 오버롱 .
+            "\xf0\x80\x80\xae",                  // 4바이트 오버롱 .
+            '..;',                               // Tomcat-style semicolon
         ];
-        $cleaned = str_ireplace($dangerous, '', $cleaned);
+        $cleaned = str_replace($dangerous, '', $cleaned);
 
-        // 반복 패턴 재검사 (치환 후 새로운 ../ 생성 방어)
-        while (str_contains($cleaned, '../') || str_contains($cleaned, '..\\')) {
-            $cleaned = str_replace(['../', '..\\'], '', $cleaned);
+        // ── 3. 경로 구분자 정규화 (\ → /) ──
+        $cleaned = str_replace('\\', '/', $cleaned);
+
+        // ── 4. 반복 치환: ../ 패턴이 완전히 사라질 때까지 ──
+        $prev = '';
+        while ($prev !== $cleaned) {
+            $prev = $cleaned;
+            $cleaned = str_replace('../', '', $cleaned);
         }
 
-        // 슬래시 없는 '..' 세그먼트 탐지 (test/.. 또는 단독 .. 우회 방어)
-        $segments = explode('/', str_replace('\\', '/', $cleaned));
-        if (in_array('..', $segments, true)) {
-            $cleaned = implode('/', array_filter($segments, fn(string $s) => $s !== '..'));
-            $this->reportAttack('path_traversal', $input);
+        // ── 5. 세그먼트 기반 최종 검증: '..' 세그먼트 완전 제거 ──
+        // explode 후 '..' 세그먼트가 남아 있으면 우회 시도로 판단
+        $segments = explode('/', $cleaned);
+        $hasDotDot = false;
+        $safe = [];
+        foreach ($segments as $seg) {
+            if ($seg === '..') {
+                $hasDotDot = true;
+                continue; // 제거
+            }
+            $safe[] = $seg;
+        }
+        if ($hasDotDot) {
+            $cleaned = implode('/', $safe);
         }
 
+        // ── 6. 공격 리포트 ──
         if ($cleaned !== $input) {
             $this->reportAttack('path_traversal', $input);
         }
