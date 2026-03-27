@@ -3,7 +3,7 @@
 | 항목 | 값 |
 | --- | --- |
 | 클래스 | `Cat\Auth` |
-| 파일 | `catphp/Auth.php` (265줄) |
+| 파일 | `catphp/Auth.php` (267줄) |
 | Shortcut | `auth()` |
 | 싱글턴 | `getInstance()` — 빈 시크릿 시 `RuntimeException` |
 | 의존 확장 | `ext-json` |

@@ -4,7 +4,7 @@ CatPHP의 HTTP 요청/응답 처리 계층. 라우팅, 요청 파싱, 응답 빌
 
 | 도구 | Shortcut | 클래스 | 줄 수 |
 | --- | --- | --- | --- |
-| Router | `router()` | `Cat\Router` | 394 |
+| Router | `router()` | `Cat\Router` | 446 |
 | Request | `request()` | `Cat\Request` | 464 |
 | Response | `response()` | `Cat\Response` | 340 |
 

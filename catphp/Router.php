@@ -245,7 +245,11 @@ final class Router
         if ($method === 'POST') {
             $override = $_POST['_method'] ?? $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ?? null;
             if ($override !== null) {
-                $method = strtoupper($override);
+                $upper = strtoupper($override);
+                // 허용된 HTTP 메서드만 오버라이드 (임의 문자열 차단)
+                if (in_array($upper, ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'], true)) {
+                    $method = $upper;
+                }
             }
         }
 

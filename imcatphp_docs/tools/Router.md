@@ -3,7 +3,7 @@
 | 항목 | 값 |
 | --- | --- |
 | 클래스 | `Cat\Router` |
-| 파일 | `catphp/Router.php` (394줄) |
+| 파일 | `catphp/Router.php` (446줄) |
 | Shortcut | `router()` |
 | 싱글턴 | `getInstance()` — 뮤터블 (라우트 등록은 상태 누적) |
 | 의존 확장 | 없음 |

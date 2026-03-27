@@ -47,6 +47,10 @@ final class Auth
         if ($secret === '') {
             throw new \RuntimeException('auth.secret 설정이 비어 있습니다. config/app.php에서 설정하세요.');
         }
+        // HMAC-SHA256 권장 키 길이: 32바이트 이상 — 짧은 키는 브루트포스 위험
+        if (strlen($secret) < 32 && class_exists('Cat\\Log', false)) {
+            \logger()->warn('auth.secret이 32바이트 미만입니다. 보안을 위해 32바이트 이상 설정을 권장합니다.');
+        }
 
         $algoStr = strtolower((string) (\config('auth.algo') ?? 'argon2id'));
         $algo = match ($algoStr) {
