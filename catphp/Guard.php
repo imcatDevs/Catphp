@@ -137,6 +137,9 @@ final class Guard
     /** XSS 태그/속성 살균 (내부) */
     private function xssClean(string $str): string
     {
+        // 비공백 제어문자 제거 (프로토콜 문자열 사이 삽입 우회 방어: java\x08script: 등)
+        $str = preg_replace('/[\x01-\x08\x0B\x0C\x0E-\x1F]/', '', $str) ?? $str;
+
         // 스크립트 태그 제거
         $str = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $str) ?? $str;
 

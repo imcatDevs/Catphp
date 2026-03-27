@@ -69,8 +69,8 @@ final class Log
 
         $timestamp = date('Y-m-d H:i:s');
         $levelName = $level->name;
-        // 로그 인젝션 방어: 메시지 내 개행/제어문자 제거
-        $message = str_replace(["\r", "\n", "\0"], ' ', $message);
+        // 로그 인젝션 방어: 메시지 내 개행/제어문자/탭 제거
+        $message = str_replace(["\r", "\n", "\0", "\t"], ' ', $message);
         $line = "[{$timestamp}] [{$levelName}] {$message}";
 
         if (!empty($context)) {

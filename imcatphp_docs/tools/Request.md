@@ -3,7 +3,7 @@
 | 항목 | 값 |
 | --- | --- |
 | 클래스 | `Cat\Request` |
-| 파일 | `catphp/Request.php` (415줄) |
+| 파일 | `catphp/Request.php` (464줄) |
 | Shortcut | `request()` |
 | 싱글턴 | `getInstance()` — 뮤터블 (`override()`, `refresh()`) |
 | 의존 확장 | 없음 |

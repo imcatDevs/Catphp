@@ -444,6 +444,14 @@ final class Request
             return 'localhost';
         }
 
+        // 포트 범위 검증 (1–65535)
+        if (str_contains($host, ':')) {
+            $port = (int) substr($host, strrpos($host, ':') + 1);
+            if ($port < 1 || $port > 65535) {
+                return 'localhost';
+            }
+        }
+
         return $host;
     }
 

@@ -3,7 +3,7 @@
 | 항목 | 값 |
 | --- | --- |
 | 클래스 | `Cat\Guard` |
-| 파일 | `catphp/Guard.php` (538줄) |
+| 파일 | `catphp/Guard.php` (541줄) |
 | Shortcut | `guard()` |
 | 싱글턴 | `getInstance()` |
 | 의존 도구 | `Cat\Ip` (공격 IP 로깅), `Cat\Log` (로깅), `Cat\Firewall` (자동 차단) |
