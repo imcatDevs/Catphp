@@ -84,10 +84,13 @@ final class Upload
             throw new \RuntimeException("허용되지 않는 파일 형식입니다: {$ext}");
         }
 
-        // MIME 타입 교차 검증 (finfo)
+        // MIME 타입 교차 검증 (finfo) — 탐지 실패 시에도 거부
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
         $mime = $finfo->file($file['tmp_name']);
-        if ($mime !== false && !$this->isMimeAllowed($mime, $ext)) {
+        if ($mime === false) {
+            throw new \RuntimeException('파일 MIME 타입을 감지할 수 없습니다');
+        }
+        if (!$this->isMimeAllowed($mime, $ext)) {
             throw new \RuntimeException("파일 MIME 타입이 확장자와 일치하지 않습니다: {$mime}");
         }
 
