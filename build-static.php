@@ -196,6 +196,40 @@ foreach ($pages as [$url, $outputPath]) {
     }
 }
 
+// ── 5. 경로 변환 (GitHub Pages용) ─────────────────────────────────────
+echo "\n경로 변환 중 (절대 경로 → 상대 경로)...\n";
+
+// docs 폴더 내 모든 HTML 파일의 경로 변환
+$iterator = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator($buildDir, RecursiveDirectoryIterator::SKIP_DOTS),
+    RecursiveIteratorIterator::SELF_FIRST
+);
+
+foreach ($iterator as $file) {
+    if (!$file->isFile()) continue;
+    $ext = $file->getExtension();
+    if ($ext !== 'html' && $ext !== 'php') continue;
+    
+    $content = file_get_contents($file->getRealPath());
+    
+    // 절대 경로를 상대 경로로 변환
+    // 파일 경로에서 docs/ 이후의 경로를 구해서 깊이 계산
+    $fullPath = str_replace(['/', '\\'], '/', $file->getRealPath());
+    $buildDirNorm = str_replace(['/', '\\'], '/', $buildDir);
+    $relPath = str_replace($buildDirNorm . '/', '', $fullPath);
+    $depth = substr_count($relPath, '/') - 1; // 파일명 제외
+    $prefix = $depth > 0 ? str_repeat('../', $depth) : './';
+    
+    // src="/...", href="/..." 변환
+    $content = preg_replace('#(src|href)="(/[^"]+)"#', '$1="' . $prefix . '$2"', $content);
+    // / 제거 (prefix에 이미 포함)
+    $content = str_replace('="' . $prefix . '/', '="' . $prefix, $content);
+    
+    file_put_contents($file->getRealPath(), $content);
+}
+
+echo "✓ 경로 변환 완료\n";
+
 // ── 4. 결과 요약 ──────────────────────────────────────────────────────
 echo "\n════════════════════════════════════════\n";
 echo "빌드 완료!\n";
