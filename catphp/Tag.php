@@ -19,9 +19,23 @@ final class Tag
         return self::$instance ??= new self();
     }
 
+    /**
+     * taggable_type 값 검증 (영숫자+밑줄만 허용)
+     *
+     * SQL 바인딩으로 사용되어 injection은 아니지만,
+     * DB에 저장되는 값이므로 방어적으로 형식을 제한한다.
+     */
+    private static function validateType(string $table): void
+    {
+        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $table)) {
+            throw new \InvalidArgumentException("Tag: 유효하지 않은 테이블명 '{$table}'");
+        }
+    }
+
     /** 태그 붙이기 */
     public function attach(string $table, int|string $id, array $tags): void
     {
+        self::validateType($table);
         foreach ($tags as $tagName) {
             $tagName = \guard()->clean($tagName);
             $tagSlug = \slug()->make($tagName);
@@ -55,6 +69,7 @@ final class Tag
     /** 태그 제거 */
     public function detach(string $table, int|string $id, array $tags): void
     {
+        self::validateType($table);
         foreach ($tags as $tagName) {
             $tagSlug = \slug()->make($tagName);
             $tag = \db()->table('tags')->where('slug', $tagSlug)->first();
@@ -70,6 +85,7 @@ final class Tag
     /** 태그 동기화 (기존 태그 제거 후 재설정) */
     public function sync(string $table, int|string $id, array $tags): void
     {
+        self::validateType($table);
         \db()->raw(
             'DELETE FROM taggables WHERE taggable_type = ? AND taggable_id = ?',
             [$table, $id]
@@ -80,6 +96,7 @@ final class Tag
     /** 특정 태그가 붙은 항목 ID 목록 */
     public function tagged(string $table, string $tagName): array
     {
+        self::validateType($table);
         $tagSlug = \slug()->make($tagName);
         $tag = \db()->table('tags')->where('slug', $tagSlug)->first();
         if ($tag === null) {
@@ -97,6 +114,7 @@ final class Tag
     /** 항목의 태그 목록 (Guard 살균) */
     public function tags(string $table, int|string $id): array
     {
+        self::validateType($table);
         $rows = \db()->raw(
             'SELECT t.name, t.slug FROM tags t INNER JOIN taggables tg ON t.id = tg.tag_id WHERE tg.taggable_type = ? AND tg.taggable_id = ?',
             [$table, $id]
@@ -108,6 +126,7 @@ final class Tag
     /** 태그 클라우드 (가중치 기반, Guard 살균) */
     public function cloud(string $table): array
     {
+        self::validateType($table);
         $rows = \db()->raw(
             'SELECT t.name, t.slug, COUNT(*) as count FROM tags t INNER JOIN taggables tg ON t.id = tg.tag_id WHERE tg.taggable_type = ? GROUP BY t.id, t.name, t.slug ORDER BY count DESC',
             [$table]

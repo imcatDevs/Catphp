@@ -129,6 +129,8 @@ final class Webhook
         $signature = '';
         if ($secret !== '') {
             $signature = $this->sign($body, $secret);
+        } elseif (class_exists('Cat\\Log', false)) {
+            \logger()->warn("Webhook 무서명 발송: {$this->targetUrl} (secret 미설정)");
         }
 
         $maxAttempts = max(1, $this->retry + 1);

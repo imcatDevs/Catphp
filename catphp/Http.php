@@ -15,6 +15,7 @@ final class Http
     private array $headers = [];
     private int $timeoutSec = 30;
     private ?string $baseUrl = null;
+    private bool $allowPrivateIp = false;
 
     private function __construct() {}
 
@@ -142,11 +143,27 @@ final class Http
         return false;
     }
 
+    /** 프라이빗/내부 IP 요청 허용 (SSRF 방어 해제) */
+    public function allowPrivate(): self
+    {
+        $c = clone $this;
+        $c->allowPrivateIp = true;
+        return $c;
+    }
+
     /** cURL 요청 실행 */
     private function request(string $method, string $url, array|string $data = []): HttpResponse
     {
         if ($this->baseUrl !== null && !str_starts_with($url, 'http')) {
             $url = $this->baseUrl . '/' . ltrim($url, '/');
+        }
+
+        // SSRF 방어: 프라이빗/내부 IP 차단
+        if (!$this->allowPrivateIp) {
+            $error = self::validateUrlSsrf($url);
+            if ($error !== null) {
+                return new HttpResponse(0, '', $error);
+            }
         }
 
         $ch = curl_init();
@@ -188,6 +205,42 @@ final class Http
         $body = substr((string) $raw, $headerSize);
 
         return new HttpResponse($statusCode, $body, '', $headerStr);
+    }
+    /**
+     * SSRF 방어: URL의 호스트가 프라이빗/예약 IP인지 검증
+     *
+     * @return string|null 에러 메시지 (null이면 안전)
+     */
+    private static function validateUrlSsrf(string $url): ?string
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+        if ($host === null || $host === false || $host === '') {
+            return 'SSRF 차단: 유효하지 않은 URL';
+        }
+
+        // IP 직접 지정 시 즉시 검증
+        $ip = filter_var($host, FILTER_VALIDATE_IP);
+        if ($ip !== false) {
+            return self::isPrivateIp($ip) ? "SSRF 차단: 프라이빗 IP 접근 불가 ({$ip})" : null;
+        }
+
+        // 도메인 → DNS 확인
+        $resolved = gethostbyname($host);
+        if ($resolved === $host) {
+            return "SSRF 차단: DNS 확인 실패 ({$host})";
+        }
+
+        return self::isPrivateIp($resolved) ? "SSRF 차단: 도메인이 프라이빗 IP로 확인됨 ({$host} → {$resolved})" : null;
+    }
+
+    /** 프라이빗/예약 IP 판별 */
+    private static function isPrivateIp(string $ip): bool
+    {
+        return filter_var(
+            $ip,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        ) === false;
     }
 }
 

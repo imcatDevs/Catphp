@@ -348,10 +348,15 @@ final class Router
     {
         $file = $this->resolveViewPath($template);
 
-        extract($data, EXTR_SKIP);
-        ob_start();
-        require $file;
-        return ob_get_clean() ?: '';
+        // 격리 클로저: extract 변수가 $this, $file 등 로컬 변수와 충돌 방지
+        $render = static function (string $_file_, array $_data_): string {
+            extract($_data_, EXTR_SKIP);
+            ob_start();
+            require $_file_;
+            return ob_get_clean() ?: '';
+        };
+
+        return $render($file, $data);
     }
 
     /** 뷰 디렉토리 설정 */

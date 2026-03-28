@@ -38,7 +38,8 @@ final class Cache
     /** 캐시 키 → 파일 경로 */
     private function filePath(string $key): string
     {
-        return $this->path . '/' . hash('xxh3', $key) . '.cache';
+        $algo = in_array('xxh3', hash_algos(), true) ? 'xxh3' : 'sha256';
+        return $this->path . '/' . hash($algo, $key) . '.cache';
     }
 
     /** 캐시 읽기 */

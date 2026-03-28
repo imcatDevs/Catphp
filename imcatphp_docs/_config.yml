@@ -1,0 +1,42 @@
+# CatPHP Framework Documentation
+# GitHub Pages Jekyll Configuration
+
+title: CatPHP Framework
+description: PHP 8.2+ 전용 경량 프레임워크 - 빠른 속도 · 사용 편리 · 쉬운 학습 · 보안
+author: imcatDevs
+lang: ko-KR
+
+# Theme
+theme: jekyll-theme-cayman
+
+# Navigation
+nav:
+  - title: "빠른 시작"
+    url: "quickstart"
+  - title: "코어"
+    url: "catphp-core"
+  - title: "보안"
+    url: "security"
+  - title: "API"
+    url: "api"
+  - title: "리뷰 보고서"
+    url: "review-report"
+
+# Markdown settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Plugins (GitHub Pages supported)
+plugins:
+  - jekyll-readme-index
+
+# Repository
+repository: imcatDevs/Catphp
+
+# Exclude files from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
