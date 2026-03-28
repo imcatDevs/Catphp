@@ -21,7 +21,8 @@
                     <tr><td><code>allowTables(bool $v=true)</code></td><td><code>self</code></td><td><code>&lt;table&gt;</code> 관련 태그 허용</td></tr>
                     <tr><td><code>allowTags(array $tags)</code></td><td><code>self</code></td><td>추가 태그 허용 (예: <code>['div', 'span']</code>)</td></tr>
                     <tr><td><code>allowAttrs(array $attrs)</code></td><td><code>self</code></td><td>추가 속성 허용 (예: <code>['class', 'id']</code>)</td></tr>
-                    <tr><td><code>allowProtocols(array $p)</code></td><td><code>self</code></td><td>허용 프로토콜 변경 (기본: http, https, mailto)</td></tr>
+                    <tr><td><code>allowProtocols(array $p)</code></td><td><code>self</code></td><td>허용 프로토콜 <strong>추가</strong> (기본: http, https, mailto, tel, ftp)</td></tr>
+                    <tr><td><code>setAllowedProtocols(array $p)</code></td><td><code>self</code></td><td>허용 프로토콜 <strong>설정</strong> (기존 목록 교체)</td></tr>
                 </tbody>
             </table>
         </div>
@@ -49,7 +50,7 @@
         <div class="card__body">
             <div class="row">
                 <div class="col-6">
-                    <h6 class="text-muted mb-2">위험 태그 제거</h6>
+                    <h6 class="text-muted mb-2">위험 태그 제거 (30개)</h6>
                     <ul class="list-unstyled mb-0 caption">
                         <li>• script, style, iframe, object</li>
                         <li>• form, input, button, select</li>
@@ -59,16 +60,31 @@
                     </ul>
                 </div>
                 <div class="col-6">
-                    <h6 class="text-muted mb-2">위험 속성 제거</h6>
+                    <h6 class="text-muted mb-2">위험 속성 제거 (25개)</h6>
                     <ul class="list-unstyled mb-0 caption">
                         <li>• on* 이벤트 핸들러 (전체)</li>
                         <li>• style (CSS 공격)</li>
                         <li>• srcdoc, formaction, action</li>
                         <li>• xlink:href, xmlns</li>
-                        <li>• autofocus, contenteditable</li>
+                        <li>• autofocus, contenteditable, tabindex</li>
                     </ul>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <h6 class="mb-2">보안 상수</h6>
+    <div class="card card--outlined card--sm mb-3">
+        <div class="card__body">
+            <table class="table table--sm mb-0">
+                <thead><tr><th>상수</th><th>개수</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>DANGEROUS_TAGS</code></td><td>30</td><td>위험 태그 (내용까지 제거)</td></tr>
+                    <tr><td><code>DANGEROUS_ATTRS</code></td><td>25</td><td>위험 속성 (poster는 URL 검증)</td></tr>
+                    <tr><td><code>DANGEROUS_PROTOCOLS</code></td><td>11</td><td>위험 프로토콜 (javascript:, data: 등)</td></tr>
+                    <tr><td><code>DANGEROUS_IDS</code></td><td>60</td><td>DOM Clobbering 방어 ID</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 

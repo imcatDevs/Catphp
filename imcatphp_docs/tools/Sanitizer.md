@@ -3,7 +3,7 @@
 | 항목 | 값 |
 | --- | --- |
 | 클래스 | `Cat\Sanitizer` |
-| 파일 | `catphp/Sanitizer.php` (약 1000줄) |
+| 파일 | `catphp/Sanitizer.php` (1041줄) |
 | Shortcut | `sanitizer()` |
 | 싱글턴 | `getInstance()` |
 | 의존 도구 | `DOMDocument` (PHP 내장) |
@@ -45,7 +45,8 @@ WYSIWYG 에디터, 댓글, 게시판 등 사용자 입력 HTML에서 XSS 공격 
 | `allowTables` | `allowTables(bool $v = true): self` | `self` | `<table>` 관련 태그 허용 |
 | `allowTags` | `allowTags(array $tags): self` | `self` | 추가 태그 허용 |
 | `allowAttrs` | `allowAttrs(array $attrs): self` | `self` | 추가 속성 허용 |
-| `allowProtocols` | `allowProtocols(array $protocols): self` | `self` | 허용 프로토콜 변경 (기본: http, https, mailto) |
+| `allowProtocols` | `allowProtocols(array $protocols): self` | `self` | 허용 프로토콜 **추가** (기본: http, https, mailto, tel, ftp) |
+| `setAllowedProtocols` | `setAllowedProtocols(array $protocols): self` | `self` | 허용 프로토콜 **설정** (기존 목록 교체) |
 
 ---
 
@@ -115,6 +116,19 @@ clean($html)
 
 ---
 
+## 보안 상수
+
+클래스 내 위험 요소 상수:
+
+| 상수 | 개수 | 설명 |
+| --- | --- | --- |
+| `DANGEROUS_TAGS` | 30 | 위험 태그 (내용까지 완전 제거) |
+| `DANGEROUS_ATTRS` | 25 | 위험 속성 (poster는 URL 검증으로 처리) |
+| `DANGEROUS_PROTOCOLS` | 11 | 위험 프로토콜 (javascript:, vbscript:, data:, blob:, ...) |
+| `DANGEROUS_IDS` | 60 | DOM Clobbering 방어 ID (document, window, __proto__, ...) |
+
+---
+
 ## 위험 태그 목록
 
 자동 제거되는 태그 (내용까지 완전 삭제):
@@ -140,7 +154,7 @@ clean($html)
 | --- | --- |
 | 이벤트 | `on*` (전체 패턴) |
 | 스타일 | `style` |
-| 스크립트 실행 | `srcdoc`, `formaction`, `action`, `poster`, `data` |
+| 스크립트 실행 | `srcdoc`, `formaction`, `action`, `data` |
 | 네임스페이스 | `xlink:href`, `xmlns`, `xmlns:xlink` |
 | 폼 관련 | `form`, `formmethod`, `formtarget`, `formenctype` |
 | 기타 | `autofocus`, `contenteditable`, `draggable`, `ping`, `tabindex` |
@@ -149,7 +163,7 @@ clean($html)
 
 ## DOM Clobbering 방어
 
-위험한 id/name 값 자동 제거:
+`DANGEROUS_IDS` 상수로 관리되는 위험 id/name 값 자동 제거:
 
 ```php
 // 차단되는 값 (소문자 기준)
