@@ -386,6 +386,17 @@ final class Migration
     /** 마이그레이션 파일 로드 */
     private function loadFile(string $file): array
     {
+        // 파일 존재 및 확장자 검증
+        if (!is_file($file) || !str_ends_with($file, '.php')) {
+            throw new \InvalidArgumentException("유효하지 않은 마이그레이션 파일: {$file}");
+        }
+
+        // 마이그레이션 파일 형식 검증 (보안)
+        $content = file_get_contents($file);
+        if ($content === false || !str_contains($content, "'up'") || !str_contains($content, "'down'")) {
+            throw new \InvalidArgumentException("마이그레이션 파일 형식이 올바르지 않습니다: {$file}");
+        }
+
         $result = require $file;
         return is_array($result) ? $result : [];
     }

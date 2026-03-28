@@ -525,13 +525,13 @@ public function download(string $url, string $savePath): bool {
 
 ### Phase 5 수정 권장 사항
 
-| 우선순위 | 항목 | 조치 |
-| --- | --- | --- |
-| **긴급** | SEC-H08 | `ip.trusted_proxies` 설정 가이드 문서화 |
-| **높음** | SEC-M05 | Rate limit 실패 시 예외 처리 |
-| **높음** | SEC-M06 | Migration 파일 검증 추가 |
-| **보통** | SEC-M07 | Upload 화이트리스트 모드 추가 |
-| **보통** | BUG-M06 | Http download 스트리밍 구현 |
+| 우선순위 | 항목 | 조치 | 상태 |
+| --- | --- | --- | --- |
+| **긴급** | SEC-H08 | `ip.trusted_proxies` 설정 가이드 문서화 | ✅ 경고 로그 추가 |
+| **높음** | SEC-M05 | Rate limit 실패 시 예외 처리 | ✅ RuntimeException |
+| **높음** | SEC-M06 | Migration 파일 검증 추가 | ✅ 형식 검증 |
+| **보통** | SEC-M07 | Upload 화이트리스트 모드 추가 | ✅ 미매핑 거부 |
+| **보통** | BUG-M06 | Http download 스트리밍 구현 | ✅ CURLOPT_FILE |
 
 ---
 

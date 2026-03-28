@@ -73,8 +73,14 @@ final class Ip
     /** 신뢰 프록시 확인 */
     private function isTrustedProxy(string $ip): bool
     {
-        // 빈 목록이면 모든 프록시 신뢰 (하위 호환)
+        // 빈 목록이면 모든 프록시 신뢰 (하위 호환) — ⚠ 보안 경고
         if (empty($this->trustedProxies)) {
+            // 운영 환경에서는 반드시 ip.trusted_proxies 설정 필요
+            static $warned = false;
+            if (!$warned && class_exists('Cat\\Log', false)) {
+                \logger()->warn('ip.trusted_proxies 미설정: 모든 프록시 신뢰 (IP 스푸핑 위험)');
+                $warned = true;
+            }
             return true;
         }
         return in_array($ip, $this->trustedProxies, true);

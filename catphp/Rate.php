@@ -35,7 +35,8 @@ final class Rate
 
         $fp = fopen($file, 'c+');
         if ($fp === false) {
-            return true;
+            // 파일 접근 실패 시 명시적 예외 (Rate Limit 무효화 방지)
+            throw new \RuntimeException("Rate limit 파일 접근 실패: {$file}");
         }
 
         flock($fp, LOCK_EX);

@@ -133,14 +133,42 @@ final class Http
         return new HttpResponse($statusCode, substr((string) $raw, $headerSize), '', substr((string) $raw, 0, $headerSize));
     }
 
-    /** 파일 다운로드 */
+    /** 파일 다운로드 (스트리밍 방식 — 메모리 효율) */
     public function download(string $url, string $savePath): bool
     {
-        $response = $this->get($url);
-        if ($response->status() >= 200 && $response->status() < 300) {
-            return file_put_contents($savePath, $response->body(), LOCK_EX) !== false;
+        // SSRF 방어: 프라이빗/내부 IP 차단
+        if (!$this->allowPrivateIp) {
+            $error = self::validateUrlSsrf($url);
+            if ($error !== null) {
+                return false;
+            }
         }
-        return false;
+
+        $ch = curl_init($url);
+        $fp = fopen($savePath, 'w');
+        if ($fp === false) {
+            return false;
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_FILE           => $fp,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS      => 5,
+            CURLOPT_TIMEOUT        => $this->timeoutSec,
+        ]);
+
+        $result = curl_exec($ch);
+        $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+        fclose($fp);
+
+        if ($result === false || $statusCode < 200 || $statusCode >= 300) {
+            @unlink($savePath);
+            return false;
+        }
+
+        return true;
     }
 
     /** 프라이빗/내부 IP 요청 허용 (SSRF 방어 해제) */

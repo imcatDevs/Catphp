@@ -136,9 +136,9 @@ final class Upload
             'xlsx' => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
         ];
 
-        // 매핑에 없는 확장자는 통과 (커스텀 확장자 허용)
+        // 화이트리스트 기반: 매핑에 없는 확장자는 거부
         if (!isset($map[$ext])) {
-            return true;
+            return false;
         }
 
         return in_array($mime, $map[$ext], true);
