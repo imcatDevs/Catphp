@@ -217,13 +217,33 @@ foreach ($iterator as $file) {
     $fullPath = str_replace(['/', '\\'], '/', $file->getRealPath());
     $buildDirNorm = str_replace(['/', '\\'], '/', $buildDir);
     $relPath = str_replace($buildDirNorm . '/', '', $fullPath);
-    $depth = substr_count($relPath, '/') - 1; // 파일명 제외
+    $depth = max(0, substr_count($relPath, '/') - 1); // 파일명 제외, 최소 0
     $prefix = $depth > 0 ? str_repeat('../', $depth) : './';
     
     // src="/...", href="/..." 변환
     $content = preg_replace('#(src|href)="(/[^"]+)"#', '$1="' . $prefix . '$2"', $content);
     // / 제거 (prefix에 이미 포함)
     $content = str_replace('="' . $prefix . '/', '="' . $prefix, $content);
+    
+    // SPA fetch 경로 변환: /tool/db → ./tools/db.html
+    // index.html에만 SPA 라우팅 코드가 있음
+    if ($depth === 0) {
+        // fetch(path) → fetch(toStaticPath(path))
+        // toStaticPath 함수 추가
+        $spaPathConverter = <<<'JS'
+        // 정적 사이트용 경로 변환
+        function toStaticPath(path) {
+            if (path === '/home') return './home.html';
+            if (path.startsWith('/tool/')) return './tools/' + path.slice(6) + '.html';
+            if (path.startsWith('/demo/')) return './demo/' + path.slice(6) + '.html';
+            return path;
+        }
+JS;
+        // SPA navigate 함수 앞에 toStaticPath 함수 추가
+        $content = str_replace('async function spaNavigate(', $spaPathConverter . "\n\n        async function spaNavigate(", $content);
+        // fetch(path) → fetch(toStaticPath(path))
+        $content = str_replace('const res = await fetch(path);', 'const res = await fetch(toStaticPath(path));', $content);
+    }
     
     file_put_contents($file->getRealPath(), $content);
 }

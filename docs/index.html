@@ -387,6 +387,14 @@
 
         let currentPath = '';
 
+                // 정적 사이트용 경로 변환
+        function toStaticPath(path) {
+            if (path === '/home') return './home.html';
+            if (path.startsWith('/tool/')) return './tools/' + path.slice(6) + '.html';
+            if (path.startsWith('/demo/')) return './demo/' + path.slice(6) + '.html';
+            return path;
+        }
+
         async function spaNavigate(path, updateHash = true) {
             if (path === currentPath) return;
             currentPath = path;
@@ -394,7 +402,7 @@
                 content.style.opacity = '0.5';
                 content.insertAdjacentHTML('afterbegin',
                     '<div class="progress progress--primary progress--indeterminate" id="spaLoader" style="position:sticky;top:0;z-index:10;border-radius:0;"><div class="progress__bar"></div></div>');
-                const res = await fetch(path);
+                const res = await fetch(toStaticPath(path));
                 if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
                 const html = await res.text();
                 content.innerHTML = html;
