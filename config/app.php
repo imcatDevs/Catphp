@@ -1,33 +1,33 @@
 <?php declare(strict_types=1);
 
 return [
-    'app'       => ['debug' => true, 'timezone' => 'Asia/Seoul', 'key' => ''],  // php cli.php key:generate 로 생성
+    'app'       => ['debug' => false, 'timezone' => 'Asia/Seoul', 'key' => 'base64:xYFzbDl013i7OwJjKJIdMK5rF1qAy70l28FB49XhAHI='],
     'db'        => ['driver' => 'pgsql', 'host' => '127.0.0.1', 'port' => 5432, 'dbname' => 'catphp', 'user' => 'postgres', 'pass' => '', 'charset' => 'utf8'],
     'cache'     => ['path' => __DIR__ . '/../storage/cache', 'ttl' => 3600],
     'log'       => ['path' => __DIR__ . '/../storage/logs', 'level' => 'debug'],
-    'auth'      => ['secret' => '', 'ttl' => 86400, 'algo' => 'Argon2id'],  // php cli.php key:generate 로 생성
-    'encrypt'   => ['key' => ''],  // php cli.php key:generate 로 생성
+    'auth'      => ['secret' => 'd7dfa428afa6b7ca126662da6b0d8a9d0fe515642e9a670900e605edc6ae8ab6', 'ttl' => 86400, 'algo' => 'Argon2id'],
+    'encrypt'   => ['key' => 'base64:rRIGw7onyLYQI4ZS8n13ANvzEh1PkiMi1GU1iLJv/34='],
     'firewall'  => ['path' => __DIR__ . '/../storage/firewall'],
     'ip'        => ['provider' => 'api', 'mmdb_path' => null, 'cache_ttl' => 86400, 'trusted_proxies' => []],
     'rate'      => ['storage' => 'cache', 'path' => __DIR__ . '/../storage/rate'],
     'cors'      => ['origins' => ['*'], 'methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 'headers' => ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-TOKEN'], 'max_age' => 86400],
     'upload'    => ['max_size' => '10M', 'allowed' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'zip']],
     'view'      => ['path' => __DIR__ . '/../Public/views'],
-    'session'   => ['lifetime' => 7200, 'path' => '/', 'secure' => false, 'httponly' => true, 'samesite' => 'Lax'],
+    'session'   => ['lifetime' => 7200, 'path' => '/', 'secure' => true, 'httponly' => true, 'samesite' => 'Lax'],
     'cookie'    => ['encrypt' => true, 'samesite' => 'Lax', 'secure' => false],
     'guard'     => ['auto_ban' => false, 'max_body_size' => '10M'],
     'telegram'  => ['bot_token' => '', 'chat_id' => '', 'admin_chat' => ''],
     'image'     => ['driver' => 'gd', 'quality' => 85],
     'perm'      => ['roles' => ['admin', 'editor', 'user']],
     'search'    => ['driver' => 'fulltext', 'cache_ttl' => 300],
-    'geo'       => ['default' => 'ko', 'supported' => ['ko', 'en'], 'path' => __DIR__ . '/../lang'],
+    'geo'       => ['default' => 'ko', 'supported' => ['ko', 'en', 'zh'], 'path' => __DIR__ . '/../lang'],
     'feed'      => ['limit' => 20, 'cache_ttl' => 3600],
     'spider'    => ['user_agent' => 'CatPHP Spider/1.0', 'timeout' => 30],
     'redis'     => ['host' => '127.0.0.1', 'port' => 6379, 'password' => '', 'database' => 0, 'prefix' => 'catphp:', 'timeout' => 2],
     'mail'      => ['host' => 'localhost', 'port' => 587, 'username' => '', 'password' => '', 'encryption' => 'tls', 'from_email' => '', 'from_name' => 'CatPHP'],
     'queue'     => ['driver' => 'redis', 'default' => 'default'],
     'storage'   => ['default' => 'local', 'disks' => ['local' => ['driver' => 'local', 'root' => __DIR__ . '/../storage/app'], 'public' => ['driver' => 'local', 'root' => __DIR__ . '/../Public/uploads', 'url' => '/uploads']]],
-    'hash'      => ['algo' => 'sha256'],
+    'hash'      => ['algo' => 'xxh3'],
     'migration' => ['path' => __DIR__ . '/../migrations', 'table' => 'migrations'],
     'captcha'   => ['width' => 150, 'height' => 50, 'length' => 5, 'session_key' => '_captcha', 'charset' => '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'],
     'user'      => ['table' => 'users', 'primary_key' => 'id', 'hidden' => ['password']],
@@ -41,28 +41,5 @@ return [
     'backup'    => ['path' => __DIR__ . '/../storage/backup', 'keep_days' => 30, 'compress' => false],
     'webhook'   => ['secret' => '', 'timeout' => 10, 'retry' => 0, 'retry_delay' => 1, 'log' => false],
     'dbview'    => [],
-    'swoole'    => [
-        'host' => '0.0.0.0', 'port' => 9501, 'mode' => 'process',
-        'worker_num' => 0,          // 0 = CPU 코어 수 자동
-        'task_worker_num' => 4,
-        'max_request' => 10000,     // 워커당 최대 요청 (메모리 누수 방지)
-        'max_conn' => 10000,
-        'daemonize' => false,
-        'dispatch_mode' => 2,       // FD 기반 디스패치
-        'open_tcp_nodelay' => true,
-        'enable_coroutine' => true,
-        'log_file' => __DIR__ . '/../storage/logs/swoole.log',
-        'log_level' => 2,           // 0=DEBUG, 1=TRACE, 2=INFO, 3=NOTICE, 4=WARNING, 5=ERROR
-        'pid_file' => __DIR__ . '/../storage/swoole.pid',
-        'static_handler' => false,
-        'document_root' => '',
-        'hot_reload' => false,      // 개발 전용
-        'hot_reload_paths' => [],
-        'heartbeat_idle' => 600,
-        'heartbeat_check' => 60,
-        'ssl_cert' => '', 'ssl_key' => '',
-        'buffer_output_size' => 2097152,   // 2MB
-        'package_max_length' => 2097152,   // 2MB
-        'pool' => ['db' => 0, 'redis' => 0],  // 0 = 비활성, >0 = 풀 크기
-    ],
+    'swoole'    => ['host' => '0.0.0.0', 'port' => 9501, 'mode' => 'process', 'worker_num' => 0, 'task_worker_num' => 4, 'max_request' => 10000, 'max_conn' => 10000, 'daemonize' => false, 'dispatch_mode' => 2, 'open_tcp_nodelay' => true, 'enable_coroutine' => true, 'log_file' => __DIR__ . '/../storage/logs/swoole.log', 'log_level' => 2, 'pid_file' => __DIR__ . '/../storage/swoole.pid', 'static_handler' => false, 'document_root' => '', 'hot_reload' => false, 'hot_reload_paths' => [], 'heartbeat_idle' => 600, 'heartbeat_check' => 60, 'ssl_cert' => '', 'ssl_key' => '', 'buffer_output_size' => 2097152, 'package_max_length' => 2097152, 'pool' => ['db' => 0, 'redis' => 0]],
 ];

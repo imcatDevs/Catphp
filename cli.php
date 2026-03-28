@@ -19,7 +19,7 @@ cli()->command('serve',          '개발 서버 실행',        function() {
     passthru("php -S " . escapeshellarg($host) . ":" . escapeshellarg($port) . " -t " . escapeshellarg($docRoot));
 });
 
-cli()->command('cache:clear',    '캐시 전체 삭제',        fn() => cache()->clear() || cli()->success('Done'));
+cli()->command('cache:clear',    '캐시 전체 삭제',        function() { cache()->clear(); cli()->success('Done'); });
 cli()->command('firewall:list',  '차단 IP 목록',          fn() => cli()->table(['IP', '시간'], firewall()->bannedList()));
 cli()->command('firewall:ban',   'IP 차단',              fn() => ($ip = cli()->arg(0)) ? firewall()->ban($ip) && cli()->success("차단: {$ip}") : cli()->error('IP를 입력하세요'));
 cli()->command('firewall:unban', 'IP 차단 해제',          fn() => ($ip = cli()->arg(0)) ? firewall()->unban($ip) && cli()->success("해제: {$ip}") : cli()->error('IP를 입력하세요'));

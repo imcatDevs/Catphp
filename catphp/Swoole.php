@@ -399,20 +399,20 @@ final class Swoole
             $pidFile = dirname(__DIR__) . '/storage/swoole.pid';
         }
 
-        if (!is_file($pidFile)) {
-            return ['running' => false, 'pid' => 0];
-        }
-
-        $pid = (int) file_get_contents($pidFile);
+        $pid = 0;
         $running = false;
 
-        if ($pid > 0) {
-            if (function_exists('posix_kill')) {
-                $running = posix_kill($pid, 0);
-            } else {
-                $running = stripos(PHP_OS, 'WIN') === 0
-                    ? (bool) exec("tasklist /FI \"PID eq {$pid}\" 2>NUL | find \"{$pid}\"")
-                    : (bool) exec("kill -0 {$pid} 2>/dev/null && echo 1");
+        if (is_file($pidFile)) {
+            $pid = (int) file_get_contents($pidFile);
+
+            if ($pid > 0) {
+                if (function_exists('posix_kill')) {
+                    $running = posix_kill($pid, 0);
+                } else {
+                    $running = stripos(PHP_OS, 'WIN') === 0
+                        ? (bool) exec("tasklist /FI \"PID eq {$pid}\" 2>NUL | find \"{$pid}\"")
+                        : (bool) exec("kill -0 {$pid} 2>/dev/null && echo 1");
+                }
             }
         }
 
