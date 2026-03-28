@@ -105,7 +105,12 @@ final class DB
         return $this->pdo;
     }
 
-    /** 이뮤터블 체이닝을 위한 클론 */
+    /**
+     * 이뮤터블 체이닝을 위한 클론
+     *
+     * 주의: PDO 인스턴스는 공유됩니다. 여러 쿼리 빌더 인스턴스가
+     * 동일한 연결을 사용하므로 트랜잭션 내에서 교차 사용 시 주의하세요.
+     */
     private function clone(): self
     {
         return clone $this;

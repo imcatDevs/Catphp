@@ -168,11 +168,115 @@ final class Ip
         return $result;
     }
 
-    /** GeoIP 데이터 조회 (API 폴백) */
+    /** GeoIP 데이터 조회 (MMDB 우선, HTTPS API 폴백) */
     private function fetchGeoData(string $ip): array
     {
-        // API 방식 (ip-api.com 무료 — HTTP 전용, HTTPS는 Pro 플랜 필요)
-        // ⚠ 프로덕션에서는 HTTPS 지원 GeoIP API 또는 로컬 MMDB 사용 권장
+        // 1. MMDB 방식 (가장 안전하고 빠름)
+        if ($this->provider === 'mmdb' && $this->mmdbPath !== null) {
+            $result = $this->fetchFromMmdb($ip);
+            if ($result !== null) {
+                return $result;
+            }
+        }
+
+        // 2. HTTPS API 방식 (보안)
+        if ($this->provider === 'api') {
+            $result = $this->fetchFromHttpsApi($ip);
+            if ($result !== null) {
+                return $result;
+            }
+        }
+
+        // 3. HTTP API 폴백 (보안 경고)
+        if (class_exists('Cat\\Log', false)) {
+            \logger()->warn('GeoIP: HTTP API 사용 중 — MITM 위험. ip.provider=mmdb 또는 HTTPS API 사용 권장');
+        }
+        return $this->fetchFromHttpApi($ip);
+    }
+
+    /** MMDB에서 GeoIP 조회 (MaxMind GeoLite2) */
+    private function fetchFromMmdb(string $ip): ?array
+    {
+        if ($this->mmdbPath === null || !file_exists($this->mmdbPath)) {
+            return null;
+        }
+
+        // MaxMind DB Reader 확장 확인
+        if (!class_exists(\MaxMind\Db\Reader::class)) {
+            // 순수 PHP 리더 폴백
+            return $this->fetchFromMmdbPhp($ip);
+        }
+
+        try {
+            $reader = new \MaxMind\Db\Reader($this->mmdbPath);
+            $data = $reader->get($ip);
+            $reader->close();
+
+            if (!is_array($data)) {
+                return null;
+            }
+
+            return [
+                'ip'      => $ip,
+                'country' => $data['country']['iso_code'] ?? null,
+                'city'    => $data['city']['names']['en'] ?? null,
+                'lat'     => $data['location']['latitude'] ?? null,
+                'lon'     => $data['location']['longitude'] ?? null,
+            ];
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /** MMDB 순수 PHP 리더 (확장 없을 때) */
+    private function fetchFromMmdbPhp(string $ip): ?array
+    {
+        // composer require maxmind-db/reader 필요
+        if (!class_exists(\MaxMind\Db\Reader::class)) {
+            return null;
+        }
+        return $this->fetchFromMmdb($ip);
+    }
+
+    /** HTTPS API에서 GeoIP 조회 (ipapi.co 무료 1000회/월) */
+    private function fetchFromHttpsApi(string $ip): ?array
+    {
+        $url = "https://ipapi.co/{$ip}/json/";
+
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 3,
+                'ignore_errors' => true,
+                'header' => "User-Agent: CatPHP-GeoIP/1.0\r\n",
+            ],
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+            ],
+        ]);
+
+        $response = @file_get_contents($url, false, $context);
+        if ($response === false) {
+            return null;
+        }
+
+        $data = json_decode($response, true);
+        if (!is_array($data) || isset($data['error'])) {
+            return null;
+        }
+
+        return [
+            'ip'      => $ip,
+            'country' => $data['country_code'] ?? null,
+            'city'    => $data['city'] ?? null,
+            'lat'     => $data['latitude'] ?? null,
+            'lon'     => $data['longitude'] ?? null,
+        ];
+    }
+
+    /** HTTP API에서 GeoIP 조회 (마지막 폴백, 보안 경고) */
+    private function fetchFromHttpApi(string $ip): array
+    {
         $url = "http://ip-api.com/json/{$ip}?fields=status,country,countryCode,city,lat,lon";
 
         $context = stream_context_create([

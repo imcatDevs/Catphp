@@ -151,7 +151,13 @@ final class Paginate
 
     // ── DB 연동 ──
 
-    /** DB 쿼리 결과로 페이지네이션 생성 */
+    /**
+     * DB 쿼리 결과로 페이지네이션 생성
+     *
+     * 주의: 내부적으로 2회 쿼리가 실행됩니다 (count + select).
+     * 대용량 테이블에서는 total 값을 캐싱하거나
+     * fromArray()를 사용하여 미리 계산된 total을 전달하는 것을 권장합니다.
+     */
     public function fromQuery(DB $query, int $perPage = 20): self
     {
         $c = clone $this;

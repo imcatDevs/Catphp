@@ -257,13 +257,11 @@ final class Session
         return $this->increment($key, -$amount);
     }
 
-    /** CSRF 토큰 생성/가져오기 */
+    /** CSRF 토큰 생성/가져오기 (Csrf 도구 위임) */
     public function token(): string
     {
-        if (!$this->has('_token')) {
-            $this->set('_token', bin2hex(random_bytes(32)));
-        }
-        return (string) $this->get('_token');
+        // Csrf 도구에 위임하여 토큰 일원화
+        return \csrf()->token();
     }
 
     // ── 내부 ──
