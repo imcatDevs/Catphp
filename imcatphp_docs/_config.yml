@@ -9,6 +9,9 @@ lang: ko-KR
 # Theme (GitHub Pages supported)
 theme: jekyll-theme-primer
 
+# Show future posts
+future: true
+
 # Navigation
 nav:
   - title: "빠른 시작"
