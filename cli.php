@@ -1118,6 +1118,8 @@ cli()->command('schedule:run', '스케줄 실행 (크론탭용)', function () {
     $count = schedule()->run();
     if ($count > 0) {
         cli()->success("{$count}개 태스크 실행 완료");
+    } else {
+        cli()->info('실행할 스케줄 없음');
     }
 });
 
@@ -1497,10 +1499,18 @@ cli()->command('sitemap:generate', '사이트맵 XML 생성', function () {
 
 cli()->command('db:backup', 'DB 백업', function () {
     $path = cli()->option('path', null);
-    $result = backup()->database($path);
-    $size = filesize($result);
-    $sizeStr = $size > 1048576 ? round($size / 1048576, 2) . ' MB' : round($size / 1024, 1) . ' KB';
-    cli()->success("백업 완료: {$result} ({$sizeStr})");
+    try {
+        $result = backup()->database($path);
+        if (!is_file($result)) {
+            cli()->error('백업 파일 생성 실패');
+            return;
+        }
+        $size = filesize($result);
+        $sizeStr = $size > 1048576 ? round($size / 1048576, 2) . ' MB' : round($size / 1024, 1) . ' KB';
+        cli()->success("백업 완료: {$result} ({$sizeStr})");
+    } catch (\Throwable $e) {
+        cli()->error('백업 실패: ' . $e->getMessage());
+    }
 });
 
 cli()->command('db:restore', 'DB 복원', function () {
@@ -1708,10 +1718,18 @@ cli()->command('swoole:status', 'Swoole 서버 상태 확인', function () {
 // ── seed ──
 
 cli()->command('db:seed',        'DB 시드 데이터',       function() {
-    if (cli()->confirm('실행?')) {
-        // seed 로직
-        cli()->success('Seed 완료');
+    $seeder = cli()->arg(0);
+    if (!$seeder) {
+        cli()->error('사용법: php cli.php db:seed <SeederClass>');
+        return;
     }
+    $seederFile = __DIR__ . '/seeders/' . $seeder . '.php';
+    if (!is_file($seederFile)) {
+        cli()->error("시더 파일 없음: {$seederFile}");
+        return;
+    }
+    require $seederFile;
+    cli()->success("Seed 완료: {$seeder}");
 });
 
 cli()->run();
