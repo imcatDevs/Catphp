@@ -30,6 +30,69 @@ namespace Cat;
  */
 final class Sanitizer
 {
+    // ─────────────────────────────────────────────────────────────────────
+    //  위험 요소 상수 (유지보수 용이)
+    // ─────────────────────────────────────────────────────────────────────
+
+    /** @var array<string> 위험 태그 (내용까지 완전 제거) */
+    private const DANGEROUS_TAGS = [
+        // 스크립트/스타일
+        'script', 'style', 'noscript', 'template', 'slot',
+        // 임베드/프레임
+        'iframe', 'frame', 'frameset', 'object', 'embed', 'applet',
+        // 메타/링크
+        'meta', 'link', 'base',
+        // 폼 (폼 기반 XSS 방지)
+        'form', 'input', 'button', 'select', 'textarea', 'option', 'optgroup',
+        // SVG 애니메이션 (SMIL 기반 XSS)
+        'animate', 'animatemotion', 'animatetransform', 'set', 'animacolor',
+        // 기타 위험 태그
+        'marquee', 'bgsound', 'xml', 'xss',
+    ];
+
+    /** @var array<string> 위험 속성 */
+    private const DANGEROUS_ATTRS = [
+        // 스크립트/코드 실행 관련
+        'srcdoc',           // iframe 내 HTML
+        'formaction',       // 폼 액션 오버라이드
+        'action',           // 폼 액션
+        'poster',           // 비디오 포스터 (javascript: 가능)
+        'data',             // object 데이터
+        'code',             // applet 코드
+        'codebase',         // applet 코드베이스
+        // 네임스페이스/외부 참조
+        'xlink:href',       // SVG 외부 참조
+        'xmlns',            // XML 네임스페이스
+        'xmlns:xlink',      // XLink 네임스페이스
+        // 스타일 관련 (CSS 공격)
+        'style',            // 인라인 스타일 (expression 등)
+        // 폼 관련
+        'form',             // 폼 ID 참조
+        'formmethod',       // 폼 메서드 오버라이드
+        'formtarget',       // 폼 타겟 오버라이드
+        'formenctype',      // 폼 인코딩 오버라이드
+        'formnovalidate',   // 폼 검증 비활성화
+        // 추적/네비게이션
+        'ping',             // 링크 추적
+        // 기타 위험 속성
+        'autofocus',        // 자동 포커스 + onfocus 조합
+        'contenteditable',  // 사용자 DOM 조작 가능
+        'draggable',        // 드래그 이벤트 트리거
+        'dropzone',         // 드롭 이벤트 트리거
+        'contextmenu',      // 컨텍스트 메뉴 이벤트
+        'accesskey',        // 키보드 단축키 이벤트
+        'tabindex',         // 포커스 순서 (onfocus 트리거)
+        'translate',        // 번역 제어
+        'spellcheck',       // 맞춤법 검사 이벤트
+    ];
+
+    /** @var array<string> 위험 URL 프로토콜 */
+    private const DANGEROUS_PROTOCOLS = [
+        'javascript:', 'vbscript:', 'data:', 'blob:',
+        'file:', 'about:', 'chrome:', 'mhtml:', 'mocha:',
+        'livescript:', 'jscript:',
+    ];
+
     private static ?self $instance = null;
 
     /** @var array<string> 허용 태그 */
@@ -290,29 +353,13 @@ final class Sanitizer
         // 제거할 노드들을 나중에 한 번에 처리
         $toRemove = [];
 
-        // 위험 태그 (내용까지 제거)
-        $dangerousTags = [
-            // 스크립트/스타일
-            'script', 'style', 'noscript', 'template', 'slot',
-            // 임베드/프레임
-            'iframe', 'frame', 'frameset', 'object', 'embed', 'applet',
-            // 메타/링크
-            'meta', 'link', 'base',
-            // 폼 (폼 기반 XSS 방지)
-            'form', 'input', 'button', 'select', 'textarea', 'option', 'optgroup',
-            // SVG 애니메이션 (SMIL 기반 XSS)
-            'animate', 'animatemotion', 'animatetransform', 'set', 'animacolor',
-            // 기타 위험 태그
-            'marquee', 'bgsound', 'xml', 'xss',
-        ];
-
         /** @var \DOMNode $child */
         foreach ($node->childNodes as $child) {
             if ($child->nodeType === XML_ELEMENT_NODE) {
                 $tagName = strtolower($child->nodeName);
 
                 // 위험 태그는 내용까지 완전 제거
-                if (in_array($tagName, $dangerousTags, true)) {
+                if (in_array($tagName, self::DANGEROUS_TAGS, true)) {
                     $toRemove[] = $child;
                     continue;
                 }
@@ -354,7 +401,7 @@ final class Sanitizer
                 $tagName = strtolower($child->nodeName);
 
                 // 위험 태그는 내용까지 완전 제거
-                if (in_array($tagName, $dangerousTags, true)) {
+                if (in_array($tagName, self::DANGEROUS_TAGS, true)) {
                     $child->parentNode->removeChild($child);
                     continue;
                 }
@@ -453,42 +500,7 @@ final class Sanitizer
             }
 
             // ── 위험 속성 명시적 차단 ──
-            $dangerousAttrs = [
-                // 스크립트/코드 실행 관련
-                'srcdoc',           // iframe 내 HTML
-                'formaction',       // 폼 액션 오버라이드
-                'action',           // 폼 액션
-                'poster',           // 비디오 포스터 (javascript: 가능)
-                'data',             // object 데이터
-                'code',             // applet 코드
-                'codebase',         // applet 코드베이스
-                // 네임스페이스/외부 참조
-                'xlink:href',       // SVG 외부 참조
-                'xmlns',            // XML 네임스페이스
-                'xmlns:xlink',      // XLink 네임스페이스
-                // 스타일 관련 (CSS 공격)
-                'style',            // 인라인 스타일 (expression 등)
-                // 폼 관련
-                'form',             // 폼 ID 참조
-                'formmethod',       // 폼 메서드 오버라이드
-                'formtarget',       // 폼 타겟 오버라이드
-                'formenctype',      // 폼 인코딩 오버라이드
-                'formnovalidate',   // 폼 검증 비활성화
-                // 추적/네비게이션
-                'ping',             // 링크 추적
-                // 기타 위험 속성
-                'autofocus',        // 자동 포커스 + onfocus 조합
-                'contenteditable',  // 사용자 DOM 조작 가능
-                'draggable',        // 드래그 이벤트 트리거
-                'dropzone',         // 드롭 이벤트 트리거
-                'contextmenu',      // 컨텍스트 메뉴 이벤트
-                'accesskey',        // 키보드 단축키 이벤트
-                'tabindex',         // 포커스 순서 (onfocus 트리거)
-                'translate',        // 번역 제어
-                'spellcheck',       // 맞춤법 검사 이벤트
-            ];
-
-            if (in_array($decodedName, $dangerousAttrs, true)) {
+            if (in_array($decodedName, self::DANGEROUS_ATTRS, true)) {
                 $toRemove[] = $attr;
                 continue;
             }
@@ -559,13 +571,7 @@ final class Sanitizer
         // ── 4. 위험 프로토콜 직접 검사 (parse_url 우회 방어) ──
         // parse_url은 "javascript:alert(1)"을 scheme으로 파싱하지만
         // "java\tscript:" 등은 파싱 실패할 수 있음
-        $dangerousPrefixes = [
-            'javascript:', 'vbscript:', 'data:', 'blob:',
-            'file:', 'about:', 'chrome:', 'mhtml:', 'mocha:',
-            'livescript:', 'mocha:', 'jscript:',
-        ];
-
-        foreach ($dangerousPrefixes as $prefix) {
+        foreach (self::DANGEROUS_PROTOCOLS as $prefix) {
             if (str_starts_with($lowerUrl, $prefix)) {
                 return false;
             }
@@ -581,7 +587,7 @@ final class Sanitizer
         }
         $lowerDecoded = strtolower($decodedUrl);
 
-        foreach ($dangerousPrefixes as $prefix) {
+        foreach (self::DANGEROUS_PROTOCOLS as $prefix) {
             if (str_starts_with($lowerDecoded, $prefix)) {
                 return false;
             }
@@ -597,7 +603,7 @@ final class Sanitizer
         }
         $lowerUrlDecoded = strtolower($urlDecoded);
 
-        foreach ($dangerousPrefixes as $prefix) {
+        foreach (self::DANGEROUS_PROTOCOLS as $prefix) {
             if (str_starts_with($lowerUrlDecoded, $prefix)) {
                 return false;
             }
@@ -947,6 +953,17 @@ final class Sanitizer
     public function setAllowedProtocols(array $protocols): self
     {
         $this->allowedProtocols = $protocols;
+        return $this;
+    }
+
+    /**
+     * 허용 프로토콜 추가 (기존 목록에 추가)
+     *
+     * @param array<string> $protocols
+     */
+    public function allowProtocols(array $protocols): self
+    {
+        $this->allowedProtocols = array_merge($this->allowedProtocols, $protocols);
         return $this;
     }
 
