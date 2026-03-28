@@ -436,3 +436,114 @@ Api, Auth, Backup, Cli, Cookie, Cors, Csrf, DB, DbView, Excel, Feed, Firewall, F
 | 검증 결과 양호 | 2건 (Backup, Excel) |
 | 심층 검토 추가 발견 | **0건** |
 | **잔여 문제** | 29건 (주로 Low 우선순위) |
+
+---
+
+## Phase 5: 추가 보안 분석 (2026-03-28)
+
+> 사용자 제공 종합 분석 보고서 기반 코드 검증
+
+### 새로 발견된 문제
+
+#### 🟠 High
+
+| ID | 파일 | 문제 | 설명 |
+| --- | --- | --- | --- |
+| SEC-H08 | `Ip.php:77` | trusted_proxies 기본값 | 빈 배열이면 모든 프록시 신뢰 → IP 스푸핑 가능 |
+
+**SEC-H08 상세**:
+```php
+// Ip.php:74-79
+private function isTrustedProxy(string $ip): bool {
+    if (empty($this->trustedProxies)) {
+        return true;  // ⚠️ 모든 프록시 신뢰
+    }
+}
+```
+- **영향**: 공격자가 `X-Forwarded-For` 헤더 위조 → Firewall, Rate Limiting 우회
+- **권장**: 운영 환경에서 `ip.trusted_proxies` 필수 설정 가이드 문서화
+
+#### 🟡 Medium
+
+| ID | 파일 | 문제 | 설명 |
+| --- | --- | --- | --- |
+| SEC-M05 | `Rate.php:37` | fopen 실패 시 무시 | `return true` → Rate Limit 무효화 |
+| SEC-M06 | `Migration.php:389` | PHP 파일 직접 require | 악의적 파일 실행 가능 |
+| SEC-M07 | `Upload.php:140` | 미매핑 확장자 통과 | 화이트리스트 미적용 |
+| BUG-M06 | `Http.php:139` | download 메모리 로드 | 대용량 파일 시 메모리 부족 |
+
+**SEC-M05 상세**:
+```php
+// Rate.php:36-39
+$fp = fopen($file, 'c+');
+if ($fp === false) {
+    return true;  // ⚠️ 실패 시 제한 무시
+}
+```
+- **영향**: 디스크 풀/권한 부족 시 Rate Limit 무효
+- **권장**: 실패 시 예외 또는 명시적 거부
+
+**SEC-M06 상세**:
+```php
+// Migration.php:387-391
+private function loadFile(string $file): array {
+    $result = require $file;  // ⚠️ 직접 실행
+    return is_array($result) ? $result : [];
+}
+```
+- **영향**: 마이그레이션 디렉토리에 악의적 PHP 파일 존재 시 실행
+- **권장**: 파일 형식 검증 추가
+
+**SEC-M07 상세**:
+```php
+// Upload.php:139-142
+if (!isset($map[$ext])) {
+    return true;  // ⚠️ 매핑 없는 확장자 통과
+}
+```
+- **영향**: SVG 내 XSS, 알 수 없는 확장자 우회
+- **권장**: 화이트리스트 기반으로 변경, SVG 별도 검사
+
+**BUG-M06 상세**:
+```php
+// Http.php:137-144
+public function download(string $url, string $savePath): bool {
+    $response = $this->get($url);  // ⚠️ 전체 메모리 로드
+    return file_put_contents($savePath, $response->body()) !== false;
+}
+```
+- **영향**: 수 GB 파일 다운로드 시 메모리 부족
+- **권장**: `CURLOPT_FILE` 스트리밍 사용
+
+### 검증 결과 이미 방어됨
+
+| 항목 | 결과 |
+| --- | --- |
+| SEC-H02: Router extract() | ✅ static 클로저로 격리 완료 |
+| BUG-5: Router render() 파일 확인 | ✅ realpath 검증 존재 |
+| Collection flatten() 깊이 | ✅ depth 파라미터로 제한 가능 |
+
+### Phase 5 수정 권장 사항
+
+| 우선순위 | 항목 | 조치 |
+| --- | --- | --- |
+| **긴급** | SEC-H08 | `ip.trusted_proxies` 설정 가이드 문서화 |
+| **높음** | SEC-M05 | Rate limit 실패 시 예외 처리 |
+| **높음** | SEC-M06 | Migration 파일 검증 추가 |
+| **보통** | SEC-M07 | Upload 화이트리스트 모드 추가 |
+| **보통** | BUG-M06 | Http download 스트리밍 구현 |
+
+---
+
+## 최종 집계 (갱신)
+
+| 항목 | 결과 |
+| --- | --- |
+| 총 발견 문제 | **41건** |
+| Critical | 0건 (기존 2건 검증 완료) |
+| High | 5건 (기존 4건 + SEC-H08) |
+| Medium | 16건 (기존 12건 + 4건) |
+| Low | 20건 (기존 15건 + 5건) |
+| **수정 완료** | 5건 |
+| **검증 양호** | 4건 |
+| **잔여 문제** | 32건 |
