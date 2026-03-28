@@ -6,7 +6,8 @@ namespace Cat;
  * Cat\Perm — 역할/권한 관리 (RBAC)
  *
  * @config array{
- *     roles?: array<string>,  // 역할 목록 (기본 ['admin', 'editor', 'user'])
+ *     roles?: array<string>,     // 역할 목록 (기본 ['admin', 'editor', 'user'])
+ *     super_role?: string,       // 슈퍼관리자 역할 (기본 'admin')
  * } perm  → config('perm.roles')
  */
 final class Perm
@@ -18,12 +19,14 @@ final class Perm
 
     private function __construct(
         private readonly array $roles,
+        private readonly string $superRole,
     ) {}
 
     public static function getInstance(): self
     {
         return self::$instance ??= new self(
             roles: \config('perm.roles') ?? ['admin', 'editor', 'user'],
+            superRole: \config('perm.super_role') ?? 'admin',
         );
     }
 
@@ -44,8 +47,8 @@ final class Perm
 
         $userRole = $user['role'] ?? 'user';
 
-        // admin은 모든 권한
-        if ($userRole === 'admin') {
+        // 슈퍼관리자는 모든 권한 (config로 설정 가능)
+        if ($userRole === $this->superRole) {
             return true;
         }
 

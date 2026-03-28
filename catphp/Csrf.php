@@ -42,6 +42,12 @@ final class Csrf
         if ($token === false) {
             return $raw;
         }
+
+        // 토큰 길이 검증 (32바이트 = 64 hex 문자)
+        if (strlen($token) !== 32) {
+            return $raw; // 길이 불일치 시 원본 반환
+        }
+
         $mask = random_bytes(strlen($token));
         return bin2hex($mask) . bin2hex($mask ^ $token);
     }
