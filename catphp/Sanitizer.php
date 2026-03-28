@@ -56,7 +56,7 @@ final class Sanitizer
         'srcdoc',           // iframe 내 HTML
         'formaction',       // 폼 액션 오버라이드
         'action',           // 폼 액션
-        'poster',           // 비디오 포스터 (javascript: 가능)
+        // poster는 URL 검증으로 처리 (allowMedia 시 허용)
         'data',             // object 데이터
         'code',             // applet 코드
         'codebase',         // applet 코드베이스
@@ -91,6 +91,43 @@ final class Sanitizer
         'javascript:', 'vbscript:', 'data:', 'blob:',
         'file:', 'about:', 'chrome:', 'mhtml:', 'mocha:',
         'livescript:', 'jscript:',
+    ];
+
+    /** @var array<string> 위험 ID/Name 값 (DOM Clobbering 방어) */
+    private const DANGEROUS_IDS = [
+        // Prototype pollution
+        '__proto__', 'constructor', 'prototype',
+        // 전역 함수
+        'eval', 'alert', 'confirm', 'prompt',
+        // 전역 객체
+        'document', 'window', 'globalthis', 'self', 'top', 'parent', 'frames',
+        'location', 'navigator', 'cookie', 'localstorage', 'sessionstorage',
+        // API
+        'xmlhttprequest', 'fetch', 'worker', 'sharedworker',
+        // DOM 생성자
+        'image', 'audio', 'option', 'element', 'node',
+        // 타이머
+        'settimeout', 'setinterval', 'requestanimationframe',
+        // 인코딩
+        'escape', 'unescape', 'decodeuri', 'encodeuri',
+        // DOM 메서드 오염
+        'attributes', 'createelement', 'getelementbyid', 'queryselector',
+        'queryselectorall', 'getelementsbyclassname', 'getelementsbytagname',
+        'innerhtml', 'outerhtml', 'insertadjacenthtml',
+        'appendchild', 'removechild', 'replacechild',
+        'setattribute', 'getattribute', 'removeattribute',
+        'addeventlistener', 'removeeventlistener', 'dispatchevent',
+        'clonenode', 'importnode', 'adoptnode',
+        'createdocumentfragment', 'createtextnode', 'createcomment',
+        'createattribute', 'createevent', 'createrange',
+        // DOM 속성
+        'defaultview', 'ownerdocument', 'parentnode', 'parentelement',
+        'childnodes', 'firstchild', 'lastchild', 'nextsibling', 'previoussibling',
+        'style', 'classname', 'classlist', 'id', 'name', 'src', 'href',
+        'form', 'forms', 'body', 'head', 'documentelement',
+        'scripts', 'links', 'images', 'anchors', 'applets',
+        'cookie', 'domain', 'referrer', 'url', 'title',
+        'readystate', 'status', 'responsetext', 'responsexml',
     ];
 
     private static ?self $instance = null;
@@ -440,36 +477,8 @@ final class Sanitizer
             // ── DOM clobbering 방어 ──
             // id/name 속성으로 전역 변수 오염 방지
             if (in_array($decodedName, ['id', 'name'], true)) {
-                // 위험한 전역 변수명 패턴 (모두 소문자)
-                $dangerousIds = [
-                    '__proto__', 'constructor', 'prototype',
-                    'eval', 'alert', 'confirm', 'prompt',
-                    'document', 'window', 'globalthis', 'self', 'top', 'parent', 'frames',
-                    'location', 'navigator', 'cookie', 'localstorage', 'sessionstorage',
-                    'xmlhttprequest', 'fetch', 'worker', 'sharedworker',
-                    'image', 'audio', 'option', 'element', 'node',
-                    'settimeout', 'setinterval', 'requestanimationframe',
-                    'escape', 'unescape', 'decodeuri', 'encodeuri',
-                    // DOM 요소 속성/메서드 오염
-                    'attributes', 'createelement', 'getelementbyid', 'queryselector',
-                    'queryselectorall', 'getelementsbyclassname', 'getelementsbytagname',
-                    'innerhtml', 'outerhtml', 'insertadjacenthtml',
-                    'appendchild', 'removechild', 'replacechild',
-                    'setattribute', 'getattribute', 'removeattribute',
-                    'addeventlistener', 'removeeventlistener', 'dispatchevent',
-                    'clonenode', 'importnode', 'adoptnode',
-                    'createdocumentfragment', 'createtextnode', 'createcomment',
-                    'createattribute', 'createevent', 'createrange',
-                    'defaultview', 'ownerdocument', 'parentnode', 'parentelement',
-                    'childnodes', 'firstchild', 'lastchild', 'nextsibling', 'previoussibling',
-                    'style', 'classname', 'classlist', 'id', 'name', 'src', 'href',
-                    'form', 'forms', 'body', 'head', 'documentelement',
-                    'scripts', 'links', 'images', 'anchors', 'applets',
-                    'cookie', 'domain', 'referrer', 'url', 'title',
-                    'readystate', 'status', 'responsetext', 'responsexml',
-                ];
                 $lowerValue = strtolower(trim($attrValue));
-                if (in_array($lowerValue, $dangerousIds, true)) {
+                if (in_array($lowerValue, self::DANGEROUS_IDS, true)) {
                     $toRemove[] = $attr;
                     continue;
                 }
@@ -831,14 +840,7 @@ final class Sanitizer
         // ── 26. template 태그 ──
         $html = preg_replace('/<template\b[^>]*>.*?<\/template>/is', '', $html) ?? $html;
 
-        // ── 27. SVG 이벤트 속성 추가 정리 ──
-        $svgEvents = ['onbegin', 'onend', 'onrepeat', 'onload', 'onerror', 'onabort', 'onresize'];
-        foreach ($svgEvents as $event) {
-            $html = preg_replace('/' . $event . '\s*=\s*"[^"]*"/i', '', $html) ?? $html;
-            $html = preg_replace('/' . $event . '\s*=\s*\'[^\']*\'/i', '', $html) ?? $html;
-        }
-
-        // ── 28. CSS @import, @charset 등 ──
+        // ── 27. CSS @import, @charset 등 ──
         // style 태그는 이미 제거됨
 
         // ── 29. HTML5 양식 속성 ──
