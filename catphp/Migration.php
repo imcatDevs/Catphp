@@ -58,6 +58,13 @@ final class Migration
                 batch INTEGER NOT NULL DEFAULT 1,
                 executed_at TEXT NOT NULL DEFAULT (datetime('now'))
             )");
+        } elseif ($driver === 'pgsql') {
+            \db()->raw("CREATE TABLE IF NOT EXISTS {$t} (
+                id SERIAL PRIMARY KEY,
+                migration VARCHAR(255) NOT NULL,
+                batch INTEGER NOT NULL DEFAULT 1,
+                executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )");
         } else {
             \db()->raw("CREATE TABLE IF NOT EXISTS {$t} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -417,6 +424,14 @@ final class Migration
                  . "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
                  . "    created_at TEXT NOT NULL DEFAULT (datetime('now')),\n"
                  . "    updated_at TEXT\n"
+                 . ")";
+        }
+
+        if ($driver === 'pgsql') {
+            return "CREATE TABLE IF NOT EXISTS {$table} (\n"
+                 . "    id BIGSERIAL PRIMARY KEY,\n"
+                 . "    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
+                 . "    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP\n"
                  . ")";
         }
 

@@ -3,7 +3,7 @@
 | 항목 | 값 |
 | --- | --- |
 | 클래스 | `Cat\Migration` |
-| 파일 | `catphp/Migration.php` (419줄) |
+| 파일 | `catphp/Migration.php` (445줄) |
 | Shortcut | `migration()` |
 | 싱글턴 | `getInstance()` |
 | 의존 도구 | `Cat\DB` (`db()->raw()`, `db()->table()`) |
