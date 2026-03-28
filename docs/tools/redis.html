@@ -1,0 +1,66 @@
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--danger);">memory</i>
+        <div><h4 class="mb-0">Redis</h4><span class="text-muted caption">Cat\Redis — ext-redis 클라이언트</span></div>
+        <span class="badge badge--danger badge--sm ms-auto">redis()</span>
+    </div>
+
+    <p class="mb-2"><strong>ext-redis</strong> 래퍼입니다. String, Hash, List, Set, Sorted Set, Pub/Sub 명령어를 지원하며, <code>remember()</code> 패턴으로 캐시로도 활용됩니다.</p>
+    <p class="mb-3"><code>config/app.php</code>의 <code>redis</code> 키에서 호스트, 포트, 비밀번호, DB 인덱스를 설정합니다. 연결은 <strong>지연 초기화</strong>되어 실제 사용 시점에만 연결됩니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">설정 — config/app.php</h6></div>
+        <pre class="demo-code" style="border-radius:0 0 8px 8px;"><code><span class="hl-s">'redis'</span> =&gt; [
+    <span class="hl-s">'host'</span>     =&gt; <span class="hl-s">'127.0.0.1'</span>,
+    <span class="hl-s">'port'</span>     =&gt; <span class="hl-n">6379</span>,
+    <span class="hl-s">'password'</span> =&gt; <span class="hl-k">null</span>,
+    <span class="hl-s">'database'</span> =&gt; <span class="hl-n">0</span>,
+]</code></pre>
+    </div>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">주요 메서드</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:300px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>set(string $key, mixed $value, int $ttl = 0)</code></td><td><code>bool</code></td><td>값 설정 (TTL 초, 0=영구)</td></tr>
+                    <tr><td><code>get(string $key, mixed $default = null)</code></td><td><code>mixed</code></td><td>값 읽기</td></tr>
+                    <tr><td><code>del(string ...$keys)</code></td><td><code>int</code></td><td>키 삭제</td></tr>
+                    <tr><td><code>exists(string $key)</code></td><td><code>bool</code></td><td>키 존재 여부</td></tr>
+                    <tr><td><code>incr(string $key, int $by = 1)</code></td><td><code>int</code></td><td>증가</td></tr>
+                    <tr><td><code>remember(string $key, callable $cb, int $ttl)</code></td><td><code>mixed</code></td><td>캐시 기억 패턴</td></tr>
+                    <tr><td><code>hSet / hGet / hGetAll / hDel</code></td><td>—</td><td>Hash 명령어</td></tr>
+                    <tr><td><code>rPush / lPop / blPop / lLen / lRange</code></td><td>—</td><td>List 명령어 (큐)</td></tr>
+                    <tr><td><code>sAdd / sMembers / sIsMember / sRem</code></td><td>—</td><td>Set 명령어</td></tr>
+                    <tr><td><code>zAdd / zRange / zRem / zScore</code></td><td>—</td><td>Sorted Set</td></tr>
+                    <tr><td><code>publish(string $channel, mixed $msg)</code></td><td><code>int</code></td><td>Pub/Sub 메시지 발행</td></tr>
+                    <tr><td><code>raw()</code></td><td><code>\Redis</code></td><td>원시 인스턴스 반환</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">기본 사용법</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// String 캐시</span>
+<span class="hl-f">redis</span>()-&gt;<span class="hl-f">set</span>(<span class="hl-s">'user:1:name'</span>, <span class="hl-s">'김개발'</span>, <span class="hl-n">3600</span>);
+<span class="hl-v">$name</span> = <span class="hl-f">redis</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'user:1:name'</span>);
+
+<span class="hl-c">// remember 패턴</span>
+<span class="hl-v">$stats</span> = <span class="hl-f">redis</span>()-&gt;<span class="hl-f">remember</span>(<span class="hl-s">'dashboard:stats'</span>, <span class="hl-k">fn</span>() =&gt;
+    <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)-&gt;<span class="hl-f">count</span>()
+, <span class="hl-n">300</span>);
+
+<span class="hl-c">// 카운터</span>
+<span class="hl-f">redis</span>()-&gt;<span class="hl-f">incr</span>(<span class="hl-s">'page:views'</span>);</code></pre>
+
+    <div class="alert alert--warning mb-3">
+        <span class="alert__message"><strong>요구사항:</strong> <code>ext-redis</code> PHP 확장이 필요합니다. <code>php -m | grep redis</code>로 확인하세요.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/cache" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">Cache</a>
+        <a data-spa="/tool/queue" class="badge badge--soft badge--warning badge--sm" style="cursor:pointer;">Queue</a>
+    </div>
+</div>

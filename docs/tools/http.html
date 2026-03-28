@@ -1,0 +1,81 @@
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--info);">http</i>
+        <div><h4 class="mb-0">Http</h4><span class="text-muted caption">Cat\Http — cURL HTTP 클라이언트</span></div>
+        <span class="badge badge--info badge--sm ms-auto">http()</span>
+    </div>
+
+    <p class="mb-2"><strong>cURL 기반</strong> HTTP 클라이언트입니다. GET/POST/PUT/DELETE 요청, JSON 전송, 파일 업로드/다운로드를 체이닝 API로 간결하게 사용할 수 있습니다.</p>
+    <p class="mb-3"><code>base()</code>로 기본 URL을 설정하면 이후 요청에서 상대 경로만 지정할 수 있습니다. 응답은 <code>Http\Response</code> 객체로 반환되어 <code>status()</code>, <code>body()</code>, <code>json()</code> 등으로 접근합니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:260px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>base(string $url)</code></td><td><code>self</code></td><td>기본 URL 설정</td></tr>
+                    <tr><td><code>header(string $k, string $v)</code></td><td><code>self</code></td><td>요청 헤더 추가</td></tr>
+                    <tr><td><code>timeout(int $sec)</code></td><td><code>self</code></td><td>타임아웃 설정 (초)</td></tr>
+                    <tr><td><code>get(string $url, array $query)</code></td><td><code>Response</code></td><td>GET 요청</td></tr>
+                    <tr><td><code>post(string $url, array $data)</code></td><td><code>Response</code></td><td>POST 요청 (form-urlencoded)</td></tr>
+                    <tr><td><code>put(string $url, array $data)</code></td><td><code>Response</code></td><td>PUT 요청</td></tr>
+                    <tr><td><code>delete(string $url)</code></td><td><code>Response</code></td><td>DELETE 요청</td></tr>
+                    <tr><td><code>json(string $url, array $data)</code></td><td><code>Response</code></td><td>JSON POST (Content-Type 자동)</td></tr>
+                    <tr><td><code>upload(string $url, string $filePath, string $fieldName, array $extra)</code></td><td><code>Response</code></td><td>파일 업로드 (multipart)</td></tr>
+                    <tr><td><code>download(string $url, string $savePath)</code></td><td><code>bool</code></td><td>파일 다운로드</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">Response 메서드</h6>
+    <div class="card card--outlined mb-3">
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:180px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>status()</code></td><td><code>int</code></td><td>HTTP 상태 코드</td></tr>
+                    <tr><td><code>body()</code></td><td><code>string</code></td><td>응답 본문</td></tr>
+                    <tr><td><code>json()</code></td><td><code>?array</code></td><td>JSON 디코딩 (실패 시 null)</td></tr>
+                    <tr><td><code>ok()</code></td><td><code>bool</code></td><td>200~299 여부</td></tr>
+                    <tr><td><code>headers()</code></td><td><code>array</code></td><td>응답 헤더</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">기본 사용법</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// GET 요청</span>
+<span class="hl-v">$res</span> = <span class="hl-f">http</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'https://api.example.com/users'</span>);
+<span class="hl-v">$users</span> = <span class="hl-v">$res</span>-&gt;<span class="hl-f">json</span>();
+
+<span class="hl-c">// JSON POST</span>
+<span class="hl-v">$res</span> = <span class="hl-f">http</span>()-&gt;<span class="hl-f">header</span>(<span class="hl-s">'Authorization'</span>, <span class="hl-s">'Bearer '</span> . <span class="hl-v">$token</span>)
+    -&gt;<span class="hl-f">json</span>(<span class="hl-s">'https://api.example.com/posts'</span>, [
+        <span class="hl-s">'title'</span> =&gt; <span class="hl-s">'Hello'</span>,
+        <span class="hl-s">'body'</span>  =&gt; <span class="hl-s">'World'</span>,
+    ]);
+
+<span class="hl-c">// 파일 다운로드</span>
+<span class="hl-f">http</span>()-&gt;<span class="hl-f">download</span>(<span class="hl-s">'https://example.com/file.zip'</span>, <span class="hl-s">'/tmp/file.zip'</span>);</code></pre>
+
+    <h6 class="mb-2">Base URL + 타임아웃</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// API 클라이언트 패턴</span>
+<span class="hl-v">$api</span> = <span class="hl-f">http</span>()-&gt;<span class="hl-f">base</span>(<span class="hl-s">'https://api.example.com'</span>)
+    -&gt;<span class="hl-f">header</span>(<span class="hl-s">'X-API-Key'</span>, <span class="hl-v">$key</span>)
+    -&gt;<span class="hl-f">timeout</span>(<span class="hl-n">10</span>);
+
+<span class="hl-v">$users</span> = <span class="hl-v">$api</span>-&gt;<span class="hl-f">get</span>(<span class="hl-s">'/users'</span>)-&gt;<span class="hl-f">json</span>();
+<span class="hl-v">$posts</span> = <span class="hl-v">$api</span>-&gt;<span class="hl-f">get</span>(<span class="hl-s">'/posts'</span>)-&gt;<span class="hl-f">json</span>();</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>팁:</strong> <code>timeout()</code> 기본값은 30초입니다. 외부 API 호출 시 적절한 타임아웃을 설정하세요. 응답 객체의 <code>->status()</code>, <code>->json()</code>, <code>->body()</code>로 결과를 확인할 수 있습니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/telegram" class="badge badge--soft badge--secondary badge--sm" style="cursor:pointer;">Telegram</a>
+        <a data-spa="/tool/json" class="badge badge--soft badge--info badge--sm" style="cursor:pointer;">Json</a>
+    </div>
+</div>

@@ -1,0 +1,207 @@
+<div class="demo-section">
+    <h3 class="mb-1">데이터</h3>
+    <p class="text-muted mb-4">Valid · Upload · Paginate · Cookie · Collection — 검증, 업로드, 페이지네이션, 쿠키, 컬렉션</p>
+
+    <!-- Valid -->
+    <div class="card card--outlined mb-4" id="demo-valid">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">check_circle</i> Valid</h5>
+            <span class="badge badge--success badge--sm">Cat\Valid</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">규칙 기반 입력 검증. required, email, min, max, between, regex, nullable 등 체이닝</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-v">$v</span> = <span class="hl-f">valid</span>()-&gt;<span class="hl-f">rules</span>([
+    <span class="hl-s">'name'</span>  =&gt; <span class="hl-s">'required|min:2|max:50'</span>,
+    <span class="hl-s">'email'</span> =&gt; <span class="hl-s">'required|email'</span>,
+    <span class="hl-s">'age'</span>   =&gt; <span class="hl-s">'required|numeric|min:1|max:120'</span>,
+    <span class="hl-s">'bio'</span>   =&gt; <span class="hl-s">'nullable|max:500'</span>,
+])-&gt;<span class="hl-f">check</span>(<span class="hl-v">$data</span>);
+
+<span class="hl-k">if</span> (<span class="hl-v">$v</span>-&gt;<span class="hl-f">fails</span>()) {
+    <span class="hl-f">json</span>()-&gt;<span class="hl-f">fail</span>(<span class="hl-s">'검증 실패'</span>, <span class="hl-v">$v</span>-&gt;<span class="hl-f">errors</span>(), <span class="hl-n">422</span>);
+}</code></pre>
+
+            <h6 class="mb-2">의도적 실패 데이터 검증</h6>
+            <div class="alert alert--danger mb-3">
+                <span class="alert__message">검증 실패 — 3개 필드 오류</span>
+            </div>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>필드</th><th>입력값</th><th>오류</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><code>name</code></td>
+                        <td><code>A</code></td>
+                        <td><span class="badge badge--danger badge--sm mb-1">name은(는) 최소 2자 이상이어야 합니다</span> </td>
+                    </tr>
+                    <tr>
+                        <td><code>email</code></td>
+                        <td><code>bad-email</code></td>
+                        <td><span class="badge badge--danger badge--sm mb-1">email은(는) 유효한 이메일이어야 합니다</span> </td>
+                    </tr>
+                    <tr>
+                        <td><code>age</code></td>
+                        <td><code>200</code></td>
+                        <td><span class="badge badge--danger badge--sm mb-1">age은(는) 120 이하여야 합니다</span> </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Upload -->
+    <div class="card card--outlined mb-4" id="demo-upload">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">cloud_upload</i> Upload</h5>
+            <span class="badge badge--success badge--sm">Cat\Upload</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">파일 업로드 처리. 확장자/MIME/크기 검증, finfo 교차 확인, 안전한 파일명 생성</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 기본 업로드</span>
+<span class="hl-v">$file</span> = <span class="hl-f">upload</span>()-&gt;<span class="hl-f">file</span>(<span class="hl-s">'avatar'</span>)
+    -&gt;<span class="hl-f">maxSize</span>(<span class="hl-s">'2M'</span>)
+    -&gt;<span class="hl-f">extensions</span>([<span class="hl-s">'jpg'</span>, <span class="hl-s">'png'</span>, <span class="hl-s">'webp'</span>])
+    -&gt;<span class="hl-f">save</span>(<span class="hl-s">'storage/avatars'</span>);
+
+<span class="hl-c">// 결과</span>
+<span class="hl-v">$file</span>-&gt;<span class="hl-f">path</span>;     <span class="hl-c">// storage/avatars/abc123.jpg</span>
+<span class="hl-v">$file</span>-&gt;<span class="hl-f">name</span>;     <span class="hl-c">// abc123.jpg</span>
+<span class="hl-v">$file</span>-&gt;<span class="hl-f">size</span>;     <span class="hl-c">// 102400</span>
+<span class="hl-v">$file</span>-&gt;<span class="hl-f">mime</span>;     <span class="hl-c">// image/jpeg</span>
+
+<span class="hl-c">// 다중 업로드</span>
+<span class="hl-v">$files</span> = <span class="hl-f">upload</span>()-&gt;<span class="hl-f">files</span>(<span class="hl-s">'photos'</span>)
+    -&gt;<span class="hl-f">maxSize</span>(<span class="hl-s">'5M'</span>)-&gt;<span class="hl-f">saveAll</span>(<span class="hl-s">'storage/photos'</span>);</code></pre>
+
+            <h6 class="mb-2">허용 규칙 시뮬레이션</h6>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>파일</th><th>크기</th><th>MIME</th><th>결과</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><code>photo.jpg</code></td><td>1.2 MB</td><td>image/jpeg</td>
+                        <td><span class="badge badge--success badge--sm">허용</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>avatar.png</code></td><td>800 KB</td><td>image/png</td>
+                        <td><span class="badge badge--success badge--sm">허용</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>document.pdf</code></td><td>3.5 MB</td><td>application/pdf</td>
+                        <td><span class="badge badge--danger badge--sm">확장자 거부</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>huge.jpg</code></td><td>15 MB</td><td>image/jpeg</td>
+                        <td><span class="badge badge--danger badge--sm">크기 초과</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>fake.jpg</code></td><td>50 KB</td><td>text/php</td>
+                        <td><span class="badge badge--danger badge--sm">MIME 불일치</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="alert alert--warning mt-2"><span class="alert__message"><strong>보안:</strong> finfo_file()로 실제 MIME을 교차 검증하여 확장자 위장 업로드를 차단합니다.</span></div>
+        </div>
+    </div>
+
+    <!-- Paginate -->
+    <div class="card card--outlined mb-4" id="demo-paginate">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">last_page</i> Paginate</h5>
+            <span class="badge badge--success badge--sm">Cat\Paginate</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">쿼리 결과 페이지네이션. 자동 offset 계산, 윈도우 트렁케이션 링크, toArray() JSON 직렬화</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-v">$p</span> = <span class="hl-f">paginate</span>()-&gt;<span class="hl-f">total</span>(<span class="hl-n">150</span>)-&gt;<span class="hl-f">perPage</span>(<span class="hl-n">10</span>)-&gt;<span class="hl-f">page</span>(<span class="hl-n">7</span>);
+<span class="hl-v">$p</span>-&gt;<span class="hl-f">offset</span>();    <span class="hl-c">// 60</span>
+<span class="hl-v">$p</span>-&gt;<span class="hl-f">lastPage</span>();  <span class="hl-c">// 15</span>
+<span class="hl-v">$p</span>-&gt;<span class="hl-f">toArray</span>();   <span class="hl-c">// JSON 직렬화</span>
+
+<span class="hl-c">// DB 연동</span>
+<span class="hl-v">$users</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)
+    -&gt;<span class="hl-f">limit</span>(<span class="hl-v">$p</span>-&gt;<span class="hl-f">perPage</span>())
+    -&gt;<span class="hl-f">offset</span>(<span class="hl-v">$p</span>-&gt;<span class="hl-f">offset</span>())
+    -&gt;<span class="hl-f">all</span>();</code></pre>
+
+            <h6 class="mb-2">실행 결과</h6>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="badge badge--soft badge--primary">총 95건</span>
+                <span class="badge badge--soft badge--info">페이지당 10건</span>
+                <span class="badge badge--soft badge--success">현재 3페이지</span>
+                <span class="badge badge--soft badge--warning">마지막 10페이지</span>
+                <span class="badge badge--soft badge--secondary">offset 20</span>
+            </div>
+            <pre class="demo-code"><code>{
+    &quot;data&quot;: [],
+    &quot;total&quot;: 95,
+    &quot;page&quot;: 3,
+    &quot;per_page&quot;: 10,
+    &quot;last_page&quot;: 10
+}</code></pre>
+        </div>
+    </div>
+
+    <!-- Cookie -->
+    <div class="card card--outlined mb-4" id="demo-cookie">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">cookie</i> Cookie</h5>
+            <span class="badge badge--success badge--sm">Cat\Cookie</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">보안 쿠키 관리. Encrypt 연동 자동 암호화/복호화, HttpOnly + Secure + SameSite 기본 적용</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 쿠키 설정 (7일)</span>
+<span class="hl-f">cookie</span>()-&gt;<span class="hl-f">set</span>(<span class="hl-s">'locale'</span>, <span class="hl-s">'ko'</span>, <span class="hl-n">604800</span>);
+<span class="hl-f">cookie</span>()-&gt;<span class="hl-f">set</span>(<span class="hl-s">'theme'</span>, <span class="hl-s">'dark'</span>, <span class="hl-n">2592000</span>);
+
+<span class="hl-c">// 쿠키 읽기 (자동 복호화)</span>
+<span class="hl-v">$locale</span> = <span class="hl-f">cookie</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'locale'</span>, <span class="hl-s">'en'</span>);
+
+<span class="hl-c">// 삭제 / 전체 확인</span>
+<span class="hl-f">cookie</span>()-&gt;<span class="hl-f">del</span>(<span class="hl-s">'locale'</span>);
+<span class="hl-v">$has</span> = <span class="hl-f">cookie</span>()-&gt;<span class="hl-f">has</span>(<span class="hl-s">'theme'</span>);</code></pre>
+
+            <h6 class="mb-2">보안 속성 기본값</h6>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>속성</th><th>기본값</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>HttpOnly</code></td><td><span class="badge badge--success badge--sm">true</span></td><td>JavaScript에서 접근 차단</td></tr>
+                    <tr><td><code>Secure</code></td><td><span class="badge badge--info badge--sm">auto</span></td><td>HTTPS 환경에서 자동 활성화</td></tr>
+                    <tr><td><code>SameSite</code></td><td><span class="badge badge--warning badge--sm">Lax</span></td><td>CSRF 보호</td></tr>
+                    <tr><td><code>Encrypt</code></td><td><span class="badge badge--danger badge--sm">auto</span></td><td>Encrypt 도구 연동 자동 암호화/복호화</td></tr>
+                    <tr><td><code>Path</code></td><td><code>/</code></td><td>전체 사이트 적용</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Collection -->
+    <div class="card card--outlined mb-4" id="demo-collection">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">view_list</i> Collection</h5>
+            <span class="badge badge--success badge--sm">Cat\Collection</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">이뮤터블 배열 체이닝. map, filter, sort, group, pluck, reduce 등 40+ 메서드 파이프라인</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-v">$result</span> = <span class="hl-f">collect</span>(<span class="hl-v">$users</span>)
+    -&gt;<span class="hl-f">where</span>(<span class="hl-s">'status'</span>, <span class="hl-s">'active'</span>)
+    -&gt;<span class="hl-f">sortBy</span>(<span class="hl-s">'name'</span>)
+    -&gt;<span class="hl-f">pluck</span>(<span class="hl-s">'email'</span>)
+    -&gt;<span class="hl-f">unique</span>()
+    -&gt;<span class="hl-f">toArray</span>();
+
+<span class="hl-c">// 집계</span>
+<span class="hl-f">collect</span>([<span class="hl-n">10</span>, <span class="hl-n">20</span>, <span class="hl-n">30</span>])-&gt;<span class="hl-f">sum</span>();    <span class="hl-c">// 60</span>
+<span class="hl-f">collect</span>([<span class="hl-n">10</span>, <span class="hl-n">20</span>, <span class="hl-n">30</span>])-&gt;<span class="hl-f">avg</span>();    <span class="hl-c">// 20</span></code></pre>
+
+            <h6 class="mb-2">실행 결과</h6>
+            <div class="d-flex flex-column gap-2 mb-3">
+                <div class="alert alert--info mb-0"><span class="alert__message"><strong>sortBy('score', 'desc')→pluck('name')</strong> → <code>[김개발, 최백엔드, 박보안, 이디자인, 정프론트]</code></span></div>
+                <div class="alert alert--info mb-0"><span class="alert__message"><strong>avg('score')</strong> → <code>86.4</code></span></div>
+                <div class="alert alert--info mb-0"><span class="alert__message"><strong>groupBy('city')</strong> → <code>{&quot;서울&quot;:&quot;3명&quot;,&quot;부산&quot;:&quot;1명&quot;,&quot;대전&quot;:&quot;1명&quot;}</code></span></div>
+            </div>
+        </div>
+    </div>
+</div>

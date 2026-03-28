@@ -1,0 +1,69 @@
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--success);">map</i>
+        <div><h4 class="mb-0">Sitemap</h4><span class="text-muted caption">Cat\Sitemap — XML 사이트맵 생성</span></div>
+        <span class="badge badge--success badge--sm ms-auto">sitemap()</span>
+    </div>
+
+    <p class="mb-2"><strong>XML Sitemap</strong> 생성 도구입니다. 개별 URL 추가, DB 쿼리 결과 자동 변환, 사이트맵 인덱스 생성을 지원합니다.</p>
+    <p class="mb-3"><code>changefreq</code>는 <code>always|hourly|daily|weekly|monthly|yearly|never</code>만 허용되며, <code>priority</code>는 <strong>0.0~1.0</strong> 범위로 자동 클램핑됩니다. 파일당 최대 <strong>50,000개</strong> URL (사이트맵 스펙).</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:340px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>url(string $loc, ?string $lastmod, ?string $changefreq, ?float $priority)</code></td><td><code>self</code></td><td>URL 엔트리 추가</td></tr>
+                    <tr><td><code>urls(array $urls)</code></td><td><code>self</code></td><td>복수 URL 일괄 추가</td></tr>
+                    <tr><td><code>fromQuery(array $rows, string $urlPattern, ...)</code></td><td><code>self</code></td><td>DB 결과 → URL 자동 생성</td></tr>
+                    <tr><td><code>index(array $sitemaps)</code></td><td><code>self</code></td><td>사이트맵 인덱스 생성</td></tr>
+                    <tr><td><code>render()</code></td><td><code>string</code></td><td>XML 문자열 반환</td></tr>
+                    <tr><td><code>output()</code></td><td><code>never</code></td><td>Content-Type + echo + exit</td></tr>
+                    <tr><td><code>save(string $path)</code></td><td><code>bool</code></td><td>파일로 저장</td></tr>
+                    <tr><td><code>count()</code></td><td><code>int</code></td><td>URL/사이트맵 수</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">기본 사용법</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 수동 URL 추가 + 파일 저장</span>
+<span class="hl-f">sitemap</span>()-&gt;<span class="hl-f">url</span>(<span class="hl-s">'/'</span>, <span class="hl-s">'2024-01-01'</span>, <span class="hl-s">'daily'</span>, <span class="hl-n">1.0</span>)
+    -&gt;<span class="hl-f">url</span>(<span class="hl-s">'/about'</span>, <span class="hl-s">'2024-01-01'</span>, <span class="hl-s">'monthly'</span>, <span class="hl-n">0.8</span>)
+    -&gt;<span class="hl-f">url</span>(<span class="hl-s">'/contact'</span>, <span class="hl-k">null</span>, <span class="hl-s">'yearly'</span>, <span class="hl-n">0.5</span>)
+    -&gt;<span class="hl-f">save</span>(<span class="hl-s">'Public/sitemap.xml'</span>);</code></pre>
+
+    <h6 class="mb-2">DB 연동 — fromQuery()</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// DB 결과를 자동으로 사이트맵 URL로 변환</span>
+<span class="hl-v">$posts</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'posts'</span>)
+    -&gt;<span class="hl-f">where</span>(<span class="hl-s">'status'</span>, <span class="hl-s">'published'</span>)
+    -&gt;<span class="hl-f">orderBy</span>(<span class="hl-s">'updated_at'</span>, <span class="hl-s">'DESC'</span>)-&gt;<span class="hl-f">all</span>();
+
+<span class="hl-f">sitemap</span>()-&gt;<span class="hl-f">url</span>(<span class="hl-s">'/'</span>, <span class="hl-k">null</span>, <span class="hl-s">'daily'</span>, <span class="hl-n">1.0</span>)
+    -&gt;<span class="hl-f">fromQuery</span>(<span class="hl-v">$posts</span>, <span class="hl-s">'/post/{slug}'</span>, <span class="hl-s">'updated_at'</span>)
+    -&gt;<span class="hl-f">output</span>();  <span class="hl-c">// Content-Type: application/xml + echo + exit</span></code></pre>
+
+    <h6 class="mb-2">사이트맵 인덱스</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 여러 사이트맵을 인덱스로 묶기</span>
+<span class="hl-f">sitemap</span>()-&gt;<span class="hl-f">index</span>([
+    <span class="hl-s">'/sitemap-posts.xml'</span>,
+    <span class="hl-s">'/sitemap-pages.xml'</span>,
+    [<span class="hl-s">'loc'</span> =&gt; <span class="hl-s">'/sitemap-products.xml'</span>, <span class="hl-s">'lastmod'</span> =&gt; <span class="hl-s">'2024-06-01'</span>],
+])-&gt;<span class="hl-f">save</span>(<span class="hl-s">'Public/sitemap.xml'</span>);</code></pre>
+
+    <h6 class="mb-2">CLI 명령어</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c"># DB 테이블에서 사이트맵 자동 생성</span>
+php cli.php sitemap:generate --table=posts --url=/post/{slug}</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>팁:</strong> <code>config('sitemap.base_url')</code>로 기본 URL을 설정하면 상대 경로가 자동으로 절대 URL로 변환됩니다. 캐시 연동 시 <code>cache()->remember('sitemap', fn() => sitemap()->...->render(), 3600)</code> 패턴을 사용하세요.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/feed" class="badge badge--soft badge--warning badge--sm" style="cursor:pointer;">Feed</a>
+        <a data-spa="/tool/cache" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">Cache</a>
+        <a data-spa="/tool/slug" class="badge badge--soft badge--secondary badge--sm" style="cursor:pointer;">Slug</a>
+    </div>
+</div>

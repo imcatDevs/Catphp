@@ -1,0 +1,87 @@
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--warning);">terminal</i>
+        <div><h4 class="mb-0">Cli</h4><span class="text-muted caption">Cat\Cli — CLI 명령어 프레임워크</span></div>
+        <span class="badge badge--warning badge--sm ms-auto">cli()</span>
+    </div>
+
+    <p class="mb-2"><strong>CLI(명령줄)</strong> 실행 환경을 위한 도구입니다. 터미널 색상 출력, 테이블 렌더링, 진행률 표시, 사용자 입력 프롬프트 등 CLI 애플리케이션에 필요한 기능을 제공합니다.</p>
+    <p class="mb-3"><code>cli.php</code>에서 커스텀 명령어를 등록하고, <code>php cli.php command:name</code> 형식으로 실행합니다. <code>$argv</code> null 방어가 적용되어 안전합니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:300px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>command(string $name, string $desc, callable $fn)</code></td><td><code>self</code></td><td>명령어 등록 (이름, 설명, 핸들러)</td></tr>
+                    <tr><td><code>group(string $prefix, callable $fn)</code></td><td><code>self</code></td><td>명령어 그룹 (네임스페이스)</td></tr>
+                    <tr><td><code>run()</code></td><td><code>void</code></td><td>$argv 기반 명령어 실행</td></tr>
+                    <tr><td><code>arg(int $index)</code></td><td><code>?string</code></td><td>위치 인자 (0-indexed)</td></tr>
+                    <tr><td><code>option(string $name, mixed $default = null)</code></td><td><code>mixed</code></td><td>옵션 파싱 (<code>--key=value</code>)</td></tr>
+                    <tr><td><code>confirm(string $q, ?bool $default = null)</code></td><td><code>bool</code></td><td>확인 질문 (y/n)</td></tr>
+                    <tr><td><code>prompt(string $q, ?string $default = null)</code></td><td><code>string</code></td><td>텍스트 입력 프롬프트</td></tr>
+                    <tr><td><code>choice(string $q, array $options)</code></td><td><code>?string</code></td><td>선택지 메뉴</td></tr>
+                    <tr><td><code>info/success/warn/error(string $msg)</code></td><td><code>void</code></td><td>색상 메시지 출력</td></tr>
+                    <tr><td><code>table(array $headers, array $rows)</code></td><td><code>void</code></td><td>테이블 출력</td></tr>
+                    <tr><td><code>progress(int $current, int $total)</code></td><td><code>void</code></td><td>프로그레스 바</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">명령어 등록</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// cli.php — 커스텀 명령어 등록 (이름, 설명, 핸들러)</span>
+<span class="hl-f">cli</span>()-&gt;<span class="hl-f">command</span>(<span class="hl-s">'cache:clear'</span>, <span class="hl-s">'캐시 전체 삭제'</span>, <span class="hl-k">function</span>() {
+    <span class="hl-f">cache</span>()-&gt;<span class="hl-f">clear</span>();
+    <span class="hl-f">cli</span>()-&gt;<span class="hl-f">success</span>(<span class="hl-s">'캐시가 삭제되었습니다.'</span>);
+});
+
+<span class="hl-f">cli</span>()-&gt;<span class="hl-f">command</span>(<span class="hl-s">'user:list'</span>, <span class="hl-s">'사용자 목록 출력'</span>, <span class="hl-k">function</span>() {
+    <span class="hl-v">$users</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)-&gt;<span class="hl-f">all</span>();
+    <span class="hl-f">cli</span>()-&gt;<span class="hl-f">table</span>([<span class="hl-s">'ID'</span>, <span class="hl-s">'Name'</span>, <span class="hl-s">'Email'</span>], <span class="hl-v">$users</span>);
+});
+
+<span class="hl-f">cli</span>()-&gt;<span class="hl-f">run</span>();</code></pre>
+
+    <h6 class="mb-2">인자/옵션 파싱 + 인터랙티브</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// php cli.php firewall:ban 203.0.113.50 --ttl=3600</span>
+<span class="hl-f">cli</span>()-&gt;<span class="hl-f">command</span>(<span class="hl-s">'firewall:ban'</span>, <span class="hl-s">'IP 차단'</span>, <span class="hl-k">function</span>() {
+    <span class="hl-v">$ip</span>  = <span class="hl-f">cli</span>()-&gt;<span class="hl-f">arg</span>(<span class="hl-n">0</span>) ?? <span class="hl-f">cli</span>()-&gt;<span class="hl-f">prompt</span>(<span class="hl-s">'차단할 IP'</span>);
+    <span class="hl-v">$ttl</span> = (<span class="hl-k">int</span>) <span class="hl-f">cli</span>()-&gt;<span class="hl-f">option</span>(<span class="hl-s">'ttl'</span>, <span class="hl-n">0</span>);
+
+    <span class="hl-k">if</span> (<span class="hl-f">cli</span>()-&gt;<span class="hl-f">confirm</span>(<span class="hl-s">"{$ip} 차단?"</span>)) {
+        <span class="hl-f">firewall</span>()-&gt;<span class="hl-f">ban</span>(<span class="hl-v">$ip</span>);
+        <span class="hl-f">cli</span>()-&gt;<span class="hl-f">success</span>(<span class="hl-s">"{$ip} 차단 완료"</span>);
+    }
+});</code></pre>
+
+    <h6 class="mb-2">실행</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c"># 프로젝트 초기화 (전체 도구 기본 config 생성 + 보안 키 + 디렉토리)</span>
+php cli.php config:init
+
+<span class="hl-c"># 보안 키 재생성</span>
+php cli.php key:generate
+
+<span class="hl-c"># 인터랙티브 설정 마법사</span>
+php cli.php setup
+
+<span class="hl-c"># 환경 진단</span>
+php cli.php check:env
+
+<span class="hl-c"># 일반 명령어</span>
+php cli.php cache:clear
+php cli.php user:list
+php cli.php firewall:ban 203.0.113.50 --ttl=3600</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>팁:</strong> 인자 없이 <code>php cli.php</code>을 실행하면 등록된 모든 명령어와 설명이 출력됩니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/cache" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">Cache</a>
+        <a data-spa="/tool/db" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">DB</a>
+        <a data-spa="/tool/firewall" class="badge badge--soft badge--danger badge--sm" style="cursor:pointer;">Firewall</a>
+    </div>
+</div>

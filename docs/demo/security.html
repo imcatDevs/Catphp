@@ -1,0 +1,260 @@
+<div class="demo-section">
+    <h3 class="mb-1">보안 도구</h3>
+    <p class="text-muted mb-4">Auth · Csrf · Encrypt · Guard · Firewall · Ip · Perm — 인증, 암호화, 입력 보호, 방화벽, 권한</p>
+
+    <!-- Auth -->
+    <div class="card card--outlined mb-4" id="demo-auth">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">lock</i> Auth</h5>
+            <span class="badge badge--danger badge--sm">Cat\Auth</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">Argon2id 비밀번호 해싱, JWT 토큰 생성/검증, 세션 기반 로그인</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 비밀번호 해싱 (Argon2id)</span>
+<span class="hl-v">$hash</span> = <span class="hl-f">auth</span>()-&gt;<span class="hl-f">hashPassword</span>(<span class="hl-s">'secret123'</span>);
+<span class="hl-v">$ok</span>   = <span class="hl-f">auth</span>()-&gt;<span class="hl-f">verifyPassword</span>(<span class="hl-s">'secret123'</span>, <span class="hl-v">$hash</span>);
+
+<span class="hl-c">// JWT 토큰</span>
+<span class="hl-v">$jwt</span>  = <span class="hl-f">auth</span>()-&gt;<span class="hl-f">createToken</span>([<span class="hl-s">'user_id'</span> =&gt; <span class="hl-n">1</span>, <span class="hl-s">'role'</span> =&gt; <span class="hl-s">'admin'</span>]);
+<span class="hl-v">$data</span> = <span class="hl-f">auth</span>()-&gt;<span class="hl-f">verifyToken</span>(<span class="hl-v">$jwt</span>);
+
+<span class="hl-c">// 세션 로그인</span>
+<span class="hl-f">auth</span>()-&gt;<span class="hl-f">login</span>([<span class="hl-s">'id'</span> =&gt; <span class="hl-n">1</span>, <span class="hl-s">'name'</span> =&gt; <span class="hl-s">'Admin'</span>]);
+<span class="hl-v">$user</span> = <span class="hl-f">auth</span>()-&gt;<span class="hl-f">user</span>();
+<span class="hl-f">auth</span>()-&gt;<span class="hl-f">logout</span>();</code></pre>
+
+            <h6 class="mb-2">실행 결과</h6>
+            <div class="d-flex flex-column gap-2 mb-3">
+                <div class="alert alert--success mb-0"><span class="alert__message"><strong>hashPassword('CatPHP-demo-123')</strong></span></div>
+                <pre class="demo-code mb-0" style="font-size:.7rem;word-break:break-all;white-space:pre-wrap;"><code>$argon2id$v=19$m=65536,t=4,p=1$VllXOGJpSnlZcTNNQTR0UQ$FpvejPScHI/coYQAbknSBAsQZB5GylWbwcRDpD5GmUI</code></pre>
+                <div class="alert alert--success mb-0">
+                    <span class="alert__message"><strong>verifyPassword('CatPHP-demo-123')</strong> → <code>true ✓</code></span>
+                </div>
+                <div class="alert alert--danger mb-0">
+                    <span class="alert__message"><strong>verifyPassword('wrong-password')</strong> → <code>false ✗</code></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Csrf -->
+    <div class="card card--outlined mb-4" id="demo-csrf">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">verified_user</i> Csrf</h5>
+            <span class="badge badge--danger badge--sm">Cat\Csrf</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">CSRF 토큰 생성, 폼 hidden 필드, 미들웨어 자동 검증</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 토큰 생성 + 폼 삽입</span>
+<span class="hl-v">$token</span> = <span class="hl-f">csrf</span>()-&gt;<span class="hl-f">token</span>();
+<span class="hl-k">echo</span> <span class="hl-f">csrf</span>()-&gt;<span class="hl-f">field</span>();   <span class="hl-c">// &lt;input type="hidden" name="_csrf_token" ...&gt;</span>
+
+<span class="hl-c">// 미들웨어 등록</span>
+<span class="hl-f">router</span>()-&gt;<span class="hl-f">use</span>(<span class="hl-f">csrf</span>()-&gt;<span class="hl-f">middleware</span>());
+
+<span class="hl-c">// 수동 검증 (POST 데이터 또는 X-CSRF-TOKEN 헤더에서 자동 추출)</span>
+<span class="hl-k">if</span> (!<span class="hl-f">csrf</span>()-&gt;<span class="hl-f">verify</span>()) {
+    <span class="hl-f">json</span>()-&gt;<span class="hl-f">error</span>(<span class="hl-s">'CSRF token mismatch'</span>, <span class="hl-n">403</span>);
+}</code></pre>
+
+            <h6 class="mb-2">실행 결과</h6>
+            <div class="alert alert--info mb-2"><span class="alert__message"><strong>token()</strong> → <code style="word-break:break-all;">c2a1a78417054bd3fa9ae641a58aa70627fa9e92644ee09d85fb8caeee082ef7</code></span></div>
+            <div class="card card--flat mb-2" style="background:var(--bg-secondary,#f8fafc);">
+                <div class="card__body p-2">
+                    <p class="caption text-muted mb-1">field() 출력:</p>
+                    <pre style="margin:0;font-size:.75rem;"><code>&lt;input type=&quot;hidden&quot; name=&quot;_csrf_token&quot; value=&quot;2b9bf767a21cac967c7deac2305f3dfbb4052662266e35497164025a0891783ce93a50e3b519e74586e70c8395d59afd93ffb8f04220d5d4f49f8ef4e69956cb&quot;&gt;</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Encrypt -->
+    <div class="card card--outlined mb-4" id="demo-encrypt">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">enhanced_encryption</i> Encrypt</h5>
+            <span class="badge badge--danger badge--sm">Cat\Encrypt</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">Sodium 대칭키 암호화/복호화, HMAC-SHA256 서명/검증</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 암호화 / 복호화</span>
+<span class="hl-v">$cipher</span> = <span class="hl-f">encrypt</span>()-&gt;<span class="hl-f">seal</span>(<span class="hl-s">'비밀 데이터'</span>);
+<span class="hl-v">$plain</span>  = <span class="hl-f">encrypt</span>()-&gt;<span class="hl-f">open</span>(<span class="hl-v">$cipher</span>);  <span class="hl-c">// '비밀 데이터'</span>
+
+<span class="hl-c">// HMAC 서명 / 검증</span>
+<span class="hl-v">$sig</span> = <span class="hl-f">encrypt</span>()-&gt;<span class="hl-f">sign</span>(<span class="hl-s">'payload'</span>);
+<span class="hl-v">$ok</span>  = <span class="hl-f">encrypt</span>()-&gt;<span class="hl-f">verify</span>(<span class="hl-s">'payload'</span>, <span class="hl-v">$sig</span>);</code></pre>
+
+            <h6 class="mb-2">암호화 → 복호화 플로우</h6>
+            <div class="d-flex flex-column gap-2 mb-3">
+                <div class="card card--flat" style="background:var(--bg-secondary,#f8fafc);"><div class="card__body p-2"><p class="caption text-muted mb-1">원문</p><code>Hello CatPHP! 🐱</code></div></div>
+                <div class="text-center"><i class="material-icons-outlined text-muted">arrow_downward</i> <span class="caption text-muted">seal()</span></div>
+                <div class="card card--flat" style="background:var(--bg-secondary,#f8fafc);"><div class="card__body p-2"><p class="caption text-muted mb-1">암호화 (base64)</p><code style="word-break:break-all;font-size:.7rem;">qIqYLM+uEuuRoussSitWp7Uv0/oa3Nelp3H0xF6/JpJZpTNVlttcjSdzS47p7bZx8ofGnSM7p0GR2g==</code></div></div>
+                <div class="text-center"><i class="material-icons-outlined text-muted">arrow_downward</i> <span class="caption text-muted">open()</span></div>
+                <div class="card card--flat" style="background:var(--bg-secondary,#f8fafc);"><div class="card__body p-2"><p class="caption text-muted mb-1">복호화</p><code>Hello CatPHP! 🐱</code></div></div>
+            </div>
+            <div class="alert alert--success mb-0">
+                <span class="alert__message"><strong>HMAC 서명 검증:</strong> <code>true ✓</code></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guard -->
+    <div class="card card--outlined mb-4" id="demo-guard">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">shield</i> Guard</h5>
+            <span class="badge badge--danger badge--sm">Cat\Guard</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">XSS/SQL 인젝션 살균, 경로 트래버설 차단, 미들웨어 자동 보호, <strong>공격 유형별 가중치 기반 4단계 단계적 차단</strong></p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 개별 살균</span>
+<span class="hl-v">$safe</span> = <span class="hl-f">guard</span>()-&gt;<span class="hl-f">xss</span>(<span class="hl-s">'&lt;script&gt;alert(1)&lt;/script&gt;Hello'</span>);
+<span class="hl-v">$safe</span> = <span class="hl-f">guard</span>()-&gt;<span class="hl-f">sql</span>(<span class="hl-s">'SELECT * FROM users; DROP TABLE--'</span>);
+<span class="hl-v">$safe</span> = <span class="hl-f">guard</span>()-&gt;<span class="hl-f">path</span>(<span class="hl-s">'../../etc/passwd'</span>);
+
+<span class="hl-c">// 미들웨어 (모든 요청 자동 살균)</span>
+<span class="hl-f">router</span>()-&gt;<span class="hl-f">use</span>(<span class="hl-f">guard</span>()-&gt;<span class="hl-f">middleware</span>());</code></pre>
+
+            <h6 class="mb-2">살균 비교 테이블</h6>
+            <div class="table-responsive">
+                <table class="table table--bordered table--sm">
+                    <thead><tr><th>유형</th><th>위험 입력</th><th>살균 결과</th><th>탐지</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge--secondary badge--sm">XSS</span></td>
+                            <td><code style="color:var(--danger,#ef4444);font-size:.75rem;">&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;Hello</code></td>
+                            <td><code style="color:var(--success,#22c55e);font-size:.75rem;">Hello</code></td>
+                            <td><span class="badge badge--danger badge--sm">차단</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge--secondary badge--sm">XSS</span></td>
+                            <td><code style="color:var(--danger,#ef4444);font-size:.75rem;">&lt;img src=x onerror=alert(1)&gt;</code></td>
+                            <td><code style="color:var(--success,#22c55e);font-size:.75rem;"></code></td>
+                            <td><span class="badge badge--danger badge--sm">차단</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge--secondary badge--sm">XSS</span></td>
+                            <td><code style="color:var(--danger,#ef4444);font-size:.75rem;">&lt;a href=&quot;javascript:void(0)&quot;&gt;click&lt;/a&gt;</code></td>
+                            <td><code style="color:var(--success,#22c55e);font-size:.75rem;">&lt;a href=&quot;void(0)&quot;&gt;click&lt;/a&gt;</code></td>
+                            <td><span class="badge badge--danger badge--sm">차단</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge--secondary badge--sm">SQL</span></td>
+                            <td><code style="color:var(--danger,#ef4444);font-size:.75rem;">admin&#039; OR 1=1 --</code></td>
+                            <td><code style="color:var(--success,#22c55e);font-size:.75rem;">admin&#039; OR 1=1 --</code></td>
+                            <td><span class="badge badge--warning badge--sm">탐지 (로그)</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge--secondary badge--sm">SQL</span></td>
+                            <td><code style="color:var(--danger,#ef4444);font-size:.75rem;">SELECT * FROM users; DROP TABLE users;--</code></td>
+                            <td><code style="color:var(--success,#22c55e);font-size:.75rem;">SELECT * FROM users; DROP TABLE users;--</code></td>
+                            <td><span class="badge badge--warning badge--sm">탐지 (로그)</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge--secondary badge--sm">Path</span></td>
+                            <td><code style="color:var(--danger,#ef4444);font-size:.75rem;">../../etc/passwd</code></td>
+                            <td><code style="color:var(--success,#22c55e);font-size:.75rem;">etc/passwd</code></td>
+                            <td><span class="badge badge--danger badge--sm">차단</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge--secondary badge--sm">Path</span></td>
+                            <td><code style="color:var(--danger,#ef4444);font-size:.75rem;">..\..\windows\system32</code></td>
+                            <td><code style="color:var(--success,#22c55e);font-size:.75rem;">windows/system32</code></td>
+                            <td><span class="badge badge--danger badge--sm">차단</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="alert alert--info mt-2"><span class="alert__message"><strong>SQL:</strong> Guard는 패턴 탐지 + 로깅만 수행. 실제 방어는 <code>PDO prepared statement</code>로 처리됩니다.</span></div>
+        </div>
+    </div>
+
+    <!-- Firewall + Ip -->
+    <div class="card card--outlined mb-4" id="demo-firewall">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">local_fire_department</i> Firewall + Ip</h5>
+            <span class="badge badge--danger badge--sm">Cat\Firewall · Cat\Ip</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">IP 차단/허용 방화벽 (CIDR IPv4/IPv6) + 안전한 클라이언트 IP 감지 (trusted_proxies)</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// IP 차단</span>
+<span class="hl-f">firewall</span>()-&gt;<span class="hl-f">ban</span>(<span class="hl-s">'203.0.113.50'</span>);
+<span class="hl-f">firewall</span>()-&gt;<span class="hl-f">deny</span>(<span class="hl-s">'10.0.0.0/8'</span>);  <span class="hl-c">// deny()는 ban()의 별칭</span>
+<span class="hl-f">firewall</span>()-&gt;<span class="hl-f">unban</span>(<span class="hl-s">'203.0.113.50'</span>);
+<span class="hl-f">firewall</span>()-&gt;<span class="hl-f">allow</span>(<span class="hl-s">'192.168.0.0/16'</span>);
+
+<span class="hl-c">// 미들웨어</span>
+<span class="hl-f">router</span>()-&gt;<span class="hl-f">use</span>(<span class="hl-f">firewall</span>()-&gt;<span class="hl-f">middleware</span>());
+
+<span class="hl-c">// 클라이언트 IP (프록시 안전 감지)</span>
+<span class="hl-v">$ip</span> = <span class="hl-f">ip</span>()-&gt;<span class="hl-f">address</span>();</code></pre>
+
+            <h6 class="mb-2">현재 접속 정보</h6>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="badge badge--soft badge--primary badge--sm">IP: 127.0.0.1</span>
+                <span class="badge badge--soft badge--success badge--sm">
+                    상태: 허용                </span>
+            </div>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>설정</th><th>값</th></tr></thead>
+                <tbody>
+                    <tr><td><code>trusted_proxies</code></td><td></td></tr>
+                    <tr><td><code>firewall.path</code></td><td><code>E:\imcat_project\Newcatphp\config/../storage/firewall</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Perm -->
+    <div class="card card--outlined mb-4" id="demo-perm">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">admin_panel_settings</i> Perm</h5>
+            <span class="badge badge--danger badge--sm">Cat\Perm</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">역할 기반 권한 검증. 현재 유저 역할 확인, 미들웨어로 라우트 보호</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 역할에 권한 매핑 (부팅 시)</span>
+<span class="hl-f">perm</span>()-&gt;<span class="hl-f">role</span>(<span class="hl-s">'admin'</span>, [<span class="hl-s">'posts.edit'</span>, <span class="hl-s">'users.manage'</span>]);
+<span class="hl-f">perm</span>()-&gt;<span class="hl-f">role</span>(<span class="hl-s">'editor'</span>, [<span class="hl-s">'posts.edit'</span>]);
+
+<span class="hl-c">// 라우트 보호 (admin만 접근)</span>
+<span class="hl-f">router</span>()-&gt;<span class="hl-f">use</span>(<span class="hl-f">perm</span>()-&gt;<span class="hl-f">middleware</span>(<span class="hl-s">'admin'</span>));
+
+<span class="hl-c">// 다중 역할 허용</span>
+<span class="hl-f">router</span>()-&gt;<span class="hl-f">use</span>(<span class="hl-f">perm</span>()-&gt;<span class="hl-f">middleware</span>(<span class="hl-s">'admin'</span>, <span class="hl-s">'editor'</span>));
+
+<span class="hl-c">// 권한 확인</span>
+<span class="hl-k">if</span> (<span class="hl-f">perm</span>()-&gt;<span class="hl-f">can</span>(<span class="hl-s">'posts.edit'</span>)) { ... }</code></pre>
+
+            <h6 class="mb-2">역할별 접근 시뮬레이션</h6>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>경로</th><th>필요 역할</th><th>admin</th><th>editor</th><th>user</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><code>/admin/dashboard</code></td><td><span class="badge badge--danger badge--sm">admin</span></td>
+                        <td><span class="badge badge--success badge--sm">허용</span></td>
+                        <td><span class="badge badge--danger badge--sm">거부</span></td>
+                        <td><span class="badge badge--danger badge--sm">거부</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>/posts/create</code></td><td><span class="badge badge--warning badge--sm">admin, editor</span></td>
+                        <td><span class="badge badge--success badge--sm">허용</span></td>
+                        <td><span class="badge badge--success badge--sm">허용</span></td>
+                        <td><span class="badge badge--danger badge--sm">거부</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>/profile</code></td><td><span class="badge badge--info badge--sm">모든 역할</span></td>
+                        <td><span class="badge badge--success badge--sm">허용</span></td>
+                        <td><span class="badge badge--success badge--sm">허용</span></td>
+                        <td><span class="badge badge--success badge--sm">허용</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

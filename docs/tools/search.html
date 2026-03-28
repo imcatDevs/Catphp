@@ -1,0 +1,56 @@
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--secondary);">search</i>
+        <div><h4 class="mb-0">Search</h4><span class="text-muted caption">Cat\Search — 전문 검색</span></div>
+        <span class="badge badge--secondary badge--sm ms-auto">search()</span>
+    </div>
+
+    <p class="mb-2"><strong>SQL LIKE 기반</strong> 전문 검색 도구입니다. 여러 테이블·컬럼을 대상으로 검색하고, <code>highlight()</code>로 검색어를 강조 표시합니다.</p>
+    <p class="mb-3">Paginate 도구와 연동하여 검색 결과 페이지네이션이 가능하며, Cache 도구로 자주 검색되는 쿼리의 결과를 캐싱할 수 있습니다. <code>validateIdentifier()</code>로 테이블·컬럼명 SQL Injection을 차단합니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:280px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>query(string $keyword)</code></td><td><code>self</code></td><td>검색 키워드 설정</td></tr>
+                    <tr><td><code>in(string $table, string ...$cols)</code></td><td><code>self</code></td><td>검색 대상 테이블·컬럼</td></tr>
+                    <tr><td><code>limit(int $n)</code></td><td><code>self</code></td><td>결과 개수 제한</td></tr>
+                    <tr><td><code>offset(int $n)</code></td><td><code>self</code></td><td>결과 시작 위치</td></tr>
+                    <tr><td><code>results()</code></td><td><code>array</code></td><td>검색 결과 배열</td></tr>
+                    <tr><td><code>count()</code></td><td><code>int</code></td><td>전체 결과 수</td></tr>
+                    <tr><td><code>highlight(string $text)</code></td><td><code>string</code></td><td>검색어 <code>&lt;mark&gt;</code> 강조</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">사용 예제</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-v">$keyword</span> = <span class="hl-v">$_GET</span>[<span class="hl-s">'q'</span>] ?? <span class="hl-s">''</span>;
+
+<span class="hl-v">$s</span> = <span class="hl-f">search</span>()
+    -&gt;<span class="hl-f">query</span>(<span class="hl-v">$keyword</span>)
+    -&gt;<span class="hl-f">in</span>(<span class="hl-s">'posts'</span>, <span class="hl-s">'title'</span>, <span class="hl-s">'body'</span>)
+    -&gt;<span class="hl-f">in</span>(<span class="hl-s">'pages'</span>, <span class="hl-s">'title'</span>, <span class="hl-s">'content'</span>)
+    -&gt;<span class="hl-f">limit</span>(<span class="hl-n">10</span>)-&gt;<span class="hl-f">offset</span>(<span class="hl-n">0</span>);
+
+<span class="hl-v">$results</span> = <span class="hl-v">$s</span>-&gt;<span class="hl-f">results</span>();
+<span class="hl-v">$total</span>   = <span class="hl-v">$s</span>-&gt;<span class="hl-f">count</span>();
+
+<span class="hl-c">// 검색어 강조</span>
+<span class="hl-k">foreach</span> (<span class="hl-v">$results</span> <span class="hl-k">as</span> <span class="hl-v">$row</span>) {
+    <span class="hl-k">echo</span> <span class="hl-v">$s</span>-&gt;<span class="hl-f">highlight</span>(<span class="hl-v">$row</span>[<span class="hl-s">'title'</span>]);
+}</code></pre>
+
+    <div class="alert alert--warning mb-3">
+        <span class="alert__message"><strong>보안:</strong> 테이블·컬럼명은 <code>validateIdentifier()</code>로 SQL Injection을 방지합니다. 검색어는 prepared statement로 전달되므로 안전합니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/paginate" class="badge badge--soft badge--success badge--sm" style="cursor:pointer;">Paginate</a>
+        <a data-spa="/tool/cache" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">Cache</a>
+        <a data-spa="/tool/db" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">DB</a>
+    </div>
+</div>

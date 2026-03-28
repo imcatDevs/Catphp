@@ -1,0 +1,281 @@
+<div class="demo-section">
+    <h3 class="mb-1">네트워크 / API</h3>
+    <p class="text-muted mb-4">Http · Json · Rate · Cors · Api — HTTP 클라이언트, JSON 응답, 레이트 리밋, CORS, API 통합</p>
+
+    <!-- Http -->
+    <div class="card card--outlined mb-4" id="demo-http">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">http</i> Http</h5>
+            <span class="badge badge--info badge--sm">Cat\Http</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">cURL 기반 HTTP 클라이언트. GET/POST/PUT/DELETE, JSON 요청, 타임아웃, 파일 업로드/다운로드</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// GET 요청</span>
+<span class="hl-v">$res</span> = <span class="hl-f">http</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'https://api.example.com/users'</span>);
+<span class="hl-v">$res</span>-&gt;<span class="hl-f">json</span>();    <span class="hl-c">// 배열 변환</span>
+<span class="hl-v">$res</span>-&gt;<span class="hl-f">status</span>(); <span class="hl-c">// 200</span>
+
+<span class="hl-c">// JSON POST</span>
+<span class="hl-v">$res</span> = <span class="hl-f">http</span>()-&gt;<span class="hl-f">json</span>(<span class="hl-s">'https://api.example.com/users'</span>, [
+    <span class="hl-s">'name'</span> =&gt; <span class="hl-s">'Cat'</span>, <span class="hl-s">'email'</span> =&gt; <span class="hl-s">'cat@catphp.dev'</span>
+]);
+
+<span class="hl-c">// 헤더 + 타임아웃</span>
+<span class="hl-v">$res</span> = <span class="hl-f">http</span>()-&gt;<span class="hl-f">headers</span>([<span class="hl-s">'Authorization'</span> =&gt; <span class="hl-s">'Bearer token'</span>])
+    -&gt;<span class="hl-f">timeout</span>(<span class="hl-n">5</span>)
+    -&gt;<span class="hl-f">get</span>(<span class="hl-s">'https://api.example.com/me'</span>);</code></pre>
+
+            <h6 class="mb-2">인터랙티브 API 테스트</h6>
+            <div class="d-flex gap-2 flex-wrap mb-3">
+                <button class="btn btn--primary btn--sm" id="httpTestBtn">
+                    <i class="material-icons-outlined" style="font-size:14px;">send</i> GET /api/posts
+                </button>
+            </div>
+            <pre class="demo-code" id="httpResult" style="min-height:80px;"><code>버튼을 클릭하여 API를 호출하세요..</code></pre>
+            <script>
+            document.getElementById('httpTestBtn')?.addEventListener('click', async () => {
+                const el = document.getElementById('httpResult');
+                el.querySelector('code').textContent = '요청 중..';
+                try {
+                    const res = await fetch('/api/posts');
+                    const data = await res.json();
+                    el.querySelector('code').textContent = 'Status: ' + res.status + '\n\n' + JSON.stringify(data, null, 2);
+                    IMCAT.toast.success('API 호출 성공!');
+                } catch (e) {
+                    el.querySelector('code').textContent = 'Error: ' + e.message;
+                    IMCAT.toast.error('API 호출 실패');
+                }
+            });
+            </script>
+        </div>
+    </div>
+
+    <!-- Json -->
+    <div class="card card--outlined mb-4" id="demo-json">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">data_object</i> Json</h5>
+            <span class="badge badge--info badge--sm">Cat\Json</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">통일된 JSON API 응답. ok/fail/error/paginated 4가지 포맷, header+echo+exit 자동 처리</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 성공</span>
+<span class="hl-f">json</span>()-&gt;<span class="hl-f">ok</span>([<span class="hl-s">'id'</span> =&gt; <span class="hl-n">1</span>, <span class="hl-s">'name'</span> =&gt; <span class="hl-s">'CatPHP'</span>]);
+<span class="hl-f">json</span>()-&gt;<span class="hl-f">ok</span>(<span class="hl-v">$data</span>, <span class="hl-n">201</span>);  <span class="hl-c">// 201 Created</span>
+
+<span class="hl-c">// 실패 / 에러</span>
+<span class="hl-f">json</span>()-&gt;<span class="hl-f">fail</span>(<span class="hl-s">'유효성 검증 실패'</span>, <span class="hl-v">$errors</span>, <span class="hl-n">422</span>);
+<span class="hl-f">json</span>()-&gt;<span class="hl-f">error</span>(<span class="hl-s">'서버 내부 오류'</span>, <span class="hl-n">500</span>);
+
+<span class="hl-c">// 페이지네이션</span>
+<span class="hl-f">json</span>()-&gt;<span class="hl-f">paginated</span>(<span class="hl-v">$items</span>, <span class="hl-v">$total</span>, <span class="hl-v">$page</span>, <span class="hl-v">$perPage</span>);</code></pre>
+
+            <h6 class="mb-2">응답 포맷 비교</h6>
+            <div id="jsonTabs">
+                <div role="tablist">
+                    <button role="tab">ok()</button>
+                    <button role="tab">fail()</button>
+                    <button role="tab">error()</button>
+                    <button role="tab">paginated()</button>
+                </div>
+                <div role="tabpanel">
+                    <pre class="demo-code"><code>{
+    &quot;ok&quot;: true,
+    &quot;data&quot;: {
+        &quot;id&quot;: 1,
+        &quot;name&quot;: &quot;CatPHP&quot;,
+        &quot;email&quot;: &quot;cat@catphp.dev&quot;
+    }
+}</code></pre>
+                </div>
+                <div role="tabpanel">
+                    <pre class="demo-code"><code>{
+    &quot;ok&quot;: false,
+    &quot;error&quot;: {
+        &quot;message&quot;: &quot;유효성 검증 실패&quot;,
+        &quot;details&quot;: {
+            &quot;name&quot;: [
+                &quot;최소 2자 이상&quot;
+            ],
+            &quot;email&quot;: [
+                &quot;이메일 형식 불일치&quot;
+            ]
+        }
+    }
+}</code></pre>
+                </div>
+                <div role="tabpanel">
+                    <pre class="demo-code"><code>{
+    &quot;ok&quot;: false,
+    &quot;error&quot;: {
+        &quot;message&quot;: &quot;서버 내부 오류&quot;,
+        &quot;code&quot;: 500
+    }
+}</code></pre>
+                </div>
+                <div role="tabpanel">
+                    <pre class="demo-code"><code>{
+    &quot;ok&quot;: true,
+    &quot;data&quot;: [
+        {
+            &quot;id&quot;: 1
+        },
+        {
+            &quot;id&quot;: 2
+        }
+    ],
+    &quot;meta&quot;: {
+        &quot;total&quot;: 100,
+        &quot;page&quot;: 1,
+        &quot;per_page&quot;: 10,
+        &quot;last_page&quot;: 10
+    }
+}</code></pre>
+                </div>
+            </div>
+            <script>
+            (async () => {
+                const { Tabs } = await IMCAT.use('navigation');
+                new Tabs('#jsonTabs', { animation: true });
+            })();
+            </script>
+        </div>
+    </div>
+
+    <!-- Rate -->
+    <div class="card card--outlined mb-4" id="demo-rate">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">speed</i> Rate</h5>
+            <span class="badge badge--info badge--sm">Cat\Rate</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">파일 기반 레이트 리밋. 윈도우 시간 + 최대 횟수, flock 동시성 보호, Firewall 연동 자동 차단</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 60초 내 100회 제한</span>
+<span class="hl-k">if</span> (!<span class="hl-f">rate</span>()-&gt;<span class="hl-f">limit</span>(<span class="hl-s">'api'</span>, <span class="hl-n">60</span>, <span class="hl-n">100</span>)) {
+    <span class="hl-f">json</span>()-&gt;<span class="hl-f">error</span>(<span class="hl-s">'Too Many Requests'</span>, <span class="hl-n">429</span>);
+}
+
+<span class="hl-c">// IP별 제한</span>
+<span class="hl-f">rate</span>()-&gt;<span class="hl-f">limit</span>(<span class="hl-s">'login:'</span> . <span class="hl-f">ip</span>()-&gt;<span class="hl-f">address</span>(), <span class="hl-n">300</span>, <span class="hl-n">5</span>);
+
+<span class="hl-c">// 잔여 횟수 확인</span>
+<span class="hl-v">$remaining</span> = <span class="hl-f">rate</span>()-&gt;<span class="hl-f">remaining</span>(<span class="hl-s">'api'</span>, <span class="hl-n">60</span>, <span class="hl-n">100</span>);</code></pre>
+
+            <h6 class="mb-2">레이트 리밋 시뮬레이션</h6>
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <button class="btn btn--primary btn--sm" id="rateBtn">요청 보내기</button>
+                <span class="text-muted caption">잔여: <strong id="rateCount">10</strong> / 10</span>
+                <button class="btn btn--outline btn--sm" id="rateReset">초기화</button>
+            </div>
+            <div class="progress progress--info progress--animated mb-2">
+                <div class="progress__bar" id="rateBar" style="width:100%;"></div>
+            </div>
+            <div id="rateMsg"></div>
+            <script>
+            (() => {
+                let remaining = 10, max = 10;
+                const bar = document.getElementById('rateBar');
+                const count = document.getElementById('rateCount');
+                const msg = document.getElementById('rateMsg');
+                document.getElementById('rateBtn')?.addEventListener('click', () => {
+                    if (remaining <= 0) {
+                        msg.innerHTML = '<div class="alert alert--danger"><span class="alert__message"><strong>429</strong> Too Many Requests — 레이트 리밋 초과</span></div>';
+                        IMCAT.toast.error('429 Too Many Requests');
+                        return;
+                    }
+                    remaining--;
+                    const pct = (remaining / max * 100);
+                    bar.style.width = pct + '%';
+                    count.textContent = remaining;
+                    bar.parentElement.className = 'progress mb-2 ' + (pct > 50 ? 'progress--info progress--animated' : pct > 20 ? 'progress--warning progress--animated' : 'progress--danger progress--animated');
+                    msg.innerHTML = remaining === 0
+                        ? '<div class="alert alert--danger"><span class="alert__message"><strong>429</strong> Too Many Requests</span></div>'
+                        : '<div class="alert alert--success"><span class="alert__message"><strong>200 OK</strong> — 잔여 ' + remaining + '회</span></div>';
+                });
+                document.getElementById('rateReset')?.addEventListener('click', () => {
+                    remaining = max;
+                    bar.style.width = '100%';
+                    bar.parentElement.className = 'progress progress--info progress--animated mb-2';
+                    count.textContent = max;
+                    msg.innerHTML = '<div class="alert alert--info"><span class="alert__message">초기화 완료</span></div>';
+                });
+            })();
+            </script>
+        </div>
+    </div>
+
+    <!-- Cors -->
+    <div class="card card--outlined mb-4" id="demo-cors">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">public</i> Cors</h5>
+            <span class="badge badge--info badge--sm">Cat\Cors</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">CORS 헤더 관리. 오리진/메서드/헤더 허용 설정, Preflight OPTIONS 자동 처리, Credentials 안전 제어</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 체이닝 설정 + 헤더 전송</span>
+<span class="hl-f">cors</span>()-&gt;<span class="hl-f">origins</span>([<span class="hl-s">'https://example.com'</span>])
+     -&gt;<span class="hl-f">methods</span>([<span class="hl-s">'GET'</span>, <span class="hl-s">'POST'</span>, <span class="hl-s">'PUT'</span>, <span class="hl-s">'DELETE'</span>])
+     -&gt;<span class="hl-f">headers</span>([<span class="hl-s">'Content-Type'</span>, <span class="hl-s">'Authorization'</span>])
+     -&gt;<span class="hl-f">handle</span>();
+
+<span class="hl-c">// 또는 config/app.php에서 설정 후 한 줄 호출</span>
+<span class="hl-c">// 'cors' => ['origins' => [...], 'max_age' => 86400]</span>
+<span class="hl-f">cors</span>()-&gt;<span class="hl-f">handle</span>();</code></pre>
+
+            <h6 class="mb-2">CORS 응답 헤더</h6>
+            <table class="table table--sm table--bordered">
+                <thead><tr><th>헤더</th><th>값</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Access-Control-Allow-Origin</code></td><td>https://example.com</td><td>허용 오리진</td></tr>
+                    <tr><td><code>Access-Control-Allow-Methods</code></td><td>GET, POST, PUT, DELETE</td><td>허용 메서드</td></tr>
+                    <tr><td><code>Access-Control-Allow-Headers</code></td><td>Content-Type, Authorization</td><td>허용 헤더</td></tr>
+                    <tr><td><code>Access-Control-Max-Age</code></td><td>86400</td><td>Preflight 캐시 (24시간)</td></tr>
+                    <tr><td><code>Access-Control-Allow-Credentials</code></td><td>true</td><td>쿠키/인증 허용 (와일드카드 Origin 불가)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Api -->
+    <div class="card card--outlined mb-4" id="demo-api">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">api</i> Api</h5>
+            <span class="badge badge--info badge--sm">Cat\Api</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">API 보안 미들웨어 통합. CORS + Rate Limit + Auth + Guard를 한 줄로 적용</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 한 줄로 4중 보안 적용</span>
+<span class="hl-f">api</span>()-&gt;<span class="hl-f">cors</span>()
+     -&gt;<span class="hl-f">rateLimit</span>(<span class="hl-n">60</span>, <span class="hl-n">100</span>)  <span class="hl-c">// 60초/100회</span>
+     -&gt;<span class="hl-f">guard</span>()              <span class="hl-c">// XSS/SQL 살균</span>
+     -&gt;<span class="hl-f">apply</span>();             <span class="hl-c">// 적용</span>
+
+<span class="hl-c">// JWT 인증 추가</span>
+<span class="hl-f">api</span>()-&gt;<span class="hl-f">cors</span>()-&gt;<span class="hl-f">rateLimit</span>(<span class="hl-n">60</span>, <span class="hl-n">100</span>)-&gt;<span class="hl-f">auth</span>()-&gt;<span class="hl-f">guard</span>()-&gt;<span class="hl-f">apply</span>();
+
+<span class="hl-c">// 실제 라우트 핸들러에서</span>
+<span class="hl-f">router</span>()-&gt;<span class="hl-f">get</span>(<span class="hl-s">'/api/users'</span>, <span class="hl-k">function</span>() {
+    <span class="hl-f">api</span>()-&gt;<span class="hl-f">cors</span>()-&gt;<span class="hl-f">rateLimit</span>(<span class="hl-n">60</span>, <span class="hl-n">100</span>)-&gt;<span class="hl-f">guard</span>()-&gt;<span class="hl-f">apply</span>();
+    <span class="hl-f">json</span>()-&gt;<span class="hl-f">ok</span>(<span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'users'</span>)-&gt;<span class="hl-f">all</span>());
+});</code></pre>
+
+            <h6 class="mb-2">미들웨어 파이프라인</h6>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="badge badge--info">1. CORS</span>
+                <i class="material-icons-outlined text-muted" style="font-size:16px;">arrow_forward</i>
+                <span class="badge badge--warning">2. Rate Limit</span>
+                <i class="material-icons-outlined text-muted" style="font-size:16px;">arrow_forward</i>
+                <span class="badge badge--danger">3. Auth (JWT)</span>
+                <i class="material-icons-outlined text-muted" style="font-size:16px;">arrow_forward</i>
+                <span class="badge badge--success">4. Guard (XSS/SQL)</span>
+                <i class="material-icons-outlined text-muted" style="font-size:16px;">arrow_forward</i>
+                <span class="badge badge--primary">핸들러</span>
+            </div>
+            <div class="alert alert--info mt-3"><span class="alert__message">각 미들웨어가 실패하면 즉시 에러 응답을 반환하고 다음 단계로 진행하지 않습니다.</span></div>
+        </div>
+    </div>
+</div>

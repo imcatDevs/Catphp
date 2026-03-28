@@ -1,0 +1,109 @@
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--danger);">webhook</i>
+        <div><h4 class="mb-0">Webhook</h4><span class="text-muted caption">Cat\Webhook — Webhook 발송/수신 + HMAC 서명</span></div>
+        <span class="badge badge--danger badge--sm ms-auto">webhook()</span>
+    </div>
+
+    <p class="mb-2"><strong>Webhook 발송 및 수신</strong> 도구입니다. HMAC-SHA256 서명으로 페이로드 무결성을 보장하며, 재시도 로직과 로깅을 내장합니다.</p>
+    <p class="mb-3">발송 시 URL은 <code>http</code>/<code>https</code>만 허용됩니다 (SSRF 방어). 서명 비교는 <code>hash_equals()</code>로 타이밍 공격을 방지합니다. GitHub 스타일 <code>sha256=...</code> 접두사도 자동 처리합니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">발송 메서드</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:300px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>to(string $url)</code></td><td><code>self</code></td><td>대상 URL (http/https만)</td></tr>
+                    <tr><td><code>secret(string $secret)</code></td><td><code>self</code></td><td>HMAC 시크릿 (서명 자동 첨부)</td></tr>
+                    <tr><td><code>payload(array $data)</code></td><td><code>self</code></td><td>JSON 페이로드</td></tr>
+                    <tr><td><code>header(string $name, string $value)</code></td><td><code>self</code></td><td>커스텀 헤더 추가</td></tr>
+                    <tr><td><code>send()</code></td><td><code>WebhookResult</code></td><td>발송 실행 (재시도 포함)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">수신 메서드</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:300px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>receive()</code></td><td><code>self</code></td><td>php://input에서 body + 서명 헤더 읽기</td></tr>
+                    <tr><td><code>isValid(?string $secret = null)</code></td><td><code>bool</code></td><td>서명 검증 (hash_equals)</td></tr>
+                    <tr><td><code>getPayload()</code></td><td><code>?array</code></td><td>수신 페이로드 (JSON 디코딩, 1MB/깊이32 제한)</td></tr>
+                    <tr><td><code>getRawBody()</code></td><td><code>string</code></td><td>수신 원본 body</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">WebhookResult 메서드</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:200px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>status()</code></td><td><code>int</code></td><td>HTTP 상태 코드</td></tr>
+                    <tr><td><code>body()</code></td><td><code>string</code></td><td>응답 body</td></tr>
+                    <tr><td><code>ok()</code></td><td><code>bool</code></td><td>성공 여부 (2xx)</td></tr>
+                    <tr><td><code>attempts()</code></td><td><code>int</code></td><td>시도 횟수</td></tr>
+                    <tr><td><code>json()</code></td><td><code>?array</code></td><td>응답 JSON 디코딩</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">발송 예제</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 기본 발송</span>
+<span class="hl-v">$result</span> = <span class="hl-f">webhook</span>()-&gt;<span class="hl-f">to</span>(<span class="hl-s">'https://example.com/hook'</span>)
+    -&gt;<span class="hl-f">payload</span>([<span class="hl-s">'event'</span> =&gt; <span class="hl-s">'user.created'</span>, <span class="hl-s">'data'</span> =&gt; <span class="hl-v">$user</span>])
+    -&gt;<span class="hl-f">send</span>();
+
+<span class="hl-k">if</span> (<span class="hl-v">$result</span>-&gt;<span class="hl-f">ok</span>()) {
+    <span class="hl-c">// 성공 (2xx)</span>
+}
+
+<span class="hl-c">// HMAC 서명 + 커스텀 헤더</span>
+<span class="hl-v">$result</span> = <span class="hl-f">webhook</span>()-&gt;<span class="hl-f">to</span>(<span class="hl-s">'https://api.example.com/webhook'</span>)
+    -&gt;<span class="hl-f">secret</span>(<span class="hl-s">'my-webhook-secret'</span>)
+    -&gt;<span class="hl-f">header</span>(<span class="hl-s">'X-Event-Type'</span>, <span class="hl-s">'order.paid'</span>)
+    -&gt;<span class="hl-f">payload</span>([<span class="hl-s">'order_id'</span> =&gt; <span class="hl-n">123</span>, <span class="hl-s">'amount'</span> =&gt; <span class="hl-n">9900</span>])
+    -&gt;<span class="hl-f">send</span>();</code></pre>
+
+    <h6 class="mb-2">수신 검증 예제</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// Webhook 수신 엔드포인트</span>
+<span class="hl-f">router</span>()-&gt;<span class="hl-f">post</span>(<span class="hl-s">'/api/webhook'</span>, <span class="hl-k">function</span>() {
+    <span class="hl-v">$wh</span> = <span class="hl-f">webhook</span>()-&gt;<span class="hl-f">receive</span>();
+
+    <span class="hl-k">if</span> (!<span class="hl-v">$wh</span>-&gt;<span class="hl-f">isValid</span>(<span class="hl-s">'my-secret'</span>)) {
+        <span class="hl-f">json</span>()-&gt;<span class="hl-f">fail</span>(<span class="hl-s">'서명 검증 실패'</span>, [], <span class="hl-n">401</span>);
+    }
+
+    <span class="hl-v">$data</span> = <span class="hl-v">$wh</span>-&gt;<span class="hl-f">getPayload</span>();
+    <span class="hl-c">// $data['event'], $data['data'] 처리...</span>
+    <span class="hl-f">json</span>()-&gt;<span class="hl-f">ok</span>([<span class="hl-s">'received'</span> =&gt; <span class="hl-k">true</span>]);
+});</code></pre>
+
+    <h6 class="mb-2">설정</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// config/app.php</span>
+<span class="hl-s">'webhook'</span> =&gt; [
+    <span class="hl-s">'secret'</span>      =&gt; <span class="hl-s">''</span>,      <span class="hl-c">// 기본 HMAC 시크릿</span>
+    <span class="hl-s">'timeout'</span>     =&gt; <span class="hl-n">10</span>,      <span class="hl-c">// HTTP 타임아웃 (초)</span>
+    <span class="hl-s">'retry'</span>       =&gt; <span class="hl-n">0</span>,       <span class="hl-c">// 실패 시 재시도 횟수</span>
+    <span class="hl-s">'retry_delay'</span> =&gt; <span class="hl-n">1</span>,       <span class="hl-c">// 재시도 간 대기 (초)</span>
+    <span class="hl-s">'log'</span>         =&gt; <span class="hl-k">false</span>,   <span class="hl-c">// 발송/수신 로깅</span>
+],</code></pre>
+
+    <div class="alert alert--danger mb-3">
+        <span class="alert__message"><strong>보안:</strong> 프로덕션에서는 반드시 시크릿을 설정하고, 수신 엔드포인트에서 <code>isValid()</code>로 서명을 검증하세요. 시크릿은 환경변수(<code>env('WEBHOOK_SECRET')</code>)로 관리하는 것을 권장합니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/http" class="badge badge--soft badge--info badge--sm" style="cursor:pointer;">Http</a>
+        <a data-spa="/tool/json" class="badge badge--soft badge--primary badge--sm" style="cursor:pointer;">Json</a>
+        <a data-spa="/tool/encrypt" class="badge badge--soft badge--secondary badge--sm" style="cursor:pointer;">Encrypt</a>
+    </div>
+</div>

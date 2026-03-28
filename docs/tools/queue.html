@@ -1,0 +1,65 @@
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--warning);">queue</i>
+        <div><h4 class="mb-0">Queue</h4><span class="text-muted caption">Cat\Queue — 비동기 작업 큐</span></div>
+        <span class="badge badge--warning badge--sm ms-auto">queue()</span>
+    </div>
+
+    <p class="mb-2"><strong>Redis 또는 DB 기반</strong> 비동기 작업 큐입니다. 이메일 발송, 이미지 처리 등 시간이 걸리는 작업을 백그라운드에서 처리합니다.</p>
+    <p class="mb-3"><code>push()</code>로 작업을 큐에 추가하고, <code>php cli.php queue:work</code>로 워커를 실행합니다. <code>later()</code>로 지연 실행도 가능합니다.</p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:340px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>handle(string $job, callable $handler)</code></td><td><code>self</code></td><td>작업 핸들러 등록</td></tr>
+                    <tr><td><code>push(string $job, array $payload = [])</code></td><td><code>string</code></td><td>즉시 실행 큐에 추가 (ID 반환)</td></tr>
+                    <tr><td><code>later(int $delay, string $job, array $payload)</code></td><td><code>string</code></td><td>지연 실행 (초 단위)</td></tr>
+                    <tr><td><code>pop(?string $queue = null)</code></td><td><code>bool</code></td><td>단일 작업 꺼내기 + 실행</td></tr>
+                    <tr><td><code>work(?string $queue, int $sleep, int $max)</code></td><td><code>void</code></td><td>워커 루프 (블로킹)</td></tr>
+                    <tr><td><code>size(?string $queue = null)</code></td><td><code>int</code></td><td>큐 크기 조회</td></tr>
+                    <tr><td><code>clear(?string $queue = null)</code></td><td><code>int</code></td><td>큐 비우기</td></tr>
+                    <tr><td><code>failed(int $limit = 50)</code></td><td><code>array</code></td><td>실패한 작업 목록</td></tr>
+                    <tr><td><code>retryFailed(string $id)</code></td><td><code>bool</code></td><td>실패한 작업 재시도</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">핸들러 등록 + 작업 추가</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 핸들러 등록 (cli.php 또는 부팅 시)</span>
+<span class="hl-f">queue</span>()-&gt;<span class="hl-f">handle</span>(<span class="hl-s">'send-email'</span>, <span class="hl-k">function</span>(<span class="hl-v">$payload</span>) {
+    <span class="hl-f">mailer</span>()-&gt;<span class="hl-f">to</span>(<span class="hl-v">$payload</span>[<span class="hl-s">'to'</span>])
+        -&gt;<span class="hl-f">subject</span>(<span class="hl-v">$payload</span>[<span class="hl-s">'subject'</span>])
+        -&gt;<span class="hl-f">body</span>(<span class="hl-v">$payload</span>[<span class="hl-s">'body'</span>])-&gt;<span class="hl-f">send</span>();
+});
+
+<span class="hl-c">// 웹 핸들러에서 큐에 추가 (즉시 응답)</span>
+<span class="hl-f">queue</span>()-&gt;<span class="hl-f">push</span>(<span class="hl-s">'send-email'</span>, [
+    <span class="hl-s">'to'</span> =&gt; <span class="hl-s">'user@example.com'</span>,
+    <span class="hl-s">'subject'</span> =&gt; <span class="hl-s">'환영합니다'</span>,
+    <span class="hl-s">'body'</span> =&gt; <span class="hl-s">'&lt;h1&gt;가입 완료&lt;/h1&gt;'</span>,
+]);
+
+<span class="hl-c">// 30초 뒤 실행</span>
+<span class="hl-f">queue</span>()-&gt;<span class="hl-f">later</span>(<span class="hl-n">30</span>, <span class="hl-s">'send-email'</span>, <span class="hl-v">$payload</span>);</code></pre>
+
+    <h6 class="mb-2">워커 실행</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c"># 터미널에서 워커 시작</span>
+php cli.php queue:work
+php cli.php queue:size
+php cli.php queue:failed</code></pre>
+
+    <div class="alert alert--info mb-3">
+        <span class="alert__message"><strong>드라이버:</strong> <code>redis</code>(기본) 또는 <code>database</code>. Redis 드라이버는 <code>blPop</code>으로 효율적인 블로킹 대기를 합니다.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/redis" class="badge badge--soft badge--danger badge--sm" style="cursor:pointer;">Redis</a>
+        <a data-spa="/tool/schedule" class="badge badge--soft badge--warning badge--sm" style="cursor:pointer;">Schedule</a>
+        <a data-spa="/tool/mail" class="badge badge--soft badge--info badge--sm" style="cursor:pointer;">Mail</a>
+    </div>
+</div>

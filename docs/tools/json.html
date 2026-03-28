@@ -1,0 +1,53 @@
+<div class="demo-section">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="material-icons-outlined" style="font-size:28px;color:var(--info);">data_object</i>
+        <div><h4 class="mb-0">Json</h4><span class="text-muted caption">Cat\Json — JSON 응답 빌더</span></div>
+        <span class="badge badge--info badge--sm ms-auto">json()</span>
+    </div>
+
+    <p class="mb-2">API 응답을 <strong>통일된 JSON 형식</strong>으로 출력합니다. <code>ok()</code>, <code>fail()</code>, <code>error()</code>로 일관된 응답 구조를 유지하며, <code>paginated()</code>로 페이지네이션 응답을 생성합니다.</p>
+    <p class="mb-3">모든 응답 메서드는 내부에서 <code>Content-Type: application/json</code> 헤더를 설정하고, <code>echo</code> 후 <code>exit</code>합니다. 응답 형식: <code>{"success": bool, "data": ..., "message": "..."}</code></p>
+
+    <div class="card card--outlined mb-3">
+        <div class="card__header"><h6 class="card__title mb-0">전체 메서드 레퍼런스</h6></div>
+        <div class="card__body p-0">
+            <table class="table table--sm mb-0">
+                <thead><tr><th style="min-width:280px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
+                <tbody>
+                    <tr><td><code>ok(mixed $data = null, int $code = 200)</code></td><td><code>never</code></td><td>성공 응답 <code>{"ok":true, "data":...}</code></td></tr>
+                    <tr><td><code>fail(string $msg, mixed $details = null, int $code = 422)</code></td><td><code>never</code></td><td>실패 응답 <code>{"ok":false, "message":...}</code></td></tr>
+                    <tr><td><code>error(string $msg, int $code = 500)</code></td><td><code>never</code></td><td>에러 응답</td></tr>
+                    <tr><td><code>paginated(array $data, int $total, int $page, int $perPage)</code></td><td><code>never</code></td><td>페이지네이션 응답 (meta 포함)</td></tr>
+                    <tr><td><code>send(int $code, array $payload)</code></td><td><code>never</code></td><td>커스텀 JSON 응답</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h6 class="mb-2">사용 예제</h6>
+    <pre class="demo-code mb-3"><code><span class="hl-c">// 성공 응답</span>
+<span class="hl-f">json</span>()-&gt;<span class="hl-f">ok</span>([<span class="hl-s">'user'</span> =&gt; [<span class="hl-s">'id'</span> =&gt; <span class="hl-n">1</span>, <span class="hl-s">'name'</span> =&gt; <span class="hl-s">'Cat'</span>]]);
+<span class="hl-c">// → {"ok":true, "data":{"user":{"id":1,"name":"Cat"}}}</span>
+
+<span class="hl-c">// 실패 응답 (details로 검증 오류 전달 가능)</span>
+<span class="hl-f">json</span>()-&gt;<span class="hl-f">fail</span>(<span class="hl-s">'이메일이 이미 존재합니다'</span>, <span class="hl-k">null</span>, <span class="hl-n">409</span>);
+<span class="hl-c">// → {"ok":false, "message":"이메일이 이미 존재합니다"}</span>
+
+<span class="hl-c">// 검증 오류 + 상세 정보 전달</span>
+<span class="hl-f">json</span>()-&gt;<span class="hl-f">fail</span>(<span class="hl-s">'유효성 검증 실패'</span>, <span class="hl-v">$v</span>-&gt;<span class="hl-f">errors</span>(), <span class="hl-n">422</span>);
+
+<span class="hl-c">// 페이지네이션 응답</span>
+<span class="hl-v">$posts</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'posts'</span>)-&gt;<span class="hl-f">limit</span>(<span class="hl-n">10</span>)-&gt;<span class="hl-f">offset</span>(<span class="hl-n">0</span>)-&gt;<span class="hl-f">all</span>();
+<span class="hl-v">$total</span> = <span class="hl-f">db</span>()-&gt;<span class="hl-f">table</span>(<span class="hl-s">'posts'</span>)-&gt;<span class="hl-f">count</span>();
+<span class="hl-f">json</span>()-&gt;<span class="hl-f">paginated</span>(<span class="hl-v">$posts</span>, <span class="hl-v">$total</span>, <span class="hl-n">1</span>, <span class="hl-n">10</span>);</code></pre>
+
+    <div class="alert alert--warning mb-3">
+        <span class="alert__message"><strong>주의:</strong> <code>ok()</code>/<code>fail()</code>/<code>error()</code>는 내부에서 <code>exit</code>을 호출합니다. 이후 코드는 실행되지 않으므로 핸들러의 마지막에 호출하세요.</span>
+    </div>
+
+    <div class="d-flex gap-1 flex-wrap">
+        <span class="badge badge--soft badge--secondary badge--sm">관련:</span>
+        <a data-spa="/tool/api" class="badge badge--soft badge--info badge--sm" style="cursor:pointer;">Api</a>
+        <a data-spa="/tool/paginate" class="badge badge--soft badge--success badge--sm" style="cursor:pointer;">Paginate</a>
+    </div>
+</div>
