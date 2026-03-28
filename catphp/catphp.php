@@ -228,6 +228,10 @@ if (!function_exists('guard')) {
     function guard(): \Cat\Guard { return cat('Guard'); }
 }
 
+if (!function_exists('sanitizer')) {
+    function sanitizer(): \Cat\Sanitizer { return cat('Sanitizer'); }
+}
+
 // ──────────────────────────────────────────────
 // Shortcut 함수 — 네트워크 도구 3개
 // ──────────────────────────────────────────────

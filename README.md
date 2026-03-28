@@ -92,6 +92,9 @@ guard()->onAttack(fn($type, $ip) =>
 $token = auth()->createToken(['user_id' => 1]);
 $payload = auth()->verifyToken($token);
 $hash = auth()->hashPassword('password');
+
+// HTML 정제 (XSS 방어)
+$clean = sanitizer()->allowImages()->allowLinks()->clean($userHtml);
 ```
 
 ## 웹/CMS

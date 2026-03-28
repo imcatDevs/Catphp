@@ -1,6 +1,6 @@
 <div class="demo-section">
     <h3 class="mb-1">보안 도구</h3>
-    <p class="text-muted mb-4">Auth · Csrf · Encrypt · Guard · Firewall · Ip · Perm — 인증, 암호화, 입력 보호, 방화벽, 권한</p>
+    <p class="text-muted mb-4">Auth · Csrf · Encrypt · Guard · Sanitizer · Firewall · Ip · Perm — 인증, 암호화, 입력 보호, HTML 정제, 방화벽, 권한</p>
 
     <!-- Auth -->
     <div class="card card--outlined mb-4" id="demo-auth">
@@ -255,6 +255,62 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Sanitizer -->
+    <div class="card card--outlined mb-4" id="demo-sanitizer">
+        <div class="card__header d-flex justify-content-between align-items-center">
+            <h5 class="card__title mb-0"><i class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">cleaning_services</i> Sanitizer</h5>
+            <span class="badge badge--danger badge--sm">Cat\Sanitizer</span>
+        </div>
+        <div class="card__body">
+            <p class="mb-3">HTML 콘텐츠 XSS 정제. WYSIWYG 에디터, 댓글, 게시판 등 사용자 입력 HTML 안전화. <strong>195개 이상의 XSS 공격 패턴</strong> 방어.</p>
+
+            <pre class="demo-code mb-3"><code><span class="hl-c">// 기본: 텍스트만 허용</span>
+<span class="hl-v">$clean</span> = <span class="hl-f">sanitizer</span>()-&gt;<span class="hl-f">clean</span>(<span class="hl-v">$userHtml</span>);
+
+<span class="hl-c">// 이미지 + 링크 허용 (체이닝)</span>
+<span class="hl-v">$clean</span> = <span class="hl-f">sanitizer</span>()
+    -&gt;<span class="hl-f">allowImages</span>()
+    -&gt;<span class="hl-f">allowLinks</span>()
+    -&gt;<span class="hl-f">clean</span>(<span class="hl-v">$content</span>);</code></pre>
+
+            <h6 class="mb-2">XSS 공격 방어 데모</h6>
+            <table class="table table--sm table--bordered mb-3">
+                <thead><tr><th>입력</th><th>결과</th><th>상태</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><code>&lt;script&gt;alert(1)&lt;/script&gt;</code></td>
+                        <td><code class="text-muted">(빈 문자열)</code></td>
+                        <td><span class="badge badge--success badge--sm">차단</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;img src=x onerror=alert(1)&gt;</code></td>
+                        <td><code>&lt;img src="x"&gt;</code></td>
+                        <td><span class="badge badge--success badge--sm">이벤트 제거</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;a href="javascript:alert(1)"&gt;X&lt;/a&gt;</code></td>
+                        <td><code>&lt;a&gt;X&lt;/a&gt;</code></td>
+                        <td><span class="badge badge--success badge--sm">위험 URL 제거</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;a href="&#x6A;avascript:..."&gt;</code></td>
+                        <td><code>&lt;a&gt;X&lt;/a&gt;</code></td>
+                        <td><span class="badge badge--success badge--sm">인코딩 우회 차단</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;img id="document" src="x"&gt;</code></td>
+                        <td><code>&lt;img src="x"&gt;</code></td>
+                        <td><span class="badge badge--success badge--sm">DOM Clobbering 방어</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="alert alert--info mb-0">
+                <span class="alert__message"><strong>7단계 보안:</strong> ① 제어문자 제거 → ② 엔티티 디코딩 → ③ DOM 파싱 → ④ 위험 태그/속성 제거 → ⑤ URL 검증 → ⑥ DOM Clobbering 방어 → ⑦ 정규식 정리</span>
+            </div>
         </div>
     </div>
 </div>
