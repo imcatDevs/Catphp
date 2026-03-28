@@ -121,6 +121,14 @@ final class Search
             $tsvector = implode(" || ' ' || ", $this->columns);
             $sql = "SELECT COUNT(*) FROM {$this->tableName} WHERE to_tsvector('simple', {$tsvector}) @@ plainto_tsquery('simple', ?)";
             $stmt = \db()->raw($sql, [$this->queryStr]);
+        } elseif ($this->driver === 'fulltext' && $dbDriver === 'sqlite') {
+            // SQLite: FTS5 테이블 있으면 사용, 없으면 LIKE
+            $ftsTable = $this->tableName . '_fts';
+            if ($this->hasFtsTable($ftsTable)) {
+                $stmt = \db()->raw("SELECT COUNT(*) FROM {$ftsTable} WHERE {$ftsTable} MATCH ?", [$this->queryStr]);
+            } else {
+                $stmt = $this->likeCountStmt();
+            }
         } else {
             $conditions = [];
             $bindings = [];
@@ -134,6 +142,20 @@ final class Search
         }
 
         return (int) $stmt->fetchColumn();
+    }
+
+    /** LIKE COUNT 문장 생성 */
+    private function likeCountStmt(): \PDOStatement
+    {
+        $conditions = [];
+        $bindings = [];
+        $escaped = addcslashes($this->queryStr ?? '', '%_\\');
+        foreach ($this->columns as $col) {
+            $conditions[] = "{$col} LIKE ?";
+            $bindings[] = "%{$escaped}%";
+        }
+        $sql = "SELECT COUNT(*) FROM {$this->tableName} WHERE " . implode(' OR ', $conditions);
+        return \db()->raw($sql, $bindings);
     }
 
     /** 검색어 하이라이트 */
@@ -152,6 +174,95 @@ final class Search
             "<{$safeTag}>$1</{$safeTag}>",
             htmlspecialchars($text, ENT_QUOTES, 'UTF-8')
         ) ?? $text;
+    }
+
+    /**
+     * FTS5 인덱스 생성 (SQLite 전용)
+     *
+     * SQLite에서 전문 검색을 위한 FTS5 가상 테이블 생성.
+     * MySQL FULLTEXT, PostgreSQL tsvector와 동일한 기능 제공.
+     *
+     * @param string $table 원본 테이블명
+     * @param array $columns 인덱싱할 컬럼
+     * @param string|null $ftsName FTS 테이블명 (기본: {table}_fts)
+     * @return bool 생성 성공 여부
+     */
+    public function createFtsIndex(string $table, array $columns, ?string $ftsName = null): bool
+    {
+        $dbDriver = \config('db.driver') ?? 'mysql';
+        if ($dbDriver !== 'sqlite') {
+            // SQLite만 지원, 다른 DB는 네이티브 기능 사용
+            return false;
+        }
+
+        self::validateIdentifier($table);
+        foreach ($columns as $col) {
+            self::validateIdentifier($col);
+        }
+
+        $ftsTable = $ftsName ?? $table . '_fts';
+        self::validateIdentifier($ftsTable);
+
+        $cols = implode(', ', $columns);
+
+        try {
+            // FTS5 가상 테이블 생성
+            \db()->raw("CREATE VIRTUAL TABLE IF NOT EXISTS {$ftsTable} USING fts5({$cols}, content='{$table}')");
+
+            // 기존 데이터 동기화
+            $colList = implode(', ', $columns);
+            \db()->raw("INSERT INTO {$ftsTable}({$colList}) SELECT {$colList} FROM {$table}");
+
+            return true;
+        } catch (\Throwable $e) {
+            if (class_exists('Cat\\Log', false)) {
+                \logger()->error('FTS5 인덱스 생성 실패', ['table' => $table, 'error' => $e->getMessage()]);
+            }
+            return false;
+        }
+    }
+
+    /**
+     * FTS5 인덱스 삭제
+     *
+     * @param string $ftsName FTS 테이블명
+     * @return bool 삭제 성공 여부
+     */
+    public function dropFtsIndex(string $ftsName): bool
+    {
+        self::validateIdentifier($ftsName);
+
+        try {
+            \db()->raw("DROP TABLE IF EXISTS {$ftsName}");
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * FTS5 인덱스 동기화 (데이터 변경 후 호출)
+     *
+     * @param string $table 원본 테이블명
+     * @param array $columns 컬럼
+     * @param string|null $ftsName FTS 테이블명
+     * @return bool 동기화 성공 여부
+     */
+    public function syncFtsIndex(string $table, array $columns, ?string $ftsName = null): bool
+    {
+        $ftsTable = $ftsName ?? $table . '_fts';
+        self::validateIdentifier($table);
+        self::validateIdentifier($ftsTable);
+
+        try {
+            // 기존 FTS 데이터 삭제 후 재동기화
+            \db()->raw("DELETE FROM {$ftsTable}");
+            $colList = implode(', ', $columns);
+            \db()->raw("INSERT INTO {$ftsTable}({$colList}) SELECT {$colList} FROM {$table}");
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     /** 검색 실행 (드라이버별 분기) */
@@ -200,10 +311,48 @@ final class Search
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    /** SQLite FTS5 (LIKE 폴백 — FTS5 가상 테이블은 유저가 직접 생성) */
+    /** SQLite FTS5 (자동 감지 + 폴백) */
     private function sqliteFts(): array
     {
+        $ftsTable = $this->tableName . '_fts';
+
+        // FTS5 테이블 존재 확인
+        if ($this->hasFtsTable($ftsTable)) {
+            return $this->sqliteFts5($ftsTable);
+        }
+
         return $this->likeFallback();
+    }
+
+    /** FTS5 테이블 존재 확인 */
+    private function hasFtsTable(string $ftsTable): bool
+    {
+        try {
+            $result = \db()->raw(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                [$ftsTable]
+            )->fetch();
+            return $result !== false;
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /** SQLite FTS5 검색 실행 */
+    private function sqliteFts5(string $ftsTable): array
+    {
+        $cols = implode(', ', $this->columns);
+        $limit = $this->limitVal ?? 100;
+        $bindings = [$this->queryStr, $limit];
+
+        $sql = "SELECT *, bm25({$ftsTable}) AS _score FROM {$ftsTable} WHERE {$ftsTable} MATCH ? ORDER BY _score DESC LIMIT ?";
+        if ($this->offsetVal !== null) {
+            $sql .= ' OFFSET ?';
+            $bindings[] = $this->offsetVal;
+        }
+
+        $stmt = \db()->raw($sql, $bindings);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /** LIKE 폴백 (모든 DB 호환, wildcard 이스케이프 적용) */
