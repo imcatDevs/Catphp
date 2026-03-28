@@ -61,9 +61,29 @@ final class Rate
         }
 
         $data['hits'][] = $now;
+        $json = json_encode($data);
+        if ($json === false) {
+            flock($fp, LOCK_UN);
+            fclose($fp);
+            return true; // JSON 인코딩 실패 시 기존 데이터 보존
+        }
+
+        // 원자적 쓰기: 임시 파일 → rename
+        $tempFile = $file . '.tmp.' . getmypid();
+        if (file_put_contents($tempFile, $json, LOCK_EX) === false) {
+            @unlink($tempFile);
+            flock($fp, LOCK_UN);
+            fclose($fp);
+            return true;
+        }
+
         ftruncate($fp, 0);
         rewind($fp);
-        fwrite($fp, json_encode($data));
+        $tempContent = file_get_contents($tempFile);
+        if ($tempContent !== false) {
+            fwrite($fp, $tempContent);
+        }
+        @unlink($tempFile);
         flock($fp, LOCK_UN);
         fclose($fp);
 

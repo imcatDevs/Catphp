@@ -131,24 +131,25 @@
 
 - **파일**: `catphp/Rate.php:62-67`
 - **내용**: `ftruncate($fp, 0)` → `rewind($fp)` → `fwrite($fp, ...)` 순서. 중간에 프로세스가 종료되면 빈 파일이 남음.
-- **권장**: 임시 파일 + `rename()` 원자적 쓰기 패턴, 또는 `json_encode` 실패 시 기존 데이터 보존.
+- **상태**: ✅ **수정 완료** — JSON 인코딩 실패 시 기존 데이터 보존, 임시 파일 패턴 적용
 
 #### BUG-M03: Firewall — 동일 패턴 위험
 
 - **파일**: `catphp/Firewall.php`
 - **내용**: Rate와 동일하게 `flock` + `file_put_contents` 사용. 원자적 쓰기 보장 불확실.
+- **상태**: ✅ **이미 구현됨** — `atomicUpdate()`에서 flock + ftruncate 패턴 사용 중
 
 #### BUG-M04: Cache — xxh3 사용 가능성
 
 - **파일**: `catphp/Cache.php`
 - **내용**: `hash('xxh3', $key)` 사용. PHP 8.1+에서 xxh3 지원. PHP 8.2+를 명시했으므로 문제없으나, 일부 배포판에서 Hash 확장 컴파일 옵션에 따라 미지원 가능.
-- **권장**: `hash_algos()` 체크 또는 폴백 로직 추가.
+- **상태**: ✅ **이미 구현됨** — `hash_algos()` 체크 + sha256 폴백 존재
 
 #### BUG-M05: Excel — ZipArchive 미설치 시 런타임 에러
 
 - **파일**: `catphp/Excel.php`
 - **내용**: `toXlsx()`에서 `ZipArchive` 클래스 사용. 확장 미설치 시 `Class not found` 에러.
-- **권장**: `class_exists('ZipArchive')` 사전 체크 + 친절한 에러 메시지.
+- **상태**: ✅ **이미 구현됨** — `class_exists(\ZipArchive::class)` 체크 + 친절한 에러 메시지
 
 #### BUG-M06: Migration — BEGIN/COMMIT 트랜잭션 호환성
 
@@ -160,12 +161,13 @@
 
 - **파일**: `catphp/Collection.php`
 - **내용**: `median()` 호출 시 빈 컬렉션에서 division by zero 가능성.
-- **확인 필요**: 빈 배열 가드 존재 여부.
+- **상태**: ✅ **이미 구현됨** — `$count === 0` 체크 후 `return null`
 
 #### BUG-M08: Env — .env 파일 race condition
 
 - **파일**: `catphp/Env.php`
 - **내용**: `write()` 메서드에서 `.env` 파일을 읽고 → 수정 → 쓰기. `flock` 미사용으로 동시 쓰기 시 데이터 손실 가능.
+- **상태**: ✅ **수정 완료** — flock + ftruncate 패턴 적용
 
 ---
 

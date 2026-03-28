@@ -164,16 +164,22 @@ final class Env
             return (bool) file_put_contents($path, $newLine . PHP_EOL, LOCK_EX);
         }
 
+        // flock으로 원자적 read-modify-write
+        $fp = fopen($path, 'c+');
+        if ($fp === false) {
+            return false;
+        }
+
+        flock($fp, LOCK_EX);
         $lines = file($path, FILE_IGNORE_NEW_LINES);
         if ($lines === false) {
-            return false;
+            $lines = [];
         }
 
         $found = false;
         foreach ($lines as $i => $line) {
             $trimmed = trim($line);
             if (str_starts_with($trimmed, "export {$key}=")) {
-                // export 접두사 보존
                 $lines[$i] = "export {$newLine}";
                 $found = true;
                 break;
@@ -189,8 +195,15 @@ final class Env
             $lines[] = $newLine;
         }
 
+        $content = implode(PHP_EOL, $lines) . PHP_EOL;
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, $content);
+        flock($fp, LOCK_UN);
+        fclose($fp);
+
         $this->set($key, $value);
-        return (bool) file_put_contents($path, implode(PHP_EOL, $lines) . PHP_EOL, LOCK_EX);
+        return true;
     }
 
     // ── 내부 ──
