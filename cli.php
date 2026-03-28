@@ -1062,6 +1062,9 @@ function exportValue(mixed $v): string
 // ── queue / schedule ──
 
 cli()->command('queue:work', '큐 워커 실행', function () {
+    if (config('queue.driver') === 'redis' && !extension_loaded('redis')) {
+        cli()->warn('ext-redis 미설치: Redis 큐 드라이버를 사용할 수 없습니다.');
+    }
     $queue = cli()->option('queue', 'default');
     $sleep = (int) cli()->option('sleep', '3');
     $maxJobs = (int) cli()->option('max-jobs', '0');
@@ -1070,11 +1073,17 @@ cli()->command('queue:work', '큐 워커 실행', function () {
 });
 
 cli()->command('queue:size', '큐 대기 작업 수', function () {
+    if (config('queue.driver') === 'redis' && !extension_loaded('redis')) {
+        cli()->warn('ext-redis 미설치: Redis 큐 드라이버를 사용할 수 없습니다.');
+    }
     $queue = cli()->option('queue', 'default');
     cli()->info("큐 [{$queue}] 대기: " . queue()->size($queue) . '개');
 });
 
 cli()->command('queue:clear', '큐 비우기', function () {
+    if (config('queue.driver') === 'redis' && !extension_loaded('redis')) {
+        cli()->warn('ext-redis 미설치: Redis 큐 드라이버를 사용할 수 없습니다.');
+    }
     $queue = cli()->option('queue', 'default');
     $count = queue()->clear($queue);
     cli()->success("큐 [{$queue}] {$count}개 삭제됨");
@@ -1660,6 +1669,9 @@ cli()->command('swoole:start', 'Swoole HTTP 서버 시작', function () {
 });
 
 cli()->command('swoole:stop', 'Swoole 서버 중지', function () {
+    if (!extension_loaded('swoole') && !extension_loaded('openswoole')) {
+        cli()->warn('Swoole 확장이 설치되지 않았습니다.');
+    }
     if (\Cat\Swoole::stop()) {
         cli()->success('Swoole 서버가 중지되었습니다.');
     } else {
@@ -1668,6 +1680,9 @@ cli()->command('swoole:stop', 'Swoole 서버 중지', function () {
 });
 
 cli()->command('swoole:reload', 'Swoole 워커 리로드', function () {
+    if (!extension_loaded('swoole') && !extension_loaded('openswoole')) {
+        cli()->warn('Swoole 확장이 설치되지 않았습니다.');
+    }
     if (\Cat\Swoole::reload()) {
         cli()->success('워커 리로드 신호를 보냈습니다.');
     } else {
@@ -1676,6 +1691,9 @@ cli()->command('swoole:reload', 'Swoole 워커 리로드', function () {
 });
 
 cli()->command('swoole:status', 'Swoole 서버 상태 확인', function () {
+    if (!extension_loaded('swoole') && !extension_loaded('openswoole')) {
+        cli()->warn('Swoole 확장이 설치되지 않았습니다.');
+    }
     $status = \Cat\Swoole::status();
     $running = $status['running'] ? 'YES' : 'NO';
     cli()->table(['항목', '값'], [
