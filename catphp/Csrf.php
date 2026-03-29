@@ -70,6 +70,7 @@ final class Csrf
 
         $expected = \session('_csrf_token');
         if ($expected === null) {
+            $this->logFailure('세션에 CSRF 토큰 없음 (세션 만료 또는 미생성)');
             return false;
         }
 
@@ -79,6 +80,7 @@ final class Csrf
             ?? '');
 
         if ($submitted === '') {
+            $this->logFailure('제출된 CSRF 토큰 없음 (폼 누락 또는 헤더 미전송)');
             return false;
         }
 
@@ -88,7 +90,25 @@ final class Csrf
         }
 
         // 마스킹된 토큰 언마스킹 후 비교
-        return $this->verifyMasked($expected, $submitted);
+        if ($this->verifyMasked($expected, $submitted)) {
+            return true;
+        }
+
+        $this->logFailure('CSRF 토큰 불일치 (변조 또는 만료)');
+        return false;
+    }
+
+    /** CSRF 검증 실패 로그 기록 */
+    private function logFailure(string $reason): void
+    {
+        if (!class_exists('Cat\\Log', false)) {
+            return;
+        }
+        \logger()->warn("CSRF 검증 실패: {$reason}", [
+            'ip'     => \ip()->address(),
+            'uri'    => $_SERVER['REQUEST_URI'] ?? '',
+            'method' => $_SERVER['REQUEST_METHOD'] ?? '',
+        ]);
     }
 
     /** 마스킹된 토큰 언마스킹 + 검증 */

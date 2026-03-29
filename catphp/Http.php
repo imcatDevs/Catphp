@@ -192,6 +192,12 @@ final class Http
             if ($error !== null) {
                 return new HttpResponse(0, '', $error);
             }
+        } elseif (class_exists('Cat\\Log', false)) {
+            // allowPrivate() 사용 시 감사 로그 (내부 IP 접근 추적)
+            \logger()->info("Http: SSRF 방어 비활성 상태 요청", [
+                'method' => $method,
+                'url'    => mb_substr($url, 0, 200),
+            ]);
         }
 
         $ch = curl_init();

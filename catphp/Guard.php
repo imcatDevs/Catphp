@@ -144,10 +144,10 @@ final class Guard
         $str = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $str) ?? $str;
 
         // 위험 태그 제거 (콘텐츠 포함)
-        $dangerousTags = 'iframe|object|embed|svg|math|base|style|applet|meta|link|form';
+        $dangerousTags = 'iframe|object|embed|svg|math|base|style|applet|meta|link|form|noscript|template|slot|xmp|xml|annotation-xml|picture';
         $str = preg_replace('/<(' . $dangerousTags . ')\b[^>]*>(.*?)<\/\1>/is', '', $str) ?? $str;
         // 위험 태그 자체 닫힘 제거
-        $selfCloseTags = 'iframe|object|embed|svg|math|base|applet|meta|link|img|video|audio|source|input|details|marquee|select|textarea';
+        $selfCloseTags = 'iframe|object|embed|svg|math|base|style|applet|meta|link|img|video|audio|source|input|details|marquee|select|textarea|noscript|template|slot|picture';
         $str = preg_replace('/<(' . $selfCloseTags . ')\b[^>]*\/?>/i', '', $str) ?? $str;
 
         // 이벤트 핸들러 제거: \s 또는 / 구분자 모두 대응 (<svg/onload=... 바이패스 방어)
@@ -165,6 +165,10 @@ final class Guard
         $str = preg_replace('/expression\s*\(/i', '(', $str) ?? $str;
         // CSS -moz-binding 제거
         $str = preg_replace('/-moz-binding\s*:/i', '', $str) ?? $str;
+        // CSS behavior 속성 제거 (IE HTC 컴포넌트 로딩)
+        $str = preg_replace('/behavior\s*:/i', '', $str) ?? $str;
+        // CSS @import 인젝션 방어
+        $str = preg_replace('/@import\b/i', '', $str) ?? $str;
 
         return $str;
     }

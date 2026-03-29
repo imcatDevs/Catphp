@@ -48,8 +48,18 @@ final class Auth
             throw new \RuntimeException('auth.secret 설정이 비어 있습니다. config/app.php에서 설정하세요.');
         }
         // HMAC-SHA256 권장 키 길이: 32바이트 이상 — 짧은 키는 브루트포스 위험
-        if (strlen($secret) < 32 && class_exists('Cat\\Log', false)) {
-            \logger()->warn('auth.secret이 32바이트 미만입니다. 보안을 위해 32바이트 이상 설정을 권장합니다.');
+        if (strlen($secret) < 32) {
+            $debug = (bool) \config('app.debug', false);
+            if (!$debug) {
+                // 운영환경: 짧은 시크릿은 보안 위협 — 부팅 차단
+                throw new \RuntimeException(
+                    'auth.secret이 32바이트 미만입니다. 운영환경에서는 32바이트 이상 필수입니다.'
+                );
+            }
+            // 개발환경: 경고만 기록
+            if (class_exists('Cat\\Log', false)) {
+                \logger()->warn('auth.secret이 32바이트 미만입니다. 보안을 위해 32바이트 이상 설정을 권장합니다.');
+            }
         }
 
         $algoStr = strtolower((string) (\config('auth.algo') ?? 'argon2id'));
@@ -58,6 +68,18 @@ final class Auth
             'argon2i'          => PASSWORD_ARGON2I,
             default            => PASSWORD_ARGON2ID,
         };
+
+        // 해싱 알고리즘 가용성 검증 (PHP 빌드에 따라 argon2 미지원 가능)
+        $available = password_algos();
+        if (!in_array($algo, $available, true)) {
+            // Bcrypt로 자동 폴백 + 경고
+            if (class_exists('Cat\\Log', false)) {
+                \logger()->warn("auth.algo '{$algoStr}'은(는) 이 PHP 빌드에서 지원되지 않습니다. bcrypt로 대체합니다.", [
+                    'available' => $available,
+                ]);
+            }
+            $algo = PASSWORD_BCRYPT;
+        }
 
         return self::$instance = new self(
             secret: $secret,
