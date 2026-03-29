@@ -77,7 +77,7 @@ $result = valid()
     ->check(input());
 
 if ($result->fails()) {
-    json()->fail('검증 실패', $result->errors());
+    json()->fail('검증 실패', 422, $result->errors());
 }
 ```
 

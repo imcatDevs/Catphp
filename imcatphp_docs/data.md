@@ -36,7 +36,7 @@ $v = valid()->rules([
 ])->check($data);
 
 if ($v->fails()) {
-    json()->fail('검증 실패', $v->errors());
+    json()->fail('검증 실패', 422, $v->errors());
 }
 ```
 
