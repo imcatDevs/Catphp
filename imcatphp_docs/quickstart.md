@@ -484,7 +484,7 @@ router()->group('/api', function () {
     router()->get('/posts', function () use ($mw) {
         $mw();
         $posts = db()->table('posts')->orderBy('id', 'DESC')->all();
-        json()->ok($posts);
+        json()->paginated($posts, 1, 10, count($posts));
     });
 
     // 게시글 상세
@@ -509,17 +509,19 @@ router()->group('/api', function () {
         ])->check(input());
 
         if ($v->fails()) {
-            json()->fail('검증 실패', $v->errors(), 422);
+            json()->fail('검증 실패', 422, $v->errors());
             return;
         }
 
-        $id = db()->table('posts')->insert([
+        $data = [
             'title'   => input('title'),
             'body'    => input('body'),
             'user_id' => $user['sub'],
         ]);
 
-        json()->ok(['id' => $id], 201);
+        $id = db()->table('posts')->insert($data);
+
+        json()->created(['id' => $id]);
     });
 });
 ```
@@ -528,10 +530,10 @@ router()->group('/api', function () {
 
 ```json
 // 성공
-{"ok": true, "data": [...], "meta": null}
+{"success": true, "statusCode": 200, "data": [...], "message": "Success", "error": null, "timestamp": ...}
 
 // 실패
-{"ok": false, "error": {"message": "인증 필요", "code": 401}}
+{"success": false, "statusCode": 401, "message": "Unauthorized", "error": {"message": "Unauthorized", "name": "Unauthorized", "type": "auth"}, ...}
 ```
 
 ### API 테스트

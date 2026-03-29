@@ -70,7 +70,7 @@ $q = search()
 $total = $q->count();
 $results = $q->limit(20)->offset(($page - 1) * 20)->results();
 
-json()->paginated($results, $total, $page, 20);
+json()->paginated($results, $page, 20, $total);
 ```
 
 ### 검색어 하이라이트

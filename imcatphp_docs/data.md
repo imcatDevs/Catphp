@@ -277,7 +277,7 @@ echo $pager->links('/posts?page={page}');
 
 // API: JSON 응답
 $arr = $pager->toArray();
-json()->paginated($arr['data'], $arr['total'], $arr['page'], $arr['per_page']);
+json()->paginated($arr['data'], $arr['page'], $arr['per_page'], $arr['total']);
 ```
 
 ### Paginate 수동 설정

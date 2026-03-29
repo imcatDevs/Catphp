@@ -255,11 +255,11 @@ router()->post('/api/users', function() {
     $data = request()->only(['name', 'email']);
     
     if (empty($data['name']) || empty($data['email'])) {
-        return json()->fail('이름과 이메일을 입력하세요', 422);
+        return json()->fail('이름과 이메일을 입력하세요');
     }
     
     db()->table('users')->insert($data);
-    return json()->ok(['id' => db()->lastInsertId()]);
+    return json()->created(['id' => db()->lastInsertId()]);
 });
 
 // 사용자 삭제
@@ -810,15 +810,15 @@ const timer = setInterval(pollData, 5000);
 // CatUI의 HTTP 클라이언트로 CatPHP API 호출
 const users = await IMCAT.api.get('/api/users');
 // → CatPHP: json()->ok(db()->table('users')->all())
-// → 응답: { ok: true, data: [...] }
+// → 응답: { success: true, statusCode: 200, data: [...], message: "Success" }
 ```
 
 ### API 연동 주의점
 
 | 항목 | 설명 |
 | --- | --- |
-| **응답 형식** | CatPHP `json()->ok()`는 `{ok, data}` 형식. CatUI `IMCAT.api`는 기본적으로 응답 body 전체를 반환 |
-| **에러 처리** | CatPHP `json()->fail()`은 HTTP 422 + `{ok: false, error: {message}}`. CatUI에서 `try-catch`로 처리 필요 |
+| **응답 형식** | CatPHP `json()->ok()`와 CatUI `APIUtil`이 `{success, statusCode, data, message, error, timestamp}` 동일 형식 사용 |
+| **에러 처리** | CatPHP `json()->fail()`은 HTTP 422 + `{success: false, error: {message, name, type}}`. CatUI에서 `res.success`로 확인 |
 | **인증** | CatPHP `auth()->middleware()`는 `Authorization: Bearer <token>` 헤더 필요. CatUI API 인터셉터로 자동 첨부 |
 | **CORS** | 같은 오리진이면 문제 없음. 다른 오리진에서 요청 시 CatPHP `cors()->middleware()` 필요 |
 
@@ -848,8 +848,8 @@ const users = await IMCAT.api.get('/api/users');
         return;
     }
 
-    // CatPHP 응답 형식: { ok: true, data: [...] }
-    if (!res.ok) {
+    // CatPHP 응답 형식: { success: true, data: [...] }
+    if (!res.success) {
         IMCAT.toast.error(res.error?.message ?? '알 수 없는 오류');
         return;
     }

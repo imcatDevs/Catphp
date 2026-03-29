@@ -92,7 +92,7 @@ router()->post('/webhooks/github', function () {
     $wh = webhook()->receive();
 
     if (!$wh->isValid('github-webhook-secret')) {
-        json()->error('Invalid signature', 403);
+        json()->forbidden('Invalid signature');
     }
 
     $payload = $wh->getPayload();

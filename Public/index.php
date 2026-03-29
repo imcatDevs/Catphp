@@ -50,12 +50,12 @@ router()->group('/api', function() use ($apiMiddleware) {
         $apiMiddleware();
         $v = valid()->rules(['title' => 'required|min:2', 'body' => 'required'])->check(input());
         if ($v->fails()) {
-            json()->fail('입력값 검증 실패', $v->errors(), 422);
+            json()->fail('입력값 검증 실패', 422, $v->errors());
             return;
         }
         $data = ['title' => input('title'), 'body' => input('body')];
         $id = db()->table('posts')->insert($data);
-        json()->ok(['id' => $id], 201);
+        json()->created(['id' => $id]);
     });
 });
 

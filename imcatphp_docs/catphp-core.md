@@ -247,7 +247,7 @@ Uncaught Exception 발생
 ├─ output buffer 정리 (ob_end_clean)
 │
 ├─ API 요청? (REQUEST_URI가 /api/로 시작)
-│   ├─ 예 → JSON 에러 응답 {"ok": false, "error": {...}}
+│   ├─ 예 → JSON 에러 응답 {"success": false, "error": {...}}
 │   └─ 아니오 → HTML 에러 페이지
 │
 ├─ $debug = true?

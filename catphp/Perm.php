@@ -87,12 +87,12 @@ final class Perm
         return function () use ($allowedRoles): ?bool {
             $user = \auth()->user();
             if ($user === null) {
-                \json()->error('Unauthorized', 401);
+                \json()->unauthorized();
             }
 
             $userRole = $user['role'] ?? 'user';
             if (!in_array($userRole, $allowedRoles, true)) {
-                \json()->error('Forbidden', 403);
+                \json()->forbidden();
             }
 
             return null;

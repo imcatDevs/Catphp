@@ -184,7 +184,7 @@ $html = render('posts/show', ['post' => $post]);
 router()->notFound(fn() => render('404'));
 
 // API용 404는 자동 처리
-// /api/ 경로 → {"ok": false, "error": {"message": "Not Found", "code": 404}}
+// /api/ 경로 → {"success": false, "statusCode": 404, "message": "Not Found", "error": {...}}
 ```
 
 ---
@@ -253,7 +253,7 @@ render('posts/show')
 `/api/`로 시작하는 URL은 자동으로 JSON 404 응답 반환:
 
 ```json
-{"ok": false, "error": {"message": "Not Found", "code": 404}}
+{"success": false, "statusCode": 404, "message": "Not Found", "error": {"message": "Not Found", "name": "NotFound", "type": "notfound"}}
 ```
 
 ---

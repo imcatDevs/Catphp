@@ -72,7 +72,7 @@ router()->post('/api/posts', function () {
         'title'   => input('title'),
         'body'    => input('body'),
     ]);
-    json()->ok(['id' => $id], 201);
+    json()->created(['id' => $id]);
 });
 ```
 

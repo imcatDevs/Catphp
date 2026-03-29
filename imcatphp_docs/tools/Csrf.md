@@ -99,7 +99,7 @@ verify()
 
 검증 실패 시:
 
-- **API 경로** (`/api/`로 시작): `json()->error('CSRF token mismatch', 403)`
+- **API 경로** (`/api/`로 시작): `json()->forbidden('CSRF token mismatch')`
 - **웹 경로**: HTML 403 페이지 + exit
 
 ---

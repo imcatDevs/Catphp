@@ -54,7 +54,7 @@ if (perm()->can('post.edit')) {
 }
 
 if (perm()->cannot('user.delete')) {
-    json()->error('Forbidden', 403);
+    json()->forbidden();
 }
 ```
 

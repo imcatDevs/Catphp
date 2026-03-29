@@ -174,11 +174,11 @@ final class Api
     {
         $token = \auth()->bearer();
         if ($token === null) {
-            \json()->error('Unauthorized', 401);
+            \json()->unauthorized();
         }
         $payload = \auth()->verifyToken($token);
         if ($payload === null) {
-            \json()->error('Invalid or expired token', 401);
+            \json()->unauthorized('Invalid or expired token');
         }
         \auth()->setApiUser($payload);
     }

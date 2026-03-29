@@ -59,10 +59,10 @@ router()->group('/api', function() {
     router()->post('/posts', function(): void {
         $v = valid(['title' => 'required|min:2', 'content' => 'required']);
         if ($v->check(input())->fails()) {
-            json()->fail('입력값 오류', $v->errors(), 422);
+            json()->fail('입력값 오류', 422, $v->errors());
         }
         $id = db()->table('posts')->insert(input());
-        json()->ok(['id' => $id], 201);
+        json()->created(['id' => $id]);
     });
 });
 ```
@@ -70,8 +70,8 @@ router()->group('/api', function() {
 ### JSON 응답 포맷
 
 ```json
-{"ok": true,  "data": [...]}
-{"ok": false, "error": {"message": "Not Found", "code": 404}}
+{"success": true, "statusCode": 200, "data": [...], "message": "Success", "error": null, "timestamp": ...}
+{"success": false, "statusCode": 404, "message": "Not Found", "error": {"message": "Not Found", "name": "NotFound"}, ...}
 ```
 
 ## 보안

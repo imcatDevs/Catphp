@@ -119,7 +119,7 @@ final class Csrf
             if (!$this->verify()) {
                 $isApi = str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/api/');
                 if ($isApi) {
-                    \json()->error('CSRF token mismatch', 403);
+                    \json()->forbidden('CSRF token mismatch');
                 } else {
                     http_response_code(403);
                     echo '<h1>403 Forbidden</h1><p>CSRF 토큰이 유효하지 않습니다.</p>';
