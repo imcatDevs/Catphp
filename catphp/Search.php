@@ -118,7 +118,7 @@ final class Search
             $sql = "SELECT COUNT(*) FROM {$this->tableName} WHERE MATCH({$cols}) AGAINST(? IN BOOLEAN MODE)";
             $stmt = \db()->raw($sql, [$this->queryStr]);
         } elseif ($this->driver === 'fulltext' && $dbDriver === 'pgsql') {
-            $tsvector = implode(" || ' ' || ", $this->columns);
+            $tsvector = implode(" || ' ' || ", array_map(fn(string $col) => "COALESCE({$col}, '')", $this->columns));
             $sql = "SELECT COUNT(*) FROM {$this->tableName} WHERE to_tsvector('simple', {$tsvector}) @@ plainto_tsquery('simple', ?)";
             $stmt = \db()->raw($sql, [$this->queryStr]);
         } elseif ($this->driver === 'fulltext' && $dbDriver === 'sqlite') {
@@ -299,7 +299,7 @@ final class Search
     /** PostgreSQL tsvector (to_tsvector ... plainto_tsquery) */
     private function pgsqlTsvector(): array
     {
-        $tsvector = implode(" || ' ' || ", $this->columns);
+        $tsvector = implode(" || ' ' || ", array_map(fn(string $col) => "COALESCE({$col}, '')", $this->columns));
         $limit = $this->limitVal ?? 100;
         $bindings = [$this->queryStr, $this->queryStr, $limit];
         $sql = "SELECT *, ts_rank(to_tsvector('simple', {$tsvector}), plainto_tsquery('simple', ?)) AS _score FROM {$this->tableName} WHERE to_tsvector('simple', {$tsvector}) @@ plainto_tsquery('simple', ?) ORDER BY _score DESC LIMIT ?";
