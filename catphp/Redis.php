@@ -251,12 +251,24 @@ final class Redis
     /** 패턴 키 검색 (주의: 프로덕션에서 대량 사용 금지) */
     public function keys(string $pattern = '*'): array
     {
+        // 운영환경 경고: KEYS 명령은 대량 키에서 Redis를 블로킹함
+        if (!(bool) config('app.debug', false) && class_exists('Cat\\Log', false)) {
+            \logger()->warn('Redis keys() 호출 감지. 운영환경에서는 SCAN 사용을 권장합니다.', [
+                'pattern' => $pattern,
+            ]);
+        }
         return $this->connection()->keys($pattern) ?: [];
     }
 
-    /** 전체 삭제 (현재 DB) */
+    /** 전체 삭제 (현재 DB) — 개발환경에서만 허용 */
     public function flush(): bool
     {
+        if (!(bool) config('app.debug', false)) {
+            if (class_exists('Cat\\Log', false)) {
+                \logger()->error('Redis flush() 차단: 운영환경에서는 flushDB가 금지됩니다.');
+            }
+            return false;
+        }
         return $this->connection()->flushDB();
     }
 

@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## [v1.0.7] — 2026-03-29
+
+### Security
+
+- **Auth**: 운영환경(`debug=false`)에서 `auth.secret` 32바이트 미만 시 `RuntimeException` 부팅 차단 (기존: 경고만)
+- **Auth**: `password_algos()` 런타임 검증 — argon2 미지원 PHP에서 bcrypt 자동 폴백 + 경고 로그
+- **Csrf**: 토큰 검증 실패 시 원인별 로깅 강화 (세션 없음 / 토큰 누락 / 불일치 + IP/URI/Method)
+- **Http**: `allowPrivate()` SSRF 방어 해제 시 감사 로그 추가
+- **Guard**: XSS 필터 확장 — `noscript`/`template`/`slot`/`xmp`/`annotation-xml`/`picture` 태그 + CSS `behavior`/`@import` 방어
+- **Session**: 운영환경 쿠키 보안 검증 (secure+HTTPS, httponly, samesite+secure 조합)
+- **Cors**: 운영환경 wildcard `*` origin 경고
+- **Redis**: `flush()` 운영환경 차단, `keys()` 운영환경 경고 로그
+- **Swoole**: API 라우트(`/api/`) 에러 응답을 CatUI JSON 포맷으로 통일
+
+### Fixed
+
+- **Env**: `write()` Windows mandatory file lock 버그 수정 — `file()` 대신 `stream_get_contents()` 사용
+- **Search**: PgSQL `tsvector` NULL 전파 버그 수정 — `COALESCE` 래핑
+
+### Added
+
+- **Guard 테스트**: XSS 회귀테스트 12건 + 경로탐색 회귀테스트 6건 추가 (287개 전체 통과)
+
 ## [v1.0.6] — 2026-03-28
 
 - v1.0.6 릴리즈

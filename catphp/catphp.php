@@ -8,7 +8,7 @@
  */
 
 defined('CATPHP') || define('CATPHP', true);
-define('CATPHP_VERSION', '1.0.6');
+define('CATPHP_VERSION', '1.0.7');
 
 // ──────────────────────────────────────────────
 // Autoloader: Cat\X → catphp/X.php 플랫 매핑

@@ -1108,16 +1108,36 @@ final class Swoole
             }
 
             $res->status(500);
-            $res->header('Content-Type', 'text/html; charset=utf-8');
-            if ($debug) {
-                $res->end(
-                    '<h1>CatPHP Swoole Error</h1>' .
-                    '<p><strong>' . htmlspecialchars($e->getMessage()) . '</strong></p>' .
-                    '<p>' . htmlspecialchars($e->getFile()) . ':' . $e->getLine() . '</p>' .
-                    '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>'
-                );
+
+            // API 라우트는 CatUI JSON 포맷으로 응답
+            $uri = $_SERVER['REQUEST_URI'] ?? '';
+            if (str_starts_with($uri, '/api/')) {
+                $msg = $debug ? $e->getMessage() : '서버 오류가 발생했습니다';
+                $res->header('Content-Type', 'application/json; charset=utf-8');
+                $res->end(json_encode([
+                    'success'    => false,
+                    'statusCode' => 500,
+                    'data'       => null,
+                    'message'    => $msg,
+                    'error'      => [
+                        'message' => $msg,
+                        'name'    => 'InternalServerError',
+                        'type'    => 'server',
+                    ],
+                    'timestamp'  => time(),
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             } else {
-                $res->end('<h1>서버 오류</h1><p>잠시 후 다시 시도해 주세요.</p>');
+                $res->header('Content-Type', 'text/html; charset=utf-8');
+                if ($debug) {
+                    $res->end(
+                        '<h1>CatPHP Swoole Error</h1>' .
+                        '<p><strong>' . htmlspecialchars($e->getMessage()) . '</strong></p>' .
+                        '<p>' . htmlspecialchars($e->getFile()) . ':' . $e->getLine() . '</p>' .
+                        '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>'
+                    );
+                } else {
+                    $res->end('<h1>서버 오류</h1><p>잠시 후 다시 시도해 주세요.</p>');
+                }
             }
         } finally {
             // 출력 버퍼가 남아 있으면 정리
