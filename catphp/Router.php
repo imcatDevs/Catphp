@@ -239,6 +239,13 @@ final class Router
     /** 요청 디스패치 */
     public function dispatch(): void
     {
+        // 운영환경 미들웨어 누락 경고 (1회만 실행)
+        static $auditDone = false;
+        if (!$auditDone) {
+            $auditDone = true;
+            $this->auditMiddlewares();
+        }
+
         $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
         // _method 오버라이드 (HTML 폼에서 PUT/PATCH/DELETE 지원)
@@ -444,6 +451,53 @@ final class Router
             \json()->notFound();
         } else {
             echo '<h1>404 Not Found</h1>';
+        }
+    }
+
+    /**
+     * 미들웨어 누락 감사 — 운영환경에서 API 라우트에 보안 미들웨어 없으면 경고
+     *
+     * Guard(입력 살균)와 Rate(레이트 리미트) 미들웨어가 등록되어 있는지 확인.
+     * 개발환경(debug=true)에서는 실행하지 않음.
+     */
+    private function auditMiddlewares(): void
+    {
+        if ((bool) \config('app.debug', false)) {
+            return;
+        }
+        if (!class_exists('Cat\\Log', false)) {
+            return;
+        }
+
+        // API 라우트가 등록되어 있는지 확인
+        $hasApiRoute = false;
+        foreach ($this->staticRoutes as $methods) {
+            foreach (array_keys($methods) as $path) {
+                if (str_starts_with($path, '/api/')) {
+                    $hasApiRoute = true;
+                    break 2;
+                }
+            }
+        }
+        if (!$hasApiRoute) {
+            foreach ($this->dynamicRoutes as $route) {
+                if (str_contains($route['pattern'], '/api/')) {
+                    $hasApiRoute = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$hasApiRoute) {
+            return;
+        }
+
+        // 글로벌 미들웨어 수가 0이면 보안 미들웨어가 전혀 없는 것
+        if ($this->middlewares === []) {
+            \logger()->warn(
+                'Router: API 라우트가 등록되어 있지만 글로벌 미들웨어가 없습니다. ' .
+                'Guard, Rate, Cors 미들웨어 등록을 권장합니다.'
+            );
         }
     }
 }
