@@ -234,9 +234,7 @@ final class Firewall
         return function (): ?bool {
             $ip = \ip()->address();
             if ($this->isDenied($ip) && !$this->isAllowed($ip)) {
-                http_response_code(403);
-                echo json_encode(['ok' => false, 'error' => ['message' => 'Forbidden', 'code' => 403]]);
-                exit;
+                \json()->forbidden();
             }
             return null;
         };

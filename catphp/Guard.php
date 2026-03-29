@@ -368,9 +368,7 @@ final class Guard
 
             // 요청 크기 확인
             if (!$this->maxBodySize()) {
-                http_response_code(413);
-                echo json_encode(['ok' => false, 'error' => ['message' => 'Payload Too Large', 'code' => 413]]);
-                exit;
+                \json()->error('Payload Too Large', 413);
             }
 
             // 전체 입력 살균 → input() 캐시에 반영

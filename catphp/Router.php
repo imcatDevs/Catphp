@@ -441,8 +441,7 @@ final class Router
 
         $isApi = str_starts_with($uri, '/api/');
         if ($isApi) {
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['ok' => false, 'error' => ['message' => 'Not Found', 'code' => 404]], JSON_UNESCAPED_UNICODE);
+            \json()->notFound();
         } else {
             echo '<h1>404 Not Found</h1>';
         }

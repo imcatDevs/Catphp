@@ -203,7 +203,7 @@ router()->dispatch();
 
 ### 사용 편리
 
-- Shortcut 함수 56개 (`db()`, `json()`, `auth()` 등)
+- Shortcut 함수 66개 (`db()`, `json()`, `auth()` 등)
 - 체이닝 API (`db()->table('x')->where('id', 1)->first()`)
 - `cat()` 범용 로더로 동적 도구 로딩
 - API 응답 통일 포맷 (`json()->ok()` / `json()->fail()`)

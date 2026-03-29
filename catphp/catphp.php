@@ -141,15 +141,21 @@ function errors(bool $debug = false): void
         $isApi = isset($_SERVER['REQUEST_URI']) && str_starts_with($_SERVER['REQUEST_URI'], '/api/');
 
         if ($isApi) {
+            $msg = $debug ? $e->getMessage() : '서버 오류가 발생했습니다';
             http_response_code(500);
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
-                'ok' => false,
-                'error' => [
-                    'message' => $debug ? $e->getMessage() : '서버 오류가 발생했습니다',
-                    'code' => 500,
+                'success'    => false,
+                'statusCode' => 500,
+                'data'       => null,
+                'message'    => $msg,
+                'error'      => [
+                    'message' => $msg,
+                    'name'    => 'InternalServerError',
+                    'type'    => 'server',
                 ],
-            ], JSON_UNESCAPED_UNICODE);
+                'timestamp'  => time(),
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit(1);
         }
 
@@ -201,7 +207,7 @@ if (!function_exists('logger')) {
 }
 
 // ──────────────────────────────────────────────
-// Shortcut 함수 — 보안 도구 6개
+// Shortcut 함수 — 보안 도구 7개
 // ──────────────────────────────────────────────
 
 if (!function_exists('auth')) {
@@ -417,7 +423,7 @@ if (!function_exists('excel')) {
 }
 
 // ──────────────────────────────────────────────
-// Shortcut 함수 — 관리/연동 도구 4개
+// Shortcut 함수 — 관리/연동 도구 5개
 // ──────────────────────────────────────────────
 
 if (!function_exists('sitemap')) {
@@ -441,7 +447,7 @@ if (!function_exists('swoole')) {
 }
 
 // ──────────────────────────────────────────────
-// Shortcut 함수 — 실용 도구 9개
+// Shortcut 함수 — 실용 도구 11개
 // ──────────────────────────────────────────────
 
 if (!function_exists('env')) {
