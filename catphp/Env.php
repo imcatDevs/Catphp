@@ -171,9 +171,14 @@ final class Env
         }
 
         flock($fp, LOCK_EX);
-        $lines = file($path, FILE_IGNORE_NEW_LINES);
-        if ($lines === false) {
-            $lines = [];
+        // 잠금된 핸들에서 직접 읽기 (Windows mandatory lock 호환)
+        $raw = stream_get_contents($fp);
+        $lines = ($raw !== false && $raw !== '')
+            ? explode("\n", str_replace("\r\n", "\n", $raw))
+            : [];
+        // 마지막 빈 요소 제거 (trailing newline)
+        if ($lines !== [] && end($lines) === '') {
+            array_pop($lines);
         }
 
         $found = false;
