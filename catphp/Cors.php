@@ -25,8 +25,23 @@ final class Cors
 
     public static function getInstance(): self
     {
-        return self::$instance ??= new self(
-            origins: \config('cors.origins') ?? ['*'],
+        if (self::$instance !== null) {
+            return self::$instance;
+        }
+
+        $origins = \config('cors.origins') ?? ['*'];
+
+        // 운영환경 wildcard origin 경고 — credentials 미사용 + 보안 위험
+        if (in_array('*', $origins, true) && !(bool) \config('app.debug', false)) {
+            if (class_exists('Cat\\Log', false)) {
+                \logger()->warn(
+                    'cors.origins가 와일드카드(*)입니다. 운영환경에서는 허용 도메인을 명시적으로 설정하세요.'
+                );
+            }
+        }
+
+        return self::$instance = new self(
+            origins: $origins,
             methods: \config('cors.methods') ?? ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
             allowedHeaders: \config('cors.headers') ?? ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-TOKEN'],
             maxAge: (int) (\config('cors.max_age') ?? 86400),

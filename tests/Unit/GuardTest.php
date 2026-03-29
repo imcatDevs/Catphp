@@ -103,4 +103,92 @@ return function (TestRunner $t): void {
         $result = guard()->filename('...');
         $t->eq('unnamed', $result);
     });
+
+    // ── XSS 회귀테스트 — 최신 페이로드 ──
+
+    $t->test('xss() noscript 태그 제거', function () use ($t) {
+        $result = guard()->xss('<noscript><img src=x onerror=alert(1)></noscript>');
+        $t->notContains(strtolower($result), '<noscript');
+    });
+
+    $t->test('xss() template 태그 제거', function () use ($t) {
+        $result = guard()->xss('<template><img src=x onerror=alert(1)></template>');
+        $t->notContains(strtolower($result), '<template');
+    });
+
+    $t->test('xss() style 태그 + expression 제거', function () use ($t) {
+        $result = guard()->xss('<style>body{background:url(javascript:alert(1))}</style>');
+        $t->notContains(strtolower($result), '<style');
+    });
+
+    $t->test('xss() data: URI 제거', function () use ($t) {
+        $result = guard()->xss('<a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==">click</a>');
+        $t->notContains(strtolower($result), 'data:');
+    });
+
+    $t->test('xss() CSS @import 방어', function () use ($t) {
+        $result = guard()->xss('@import url("https://evil.com/xss.css");');
+        $t->notContains(strtolower($result), '@import');
+    });
+
+    $t->test('xss() CSS behavior 방어', function () use ($t) {
+        $result = guard()->xss('behavior: url(evil.htc)');
+        $t->notContains(strtolower($result), 'behavior:');
+    });
+
+    $t->test('xss() vbscript: 프로토콜 제거', function () use ($t) {
+        $result = guard()->xss('vbscript:MsgBox("xss")');
+        $t->notContains(strtolower($result), 'vbscript:');
+    });
+
+    $t->test('xss() 제어문자 삽입 javascript 우회 방어', function () use ($t) {
+        // java\x08script: 형태의 우회 시도
+        $result = guard()->xss("java\x08script:alert(1)");
+        $t->notContains(strtolower($result), 'javascript:');
+    });
+
+    $t->test('xss() style 속성 전체 제거', function () use ($t) {
+        $result = guard()->xss('<div style="background:url(javascript:alert(1))">test</div>');
+        $t->notContains(strtolower($result), 'style=');
+    });
+
+    $t->test('xss() annotation-xml 태그 제거', function () use ($t) {
+        $result = guard()->xss('<annotation-xml><img src=x onerror=alert(1)></annotation-xml>');
+        $t->notContains(strtolower($result), '<annotation-xml');
+    });
+
+    $t->test('xss() 이중 인코딩 공격 방어', function () use ($t) {
+        $result = guard()->xss('&lt;script&gt;alert(1)&lt;/script&gt;');
+        $t->notContains(strtolower($result), '<script');
+    });
+
+    // ── 경로 탐색 회귀테스트 — 최신 우회 ──
+
+    $t->test('path() 오버롱 UTF-8 dot 방어', function () use ($t) {
+        // \xc0\xae = overlong encoding of '.'
+        $result = guard()->path("\xc0\xae\xc0\xae/etc/passwd");
+        $t->notContains($result, '..');
+    });
+
+    $t->test('path() Tomcat semicolon 방어', function () use ($t) {
+        $result = guard()->path('..;/..;/etc/passwd');
+        $t->notContains($result, '..');
+    });
+
+    $t->test('path() 백슬래시 정규화', function () use ($t) {
+        $result = guard()->path('..\\..\\etc\\passwd');
+        $t->notContains($result, '..');
+    });
+
+    $t->test('path() 제로폭 유니코드 제거', function () use ($t) {
+        // \u200B (zero-width space) 삽입
+        $result = guard()->path(".\xe2\x80\x8b./etc/passwd");
+        $t->notContains($result, '..');
+    });
+
+    $t->test('path() 삼중 URL 인코딩 방어', function () use ($t) {
+        // %252e%252e = double-encoded '..'
+        $result = guard()->path('%252e%252e/etc/passwd');
+        $t->notContains($result, '..');
+    });
 };

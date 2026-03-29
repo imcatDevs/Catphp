@@ -55,6 +55,22 @@ final class Session
         $httpOnly = (bool) \config('session.httponly', true);
         $sameSite = (string) \config('session.samesite', 'Lax');
 
+        // 운영환경 세션 쿠키 보안 검증
+        $debug = (bool) \config('app.debug', false);
+        if (!$debug && class_exists('Cat\\Log', false)) {
+            $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443;
+            if ($isHttps && !$secure) {
+                \logger()->warn('session.secure가 false입니다. HTTPS 환경에서는 true로 설정하세요 (쿠키 탈취 방지).');
+            }
+            if (!$httpOnly) {
+                \logger()->warn('session.httponly가 false입니다. JavaScript에서 세션 쿠키에 접근 가능합니다 (XSS 위험).');
+            }
+            if (strtolower($sameSite) === 'none' && !$secure) {
+                \logger()->warn('session.samesite=None은 secure=true 필수입니다. 브라우저가 쿠키를 거부합니다.');
+            }
+        }
+
         session_set_cookie_params([
             'lifetime' => $lifetime,
             'path'     => $path,
