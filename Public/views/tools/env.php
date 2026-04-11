@@ -15,11 +15,13 @@
             <table class="table table--sm mb-0">
                 <thead><tr><th style="min-width:280px;">메서드</th><th>반환</th><th>설명</th></tr></thead>
                 <tbody>
-                    <tr><td><code>load(string $path)</code></td><td><code>self</code></td><td>.env 파일 로드</td></tr>
+                    <tr><td><code>load(string $path, bool $force = false)</code></td><td><code>self</code></td><td>.env 파일 로드 (멱등, force로 재로드)</td></tr>
                     <tr><td><code>get(string $key, mixed $default)</code></td><td><code>mixed</code></td><td>환경변수 가져오기</td></tr>
                     <tr><td><code>set(string $key, string $value)</code></td><td><code>self</code></td><td>환경변수 설정</td></tr>
                     <tr><td><code>has(string $key)</code></td><td><code>bool</code></td><td>존재 확인</td></tr>
-                    <tr><td><code>required(array $keys)</code></td><td><code>self</code></td><td>필수 키 검증 (누락 시 예외)</td></tr>
+                    <tr><td><code>required(array $keys)</code></td><td><code>self</code></td><td>필수 키 존재 검증 (빈 문자열 허용)</td></tr>
+                    <tr><td><code>requiredNotEmpty(array $keys)</code></td><td><code>self</code></td><td>필수 키 + 비어있지 않은 값 검증</td></tr>
+                    <tr><td><code>remove(string $key)</code></td><td><code>self</code></td><td>환경변수 삭제</td></tr>
                     <tr><td><code>all()</code></td><td><code>array</code></td><td>로드된 모든 변수</td></tr>
                     <tr><td><code>write(string $path, string $key, string $val)</code></td><td><code>bool</code></td><td>.env 파일 키 수정/추가</td></tr>
                     <tr><td><code>isLoaded()</code></td><td><code>bool</code></td><td>로드 여부</td></tr>
@@ -36,6 +38,12 @@
 <span class="hl-c">// 값 읽기</span>
 <span class="hl-v">$debug</span> = <span class="hl-f">env</span>(<span class="hl-s">'APP_DEBUG'</span>, <span class="hl-s">'false'</span>);
 <span class="hl-v">$dbHost</span> = <span class="hl-f">env</span>(<span class="hl-s">'DB_HOST'</span>, <span class="hl-s">'127.0.0.1'</span>);
+
+<span class="hl-c">// 비어있지 않은 값 필수 검증</span>
+<span class="hl-f">env</span>()-&gt;<span class="hl-f">requiredNotEmpty</span>([<span class="hl-s">'APP_KEY'</span>, <span class="hl-s">'DB_PASSWORD'</span>]);
+
+<span class="hl-c">// 환경변수 삭제</span>
+<span class="hl-f">env</span>()-&gt;<span class="hl-f">remove</span>(<span class="hl-s">'OLD_KEY'</span>);
 
 <span class="hl-c">// .env 파일 수정 (배포 스크립트 등)</span>
 <span class="hl-f">env</span>()-&gt;<span class="hl-f">write</span>(<span class="hl-s">'.env'</span>, <span class="hl-s">'APP_VERSION'</span>, <span class="hl-s">'2.1.0'</span>);</code></pre>

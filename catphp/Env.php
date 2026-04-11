@@ -13,6 +13,8 @@ namespace Cat;
  *   env()->get('APP_DEBUG');
  *   env()->set('APP_KEY', 'secret');
  *   env()->required(['DB_HOST', 'DB_NAME']);
+ *   env()->requiredNotEmpty(['APP_KEY']);
+ *   env()->remove('OLD_KEY');
  */
 final class Env
 {
@@ -20,6 +22,9 @@ final class Env
 
     /** @var array<string, string> 로드된 환경변수 */
     private array $vars = [];
+
+    /** @var list<string> 로드 완료된 파일 경로 (realpath 정규화) */
+    private array $loadedPaths = [];
 
     private bool $loaded = false;
 
@@ -30,10 +35,19 @@ final class Env
         return self::$instance ??= new self();
     }
 
-    /** .env 파일 로드 */
-    public function load(string $path): self
+    /** .env 파일 로드 (멱등: 같은 파일은 1회만 파싱, force=true로 재로드) */
+    public function load(string $path, bool $force = false): self
     {
         if (!is_file($path)) {
+            return $this;
+        }
+
+        // 멱등성: realpath 정규화 후 중복 로드 방지
+        $real = realpath($path);
+        if ($real === false) {
+            return $this;
+        }
+        if (!$force && in_array($real, $this->loadedPaths, true)) {
             return $this;
         }
 
@@ -72,9 +86,9 @@ final class Env
             $this->vars[$key] = $value;
             putenv("{$key}={$value}");
             $_ENV[$key] = $value;
-            $_SERVER[$key] = $value;
         }
 
+        $this->loadedPaths[] = $real;
         $this->loaded = true;
         return $this;
     }
@@ -89,16 +103,20 @@ final class Env
     public function get(string $key, mixed $default = null): mixed
     {
         // 내부 캐시 → $_ENV → getenv 순서
-        if (isset($this->vars[$key])) {
+        if (array_key_exists($key, $this->vars)) {
             return $this->castValue($this->vars[$key]);
         }
 
-        $value = $_ENV[$key] ?? getenv($key);
-        if ($value === false || $value === null) {
+        if (array_key_exists($key, $_ENV)) {
+            return $this->castValue((string) $_ENV[$key]);
+        }
+
+        $value = getenv($key);
+        if ($value === false) {
             return $default;
         }
 
-        return $this->castValue((string) $value);
+        return $this->castValue($value);
     }
 
     /** 환경변수 설정 */
@@ -107,20 +125,19 @@ final class Env
         $this->vars[$key] = $value;
         putenv("{$key}={$value}");
         $_ENV[$key] = $value;
-        $_SERVER[$key] = $value;
         return $this;
     }
 
     /** 환경변수 존재 확인 */
     public function has(string $key): bool
     {
-        return isset($this->vars[$key])
-            || isset($_ENV[$key])
+        return array_key_exists($key, $this->vars)
+            || array_key_exists($key, $_ENV)
             || getenv($key) !== false;
     }
 
     /**
-     * 필수 환경변수 확인
+     * 필수 환경변수 존재 확인 (빈 문자열도 "존재"로 인정)
      *
      * @param list<string> $keys
      * @throws \RuntimeException 누락 시
@@ -129,9 +146,7 @@ final class Env
     {
         $missing = [];
         foreach ($keys as $key) {
-            // castValue 적용 전 raw 값 기준으로 체크 ('null' 문자열도 유효한 값으로 인정)
-            $raw = $this->vars[$key] ?? $_ENV[$key] ?? getenv($key);
-            if ($raw === false || $raw === null || $raw === '') {
+            if (!$this->has($key)) {
                 $missing[] = $key;
             }
         }
@@ -143,10 +158,41 @@ final class Env
         return $this;
     }
 
+    /**
+     * 필수 환경변수 존재 + 비어있지 않은 값 확인
+     *
+     * @param list<string> $keys
+     * @throws \RuntimeException 누락 또는 빈 값
+     */
+    public function requiredNotEmpty(array $keys): self
+    {
+        $missing = [];
+        foreach ($keys as $key) {
+            $raw = $this->vars[$key] ?? $_ENV[$key] ?? getenv($key);
+            if ($raw === false || $raw === null || $raw === '') {
+                $missing[] = $key;
+            }
+        }
+        if ($missing !== []) {
+            throw new \RuntimeException(
+                '필수 환경변수 누락 또는 빈 값: ' . implode(', ', $missing)
+            );
+        }
+        return $this;
+    }
+
     /** 로드된 모든 변수 반환 */
     public function all(): array
     {
         return $this->vars;
+    }
+
+    /** 환경변수 삭제 */
+    public function remove(string $key): self
+    {
+        unset($this->vars[$key], $_ENV[$key]);
+        putenv($key);
+        return $this;
     }
 
     /**
@@ -182,15 +228,16 @@ final class Env
         }
 
         $found = false;
+        $pattern = '/^(export\s+)?' . preg_quote($key, '/') . '\s*=/';
         foreach ($lines as $i => $line) {
             $trimmed = trim($line);
-            if (str_starts_with($trimmed, "export {$key}=")) {
-                $lines[$i] = "export {$newLine}";
-                $found = true;
-                break;
+            // 주석 줄 보호
+            if (str_starts_with($trimmed, '#') || str_starts_with($trimmed, ';')) {
+                continue;
             }
-            if (str_starts_with($trimmed, "{$key}=")) {
-                $lines[$i] = $newLine;
+            if (preg_match($pattern, $trimmed, $m)) {
+                $prefix = $m[1] ?? '';
+                $lines[$i] = $prefix . $newLine;
                 $found = true;
                 break;
             }
@@ -242,12 +289,26 @@ final class Env
         return $value;
     }
 
-    /** 변수 참조 치환: ${VAR} */
+    /** 변수 참조 치환: ${VAR} 또는 $VAR */
     private function resolveReferences(string $value): string
     {
         return (string) preg_replace_callback(
-            '/\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}/',
-            fn(array $m) => $this->vars[$m[1]] ?? $_ENV[$m[1]] ?? (string) getenv($m[1]),
+            '/\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}|\$([a-zA-Z_][a-zA-Z0-9_]*)/',
+            function (array $m): string {
+                $name = $m[1] !== '' ? $m[1] : $m[2];
+                if (array_key_exists($name, $this->vars)) {
+                    return $this->vars[$name];
+                }
+                if (array_key_exists($name, $_ENV)) {
+                    return (string) $_ENV[$name];
+                }
+                $env = getenv($name);
+                if ($env !== false) {
+                    return $env;
+                }
+                // 미정의 참조는 원본 문자열 유지
+                return $m[0];
+            },
             $value
         );
     }

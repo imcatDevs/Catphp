@@ -3,8 +3,8 @@
 CatPHP 프레임워크의 단일 진입점. `require` 1회로 오토로더, 설정 시스템, 도구 로더, 에러 핸들러, Shortcut 함수, 헬퍼 함수를 모두 부팅한다.
 
 - **경로**: `catphp/catphp.php`
-- **버전**: `CATPHP_VERSION` 상수 (`1.0.6`)
-- **줄 수**: 616줄
+- **버전**: `CATPHP_VERSION` 상수 (`1.0.8`)
+- **줄 수**: 632줄
 - **의존성**: 없음 (순수 PHP 8.2+)
 
 ---
@@ -35,7 +35,7 @@ Public/index.php (또는 cli.php)
 │   ├─ config() 함수 정의
 │   ├─ cat() 범용 로더 정의
 │   ├─ errors() 에러 핸들러 정의
-│   ├─ Shortcut 함수 56개 등록
+│   ├─ Shortcut 함수 62개 등록
 │   └─ 헬퍼 함수 등록 (input, redirect, e, parse_size, is_cli)
 │
 ├─ require config/app.php        ← config([...]) 호출로 설정 주입
@@ -57,7 +57,7 @@ Public/index.php (또는 cli.php)
 | 상수 | 값 | 용도 |
 | --- | --- | --- |
 | `CATPHP` | `true` | include 전용 파일 직접 접근 차단 가드 (`defined('CATPHP') \|\| exit;`) |
-| `CATPHP_VERSION` | `'1.0.6'` | 프레임워크 버전 |
+| `CATPHP_VERSION` | `'1.0.8'` | 프레임워크 버전 |
 
 ```php
 // views/*.php 파일 첫 줄에 사용
