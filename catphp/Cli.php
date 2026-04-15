@@ -14,6 +14,8 @@ final class Cli
     /** @var array<string, array{description: string, handler: callable}> */
     private array $commands = [];
 
+    private string $groupPrefix = '';
+
     private function __construct() {}
 
     public static function getInstance(): self
@@ -24,14 +26,18 @@ final class Cli
     /** 명령어 등록 */
     public function command(string $name, string $description, callable $handler): self
     {
-        $this->commands[$name] = ['description' => $description, 'handler' => $handler];
+        $fullName = $this->groupPrefix !== '' ? $this->groupPrefix . ':' . $name : $name;
+        $this->commands[$fullName] = ['description' => $description, 'handler' => $handler];
         return $this;
     }
 
-    /** 명령어 그룹 (네임스페이스 prefix) */
+    /** 명령어 그룹 (네임스페이스 prefix 자동 적용) */
     public function group(string $prefix, callable $callback): self
     {
-        $callback($prefix);
+        $prevPrefix = $this->groupPrefix;
+        $this->groupPrefix = $prevPrefix !== '' ? $prevPrefix . ':' . $prefix : $prefix;
+        $callback();
+        $this->groupPrefix = $prevPrefix;
         return $this;
     }
 

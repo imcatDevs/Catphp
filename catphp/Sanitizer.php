@@ -247,9 +247,6 @@ final class Sanitizer
             $html = ($this->customFilter)($html);
         }
 
-        // 7. 설정 초기화 (체이닝 후 재사용 대비)
-        $this->reset();
-
         return $html;
     }
 
@@ -403,7 +400,8 @@ final class Sanitizer
 
                 // 허용되지 않은 태그 제거 (내용은 유지)
                 if (!in_array($tagName, $allowedTags, true)) {
-                    // 태그 제거하되 내용은 유지
+                    // 자식 노드를 먼저 재귀 살균 (부모 이동 전 DOM 수준 살균 보장)
+                    $this->sanitizeNode($child, $allowedTags, $allowedAttrs);
                     $toRemove[] = $child;
                     continue;
                 }
@@ -619,13 +617,18 @@ final class Sanitizer
         }
 
         // ── 7. 상대 경로 허용 ──
-        if (str_starts_with($url, '/') || str_starts_with($url, './') || str_starts_with($url, '../')) {
-            // 하지만 //example.com 같은 프로토콜 상대 URL은 검증 필요
-            if (str_starts_with($url, '//')) {
-                // 프로토콜 상대 URL - 현재 페이지의 프로토콜 사용
-                // 허용하되, 위험한 도메인은 차단하지 않음 (단순화)
+        if (str_starts_with($url, '//')) {
+            // 프로토콜 상대 URL (//evil.com 등) — 외부 리소스 로딩/피싱 벡터 차단
+            // 허용된 호스트 목록과 비교
+            $allowedHosts = (array) \config('response.allowed_hosts', []);
+            $host = (string) parse_url('https:' . $url, PHP_URL_HOST);
+            $currentHost = $_SERVER['HTTP_HOST'] ?? '';
+            if ($host === $currentHost || in_array($host, $allowedHosts, true)) {
                 return true;
             }
+            return false;
+        }
+        if (str_starts_with($url, '/') || str_starts_with($url, './') || str_starts_with($url, '../')) {
             return true;
         }
 
@@ -665,8 +668,13 @@ final class Sanitizer
      * 위험한 내용 포함 여부 검사
      * 주의: 속성명 자체가 차단된 것들은 여기서 검사하지 않음
      */
-    private function hasDangerousContent(string $value): bool
+    private function hasDangerousContent(string $value, int $depth = 0): bool
     {
+        // 재귀 깊이 제한 — 무한 재귀 방지
+        if ($depth >= 3) {
+            return false;
+        }
+
         // ── 1. 제어문자 제거 후 검사 ──
         $cleaned = preg_replace('/[\x00-\x20\x7f]/', '', $value);
 
@@ -714,8 +722,8 @@ final class Sanitizer
         }
 
         if (strtolower($decoded) !== $lower) {
-            // 디코딩 후 다시 검사
-            return $this->hasDangerousContent($decoded);
+            // 디코딩 후 다시 검사 (깊이 증가)
+            return $this->hasDangerousContent($decoded, $depth + 1);
         }
 
         return false;
@@ -872,8 +880,9 @@ final class Sanitizer
      */
     public function allowImages(bool $allow = true): self
     {
-        $this->allowImages = $allow;
-        return $this;
+        $c = clone $this;
+        $c->allowImages = $allow;
+        return $c;
     }
 
     /**
@@ -881,8 +890,9 @@ final class Sanitizer
      */
     public function allowLinks(bool $allow = true): self
     {
-        $this->allowLinks = $allow;
-        return $this;
+        $c = clone $this;
+        $c->allowLinks = $allow;
+        return $c;
     }
 
     /**
@@ -890,8 +900,9 @@ final class Sanitizer
      */
     public function allowTables(bool $allow = true): self
     {
-        $this->allowTables = $allow;
-        return $this;
+        $c = clone $this;
+        $c->allowTables = $allow;
+        return $c;
     }
 
     /**
@@ -899,8 +910,9 @@ final class Sanitizer
      */
     public function allowMedia(bool $allow = true): self
     {
-        $this->allowMedia = $allow;
-        return $this;
+        $c = clone $this;
+        $c->allowMedia = $allow;
+        return $c;
     }
 
     /**
@@ -910,8 +922,9 @@ final class Sanitizer
      */
     public function allowTags(array $tags): self
     {
-        $this->allowedTags = array_merge($this->allowedTags, $tags);
-        return $this;
+        $c = clone $this;
+        $c->allowedTags = array_merge($c->allowedTags, $tags);
+        return $c;
     }
 
     /**
@@ -921,8 +934,9 @@ final class Sanitizer
      */
     public function allowAttrs(array $attrs): self
     {
-        $this->allowedAttrs = array_merge($this->allowedAttrs, $attrs);
-        return $this;
+        $c = clone $this;
+        $c->allowedAttrs = array_merge($c->allowedAttrs, $attrs);
+        return $c;
     }
 
     /**
@@ -932,8 +946,9 @@ final class Sanitizer
      */
     public function setAllowedTags(array $tags): self
     {
-        $this->allowedTags = $tags;
-        return $this;
+        $c = clone $this;
+        $c->allowedTags = $tags;
+        return $c;
     }
 
     /**
@@ -943,8 +958,9 @@ final class Sanitizer
      */
     public function setAllowedAttrs(array $attrs): self
     {
-        $this->allowedAttrs = $attrs;
-        return $this;
+        $c = clone $this;
+        $c->allowedAttrs = $attrs;
+        return $c;
     }
 
     /**
@@ -954,8 +970,9 @@ final class Sanitizer
      */
     public function setAllowedProtocols(array $protocols): self
     {
-        $this->allowedProtocols = $protocols;
-        return $this;
+        $c = clone $this;
+        $c->allowedProtocols = $protocols;
+        return $c;
     }
 
     /**
@@ -965,8 +982,9 @@ final class Sanitizer
      */
     public function allowProtocols(array $protocols): self
     {
-        $this->allowedProtocols = array_merge($this->allowedProtocols, $protocols);
-        return $this;
+        $c = clone $this;
+        $c->allowedProtocols = array_merge($c->allowedProtocols, $protocols);
+        return $c;
     }
 
     /**
@@ -976,8 +994,9 @@ final class Sanitizer
      */
     public function setCustomFilter(callable $filter): self
     {
-        $this->customFilter = $filter;
-        return $this;
+        $c = clone $this;
+        $c->customFilter = $filter;
+        return $c;
     }
 
     /**
@@ -993,13 +1012,14 @@ final class Sanitizer
      */
     public function textOnly(): self
     {
-        $this->allowedTags = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's'];
-        $this->allowedAttrs = [];
-        $this->allowImages = false;
-        $this->allowLinks = false;
-        $this->allowTables = false;
-        $this->allowMedia = false;
-        return $this;
+        $c = clone $this;
+        $c->allowedTags = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's'];
+        $c->allowedAttrs = [];
+        $c->allowImages = false;
+        $c->allowLinks = false;
+        $c->allowTables = false;
+        $c->allowMedia = false;
+        return $c;
     }
 
     // ─────────────────────────────────────────────────────────────────────

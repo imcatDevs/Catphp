@@ -440,8 +440,10 @@ final class Collection implements \Countable, \IteratorAggregate, \JsonSerializa
     public function combine(iterable $values): self
     {
         $vals = $values instanceof self ? $values->toArray() : (is_array($values) ? $values : iterator_to_array($values));
-        $result = array_combine($this->items, $vals);
-        return new self($result !== false ? $result : []);
+        if (count($this->items) !== count($vals)) {
+            return new self();
+        }
+        return new self(array_combine($this->items, $vals));
     }
 
     // ── 반복 ──

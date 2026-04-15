@@ -24,7 +24,7 @@ final class Router
 {
     private static ?self $instance = null;
 
-    /** @var array<string, array<string, callable>> 정적 라우트 [method][path] => handler */
+    /** @var array<string, array<string, array{handler: callable, middlewares: array<int, callable>}>> 정적 라우트 [method][path] => {handler, middlewares} */
     private array $staticRoutes = [];
 
     /** @var array<int, array{method: string, pattern: string, handler: callable, paramNames: array<int, string>, paramTypes: array<string, ?string>}> 동적 라우트 */
@@ -78,6 +78,9 @@ final class Router
     /** @var string 현재 그룹 prefix */
     private string $groupPrefix = '';
 
+    /** @var array<int, callable> 현재 그룹 미들웨어 스택 */
+    private array $groupMiddlewares = [];
+
     /** @var ?callable 404 핸들러 */
     private mixed $notFoundHandler = null;
 
@@ -98,13 +101,30 @@ final class Router
         return $this;
     }
 
-    /** 라우트 그룹 */
-    public function group(string $prefix, callable $callback): self
+    /**
+     * 라우트 그룹 (prefix + 미들웨어 지원)
+     *
+     * @param string $prefix URL 접두사
+     * @param callable|array $middlewaresOrCallback 미들웨어 배열 또는 콜백
+     * @param callable|null $callback 미들웨어 전달 시 콜백
+     */
+    public function group(string $prefix, callable|array $middlewaresOrCallback, ?callable $callback = null): self
     {
         $prevPrefix = $this->groupPrefix;
+        $prevMiddlewares = $this->groupMiddlewares;
+
         $this->groupPrefix = $prevPrefix . $prefix;
-        $callback();
+
+        if (is_array($middlewaresOrCallback) && $callback !== null) {
+            $this->groupMiddlewares = array_merge($prevMiddlewares, $middlewaresOrCallback);
+            $callback();
+        } else {
+            /** @var callable $middlewaresOrCallback */
+            $middlewaresOrCallback();
+        }
+
         $this->groupPrefix = $prevPrefix;
+        $this->groupMiddlewares = $prevMiddlewares;
         return $this;
     }
 
@@ -192,14 +212,18 @@ final class Router
             $pattern = '#^' . $pattern . '$#u';
 
             $this->dynamicRoutes[] = [
-                'method'     => $method,
-                'pattern'    => $pattern,
-                'handler'    => $handler,
-                'paramNames' => $paramNames,
-                'paramTypes' => $paramTypes,
+                'method'      => $method,
+                'pattern'     => $pattern,
+                'handler'     => $handler,
+                'paramNames'  => $paramNames,
+                'paramTypes'  => $paramTypes,
+                'middlewares' => $this->groupMiddlewares,
             ];
         } else {
-            $this->staticRoutes[$method][$fullPath] = $handler;
+            $this->staticRoutes[$method][$fullPath] = [
+                'handler'     => $handler,
+                'middlewares' => $this->groupMiddlewares,
+            ];
         }
 
         return $this;
@@ -283,13 +307,20 @@ final class Router
 
         // 1. 정적 라우트 O(1) 매칭
         if (isset($this->staticRoutes[$method][$uri])) {
-            $this->executeHandler($this->staticRoutes[$method][$uri], []);
+            $route = $this->staticRoutes[$method][$uri];
+            if (!$this->runRouteMiddlewares($route['middlewares'] ?? [], $method, $uri)) {
+                return;
+            }
+            $this->executeHandler($route['handler'], []);
             return;
         }
 
         // 2. 동적 라우트 regex 매칭
         $matched = $this->matchDynamic($method, $uri);
         if ($matched !== null) {
+            if (!$this->runRouteMiddlewares($matched['middlewares'] ?? [], $method, $uri)) {
+                return;
+            }
             $this->executeHandler($matched['handler'], $matched['params']);
             return;
         }
@@ -297,13 +328,20 @@ final class Router
         // 3. HEAD → GET 폴백 (정적 + 동적 라우트)
         if ($method === 'HEAD') {
             if (isset($this->staticRoutes['GET'][$uri])) {
+                $route = $this->staticRoutes['GET'][$uri];
+                if (!$this->runRouteMiddlewares($route['middlewares'] ?? [], 'GET', $uri)) {
+                    return;
+                }
                 ob_start();
-                $this->executeHandler($this->staticRoutes['GET'][$uri], []);
+                $this->executeHandler($route['handler'], []);
                 ob_end_clean();
                 return;
             }
             $matched = $this->matchDynamic('GET', $uri);
             if ($matched !== null) {
+                if (!$this->runRouteMiddlewares($matched['middlewares'] ?? [], 'GET', $uri)) {
+                    return;
+                }
                 ob_start();
                 $this->executeHandler($matched['handler'], $matched['params']);
                 ob_end_clean();
@@ -324,12 +362,26 @@ final class Router
             }
             if (preg_match($route['pattern'], $uri, $matches)) {
                 array_shift($matches);
-                $params = array_combine($route['paramNames'], $matches);
+                $names = $route['paramNames'];
+                $params = count($names) === count($matches)
+                    ? array_combine($names, $matches)
+                    : array_combine($names, array_pad(array_slice($matches, 0, count($names)), count($names), ''));
                 $params = $this->castParams($params, $route['paramTypes']);
-                return ['handler' => $route['handler'], 'params' => $params];
+                return ['handler' => $route['handler'], 'params' => $params, 'middlewares' => $route['middlewares'] ?? []];
             }
         }
         return null;
+    }
+
+    /** 라우트별 미들웨어 실행 (false 반환 시 중단) */
+    private function runRouteMiddlewares(array $middlewares, string $method, string $uri): bool
+    {
+        foreach ($middlewares as $mw) {
+            if ($mw($method, $uri) === false) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** 핸들러 실행 (string 반환 → echo, void → 직접 출력) */

@@ -135,7 +135,7 @@ final class Valid
             'before'   => $this->checkDateCompare($field, $value, $params[0] ?? '', '<'),
             'after'    => $this->checkDateCompare($field, $value, $params[0] ?? '', '>'),
             'ip'       => (is_string($value) && filter_var($value, FILTER_VALIDATE_IP)) ? null : "{$field}은(는) 유효한 IP 주소여야 합니다",
-            'json'     => (is_string($value) && (json_decode($value) !== null || json_last_error() === JSON_ERROR_NONE)) ? null : "{$field}은(는) 유효한 JSON이어야 합니다",
+            'json'     => $this->checkJson($field, $value),
             'same'     => ($value === ($data[$params[0] ?? ''] ?? null)) ? null : "{$field}은(는) " . ($params[0] ?? '') . "와(과) 동일해야 합니다",
             'different' => ($value !== ($data[$params[0] ?? ''] ?? null)) ? null : "{$field}은(는) " . ($params[0] ?? '') . "와(과) 달라야 합니다",
             'size'     => $this->checkSize($field, $value, (int) ($params[0] ?? 0)),
@@ -173,13 +173,25 @@ final class Valid
                 return "{$field}은(는) {$min}~{$max}자 사이여야 합니다";
             }
         }
-        if (is_numeric($value)) {
+        elseif (is_numeric($value)) {
             $num = (float) $value;
             if ($num < $min || $num > $max) {
                 return "{$field}은(는) {$min}~{$max} 사이여야 합니다";
             }
         }
         return null;
+    }
+
+    /** JSON 유효성 검증 (null, true, false 리터럴 포함) */
+    private function checkJson(string $field, mixed $value): ?string
+    {
+        if (!is_string($value)) {
+            return "{$field}은(는) 유효한 JSON이어야 합니다";
+        }
+        json_decode($value);
+        return json_last_error() === JSON_ERROR_NONE
+            ? null
+            : "{$field}은(는) 유효한 JSON이어야 합니다";
     }
 
     /** unique:table,column 검증 (DB 중복 검사) */

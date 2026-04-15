@@ -87,8 +87,9 @@ final class Captcha
         $escapedId = htmlspecialchars($id, ENT_QUOTES, 'UTF-8');
         $onclick = '';
         if ($refreshUrl !== '') {
-            $escapedUrl = htmlspecialchars($refreshUrl, ENT_QUOTES, 'UTF-8');
-            $onclick = " onclick=\"fetch('{$escapedUrl}').then(r=>r.text()).then(s=>this.src=s)\"";
+            // JS 컨텍스트 + HTML 속성 이중 이스케이프: json_encode → HTML 엔티티 안전 출력
+            $jsUrl = json_encode($refreshUrl, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+            $onclick = " onclick=\"fetch({$jsUrl}).then(r=>r.text()).then(s=>this.src=s)\"";
         }
         return '<img id="' . $escapedId
              . '" src="' . $src . '" alt="captcha" style="cursor:pointer;"'

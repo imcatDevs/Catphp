@@ -199,16 +199,21 @@ final class Queue
     public function retryFailed(string $id): bool
     {
         if ($this->driver === 'redis') {
-            $failed = \redis()->lRange('queue:failed', 0, -1);
-            foreach ($failed as $item) {
-                if (is_array($item) && ($item['id'] ?? '') === $id) {
-                    // List에서 삭제 (lRem: count=1 → 좌→우 첫 번째 매칭 삭제)
-                    // raw()는 OPT_PREFIX가 이미 설정된 연결 — 수동 프리픽스 불필요
-                    \redis()->raw()->lRem('queue:failed', $item, 1);
-                    $item['attempts'] = 0;
-                    $this->enqueue($item);
-                    return true;
+            // 청크 단위 스캔 (메모리 절약)
+            $chunkSize = 100;
+            $offset = 0;
+            $total = (int) \redis()->lLen('queue:failed');
+            while ($offset < $total) {
+                $failed = \redis()->lRange('queue:failed', $offset, $offset + $chunkSize - 1);
+                foreach ($failed as $item) {
+                    if (is_array($item) && ($item['id'] ?? '') === $id) {
+                        \redis()->raw()->lRem('queue:failed', $item, 1);
+                        $item['attempts'] = 0;
+                        $this->enqueue($item);
+                        return true;
+                    }
                 }
+                $offset += $chunkSize;
             }
             return false;
         }

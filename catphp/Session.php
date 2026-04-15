@@ -98,7 +98,7 @@ final class Session
     /** 세션 값 가져오기 (dot notation 미지원, 단순 키) */
     public function get(string $key, mixed $default = null): mixed
     {
-        return $_SESSION[$key] ?? $default;
+        return array_key_exists($key, $_SESSION ?? []) ? $_SESSION[$key] : $default;
     }
 
     /** 세션 값 설정 */

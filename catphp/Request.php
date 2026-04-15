@@ -179,6 +179,9 @@ final class Request
 
     // ── HTTP 메서드 ──
 
+    /** 허용된 HTTP 메서드 오버라이드 목록 */
+    private const ALLOWED_OVERRIDES = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
+
     /** HTTP 메서드 (대문자) */
     public function method(): string
     {
@@ -187,7 +190,11 @@ final class Request
         if ($method === 'POST') {
             $override = $_POST['_method'] ?? $this->header('X-HTTP-Method-Override');
             if ($override !== null) {
-                return strtoupper($override);
+                $upper = strtoupper($override);
+                // 화이트리스트 검증 — 임의 메서드 반환 방지
+                if (in_array($upper, self::ALLOWED_OVERRIDES, true)) {
+                    return $upper;
+                }
             }
         }
         return $method;

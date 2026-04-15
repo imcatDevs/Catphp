@@ -160,6 +160,18 @@ final class Http
         $result = curl_exec($ch);
         $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
+
+        // SSRF 방어: 리다이렉트 후 최종 연결 IP 검증
+        if (!$this->allowPrivateIp) {
+            $effectiveIp = (string) curl_getinfo($ch, CURLINFO_PRIMARY_IP);
+            if ($effectiveIp !== '' && self::isPrivateIp($effectiveIp)) {
+                curl_close($ch);
+                fclose($fp);
+                @unlink($savePath);
+                return false;
+            }
+        }
+
         curl_close($ch);
         fclose($fp);
 
@@ -229,6 +241,16 @@ final class Http
         $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $headerSize = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
         $error = curl_error($ch);
+
+        // SSRF 방어: 리다이렉트 후 최종 연결 IP 검증 (TOCTOU 방지)
+        if (!$this->allowPrivateIp) {
+            $effectiveIp = (string) curl_getinfo($ch, CURLINFO_PRIMARY_IP);
+            if ($effectiveIp !== '' && self::isPrivateIp($effectiveIp)) {
+                curl_close($ch);
+                return new HttpResponse(0, '', "SSRF 차단: 리다이렉트가 프라이빗 IP로 해석됨 ({$effectiveIp})");
+            }
+        }
+
         curl_close($ch);
 
         if ($raw === false) {

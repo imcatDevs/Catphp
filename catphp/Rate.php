@@ -68,22 +68,11 @@ final class Rate
             return true; // JSON 인코딩 실패 시 기존 데이터 보존
         }
 
-        // 원자적 쓰기: 임시 파일 → rename
-        $tempFile = $file . '.tmp.' . getmypid();
-        if (file_put_contents($tempFile, $json, LOCK_EX) === false) {
-            @unlink($tempFile);
-            flock($fp, LOCK_UN);
-            fclose($fp);
-            return true;
-        }
-
+        // 원자적 쓰기: flock 보호 하에 직접 쓰기
         ftruncate($fp, 0);
         rewind($fp);
-        $tempContent = file_get_contents($tempFile);
-        if ($tempContent !== false) {
-            fwrite($fp, $tempContent);
-        }
-        @unlink($tempFile);
+        fwrite($fp, $json);
+        fflush($fp);
         flock($fp, LOCK_UN);
         fclose($fp);
 

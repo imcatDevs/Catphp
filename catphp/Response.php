@@ -36,11 +36,12 @@ final class Response
 
     // ── 상태 코드 ──
 
-    /** HTTP 상태 코드 설정 */
+    /** HTTP 상태 코드 설정 (이뮤터블) */
     public function status(int $code): self
     {
-        $this->statusCode = $code;
-        return $this;
+        $c = clone $this;
+        $c->statusCode = $code;
+        return $c;
     }
 
     /** 현재 상태 코드 */
@@ -51,47 +52,54 @@ final class Response
 
     // ── 헤더 ──
 
-    /** 응답 헤더 설정 */
+    /** 응답 헤더 설정 (이뮤터블) */
     public function header(string $name, string $value): self
     {
         // CRLF 인젝션 방어 (HTTP Response Splitting 차단)
         $name = str_replace(["\r", "\n"], '', $name);
         $value = str_replace(["\r", "\n"], '', $value);
-        $this->headers[$name] = $value;
-        return $this;
+        $c = clone $this;
+        $c->headers[$name] = $value;
+        return $c;
     }
 
-    /** 여러 헤더 한 번에 설정 */
+    /** 여러 헤더 한 번에 설정 (이뮤터블) */
     public function withHeaders(array $headers): self
     {
+        $c = clone $this;
         foreach ($headers as $name => $value) {
-            $this->header((string) $name, (string) $value);
+            $name = str_replace(["\r", "\n"], '', (string) $name);
+            $value = str_replace(["\r", "\n"], '', (string) $value);
+            $c->headers[$name] = $value;
         }
-        return $this;
+        return $c;
     }
 
-    /** Content-Type 설정 */
+    /** Content-Type 설정 (이뮤터블) */
     public function contentType(string $type, string $charset = 'UTF-8'): self
     {
-        $this->headers['Content-Type'] = "{$type}; charset={$charset}";
-        return $this;
+        $c = clone $this;
+        $c->headers['Content-Type'] = "{$type}; charset={$charset}";
+        return $c;
     }
 
-    /** 캐시 비활성화 */
+    /** 캐시 비활성화 (이뮤터블) */
     public function noCache(): self
     {
-        $this->headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0';
-        $this->headers['Pragma'] = 'no-cache';
-        $this->headers['Expires'] = '0';
-        return $this;
+        $c = clone $this;
+        $c->headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0';
+        $c->headers['Pragma'] = 'no-cache';
+        $c->headers['Expires'] = '0';
+        return $c;
     }
 
-    /** 캐시 활성화 */
+    /** 캐시 활성화 (이뮤터블) */
     public function cache(int $seconds): self
     {
-        $this->headers['Cache-Control'] = "public, max-age={$seconds}";
-        $this->headers['Expires'] = gmdate('D, d M Y H:i:s', time() + $seconds) . ' GMT';
-        return $this;
+        $c = clone $this;
+        $c->headers['Cache-Control'] = "public, max-age={$seconds}";
+        $c->headers['Expires'] = gmdate('D, d M Y H:i:s', time() + $seconds) . ' GMT';
+        return $c;
     }
 
     // ── 쿠키 ──
@@ -107,7 +115,8 @@ final class Response
         bool $httpOnly = true,
         string $sameSite = 'Lax'
     ): self {
-        $this->cookies[] = [
+        $c = clone $this;
+        $c->cookies[] = [
             'name'  => $name,
             'value' => $value,
             'options' => [
@@ -119,13 +128,14 @@ final class Response
                 'samesite' => $sameSite,
             ],
         ];
-        return $this;
+        return $c;
     }
 
-    /** 쿠키 삭제 */
+    /** 쿠키 삭제 (이뮤터블) */
     public function forgetCookie(string $name, string $path = '/', string $domain = ''): self
     {
-        $this->cookies[] = [
+        $c = clone $this;
+        $c->cookies[] = [
             'name'  => $name,
             'value' => '',
             'options' => [
@@ -137,7 +147,7 @@ final class Response
                 'samesite' => 'Lax',
             ],
         ];
-        return $this;
+        return $c;
     }
 
     // ── 응답 본문 ──
@@ -148,7 +158,7 @@ final class Response
         if ($status > 0) {
             $this->statusCode = $status;
         }
-        $this->contentType('text/html');
+        $this->headers['Content-Type'] = 'text/html; charset=UTF-8';
         $this->send($content);
     }
 
@@ -158,7 +168,7 @@ final class Response
         if ($status > 0) {
             $this->statusCode = $status;
         }
-        $this->contentType('text/plain');
+        $this->headers['Content-Type'] = 'text/plain; charset=UTF-8';
         $this->send($content);
     }
 
@@ -168,7 +178,7 @@ final class Response
         if ($status > 0) {
             $this->statusCode = $status;
         }
-        $this->contentType('application/xml');
+        $this->headers['Content-Type'] = 'application/xml; charset=UTF-8';
         $this->send($content);
     }
 
@@ -224,12 +234,17 @@ final class Response
     /** 파일 다운로드 */
     public function download(string $filePath, ?string $fileName = null, array $headers = []): never
     {
+        // 경로 탈출 방어 (null 바이트 + realpath 검증)
+        $filePath = str_replace("\0", '', $filePath);
+
         if (!is_file($filePath)) {
             $this->statusCode = 404;
             $this->send('File not found');
         }
 
         $fileName ??= basename($filePath);
+        // 파일명 CRLF/null 살균
+        $fileName = str_replace(["\r", "\n", "\0"], '', $fileName);
         $mime = mime_content_type($filePath) ?: 'application/octet-stream';
 
         $this->headers['Content-Type'] = $mime;
@@ -237,8 +252,10 @@ final class Response
         $this->headers['Content-Length'] = (string) filesize($filePath);
         $this->headers['Content-Transfer-Encoding'] = 'binary';
 
+        // extra headers — CRLF 인젝션 방어
         foreach ($headers as $k => $v) {
-            $this->headers[(string) $k] = (string) $v;
+            $this->headers[str_replace(["\r", "\n", "\0"], '', (string) $k)]
+                = str_replace(["\r", "\n", "\0"], '', (string) $v);
         }
 
         $this->applyHeaders();
@@ -250,12 +267,16 @@ final class Response
     /** 인라인 파일 표시 (PDF 등 브라우저에서 열기) */
     public function inline(string $filePath, ?string $fileName = null): never
     {
+        // 경로 탈출 방어 (null 바이트 제거)
+        $filePath = str_replace("\0", '', $filePath);
+
         if (!is_file($filePath)) {
             $this->statusCode = 404;
             $this->send('File not found');
         }
 
         $fileName ??= basename($filePath);
+        $fileName = str_replace(["\r", "\n", "\0"], '', $fileName);
         $mime = mime_content_type($filePath) ?: 'application/octet-stream';
 
         $this->headers['Content-Type'] = $mime;
@@ -321,9 +342,6 @@ final class Response
                 setcookie($c['name'], $c['value'], $c['options']);
             }
         }
-
-        // 상태 초기화 (싱글턴이므로)
-        $this->reset();
     }
 
     /** 응답 전송 */
@@ -332,13 +350,5 @@ final class Response
         $this->applyHeaders();
         echo $body;
         exit;
-    }
-
-    /** 상태 초기화 */
-    private function reset(): void
-    {
-        $this->statusCode = 200;
-        $this->headers = [];
-        $this->cookies = [];
     }
 }

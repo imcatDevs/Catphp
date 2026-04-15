@@ -183,7 +183,7 @@ final class Firewall
     public function isAllowed(string $ip): bool
     {
         // 허용 목록에 있으면 항상 허용
-        if (isset($this->allowed[$ip])) {
+        if (array_key_exists($ip, $this->allowed)) {
             return true;
         }
 

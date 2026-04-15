@@ -26,7 +26,8 @@ final class DB
     private array $selectColumns = [];
     /** @var array<int, array{0: string, 1: string, 2: mixed, 3: string}> [col, op, val, logic] */
     private array $wheres = [];
-    private string $orderBy = '';
+    /** @var string[] */
+    private array $orderByClauses = [];
     private string $groupByCol = '';
     private ?int $limitVal = null;
     private ?int $offsetVal = null;
@@ -123,7 +124,7 @@ final class DB
         $q->table = $table;
         $q->selectColumns = [];
         $q->wheres = [];
-        $q->orderBy = '';
+        $q->orderByClauses = [];
         $q->groupByCol = '';
         $q->limitVal = null;
         $q->offsetVal = null;
@@ -234,7 +235,7 @@ final class DB
         self::validateIdentifier($column);
         $q = $this->clone();
         $dir = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
-        $q->orderBy = "{$column} {$dir}";
+        $q->orderByClauses[] = "{$column} {$dir}";
         return $q;
     }
 
@@ -302,8 +303,8 @@ final class DB
         if ($this->groupByCol !== '') {
             $sql .= " GROUP BY {$this->groupByCol}";
         }
-        if ($this->orderBy) {
-            $sql .= " ORDER BY {$this->orderBy}";
+        if ($this->orderByClauses) {
+            $sql .= ' ORDER BY ' . implode(', ', $this->orderByClauses);
         }
         $sql .= ' LIMIT ?';
         $bindings[] = 1;
@@ -323,8 +324,8 @@ final class DB
         if ($this->groupByCol !== '') {
             $sql .= " GROUP BY {$this->groupByCol}";
         }
-        if ($this->orderBy) {
-            $sql .= " ORDER BY {$this->orderBy}";
+        if ($this->orderByClauses) {
+            $sql .= ' ORDER BY ' . implode(', ', $this->orderByClauses);
         }
         if ($this->limitVal !== null) {
             $sql .= ' LIMIT ?';
@@ -367,8 +368,8 @@ final class DB
         if ($this->groupByCol !== '') {
             $sql .= " GROUP BY {$this->groupByCol}";
         }
-        if ($this->orderBy) {
-            $sql .= " ORDER BY {$this->orderBy}";
+        if ($this->orderByClauses) {
+            $sql .= ' ORDER BY ' . implode(', ', $this->orderByClauses);
         }
         if ($this->limitVal !== null) {
             $sql .= ' LIMIT ?';
@@ -385,7 +386,11 @@ final class DB
     {
         self::validateIdentifier($column);
         [$whereSql, $bindings] = $this->buildWhere();
-        $sql = "SELECT {$column} FROM {$this->table}{$whereSql} LIMIT 1";
+        $sql = "SELECT {$column} FROM {$this->table}{$whereSql}";
+        if ($this->orderByClauses) {
+            $sql .= ' ORDER BY ' . implode(', ', $this->orderByClauses);
+        }
+        $sql .= ' LIMIT 1';
 
         $stmt = $this->pdo()->prepare($sql);
         $stmt->execute($bindings);

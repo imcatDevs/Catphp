@@ -25,6 +25,7 @@ final class Mail
     private string $smtpHost;
     private int $smtpPort;
     private string $smtpUser;
+    /** @sensitive 비밀번호 — 스택 트레이스 노출 주의 */
     private string $smtpPass;
     private string $encryption; // tls, ssl, none
     private string $fromEmail;

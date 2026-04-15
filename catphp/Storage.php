@@ -228,6 +228,7 @@ final class Storage
     /** 공개 URL 반환 */
     public function url(string $path): string
     {
+        $path = $this->safePath($path);
         $cfg = $this->diskConfig();
         $driver = $cfg['driver'] ?? 'local';
 

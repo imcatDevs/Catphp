@@ -609,6 +609,9 @@ if (!function_exists('parse_size')) {
     function parse_size(string $size): int
     {
         $size = trim($size);
+        if ($size === '' || !preg_match('/^\d+[gGmMkK]?$/', $size)) {
+            throw new \InvalidArgumentException("유효하지 않은 사이즈 문자열: '{$size}'. 예: '10M', '1G', '512K', '1024'");
+        }
         $unit = strtoupper(substr($size, -1));
         $value = (int) $size;
         return match ($unit) {
