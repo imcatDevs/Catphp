@@ -42,6 +42,22 @@ final class Request
     }
 
     /**
+     * Swoole 요청 간 상태 초기화 (프레임워크 내부용)
+     *
+     * 입력 캐시를 현재 슈퍼글로벌로 재동기화하고 rawBody/jsonCache 무효화.
+     * `Swoole.php::handleRequest()` 시작부에서 호출.
+     */
+    public static function resetInstance(): void
+    {
+        if (self::$instance === null) {
+            return;
+        }
+        self::$instance->inputCache = array_merge($_GET, $_POST);
+        self::$instance->rawBody = null;
+        self::$instance->jsonCache = null;
+    }
+
+    /**
      * 입력 캐시 덮어쓰기 (테스트용 모킹 또는 런타임 갱신)
      *
      * @param array<string, mixed> $data

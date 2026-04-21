@@ -212,10 +212,10 @@ hash_equals($expectedSignature, $signature)
 비밀번호·시크릿 파라미터에 `#[\SensitiveParameter]` 속성 적용:
 
 ```php
-public function hashPassword(#[\SensitiveParameter] string $password): string
+public function hashPassword(string $password): string
 ```
 
-→ 스택 트레이스에 비밀번호가 노출되지 않음 (PHP 8.2+)
+→ 비밀번호 해싱은 Argon2id/Bcrypt 사용. 운영 환경에서 `display_errors=Off` 설정 필수.
 
 ### 세션 고정 공격 방어
 

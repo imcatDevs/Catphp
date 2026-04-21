@@ -68,13 +68,13 @@ final class Hash
     }
 
     /** HMAC 서명 */
-    public function hmac(string $data, #[\SensitiveParameter] string $key, ?string $algo = null): string
+    public function hmac(string $data, string $key, ?string $algo = null): string
     {
         return hash_hmac($algo ?? $this->defaultAlgo, $data, $key);
     }
 
     /** HMAC 검증 */
-    public function verifyHmac(string $data, string $expectedMac, #[\SensitiveParameter] string $key, ?string $algo = null): bool
+    public function verifyHmac(string $data, string $expectedMac, string $key, ?string $algo = null): bool
     {
         return hash_equals($expectedMac, $this->hmac($data, $key, $algo));
     }
@@ -82,7 +82,7 @@ final class Hash
     // ── 비밀번호 해싱 ──
 
     /** 비밀번호 해시 (Argon2id/Bcrypt) */
-    public function password(#[\SensitiveParameter] string $password): string
+    public function password(string $password): string
     {
         $algo = strtolower((string) config('auth.algo', 'Argon2id'));
 
@@ -100,7 +100,7 @@ final class Hash
     }
 
     /** 비밀번호 검증 */
-    public function passwordVerify(#[\SensitiveParameter] string $password, string $hash): bool
+    public function passwordVerify(string $password, string $hash): bool
     {
         return password_verify($password, $hash);
     }

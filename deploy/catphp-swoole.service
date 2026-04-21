@@ -1,0 +1,25 @@
+[Unit]
+Description=CatPHP Swoole HTTP Server (catphp.imcat.dev)
+After=network.target redis.service postgresql.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=www
+Group=www
+WorkingDirectory=/www/wwwroot/catphp.imcat.dev
+ExecStart=/usr/bin/php /www/wwwroot/catphp.imcat.dev/server.php
+ExecReload=/bin/kill -USR1 $MAINPID
+KillMode=process
+KillSignal=SIGTERM
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65535
+StandardOutput=append:/www/wwwroot/catphp.imcat.dev/storage/logs/swoole-stdout.log
+StandardError=append:/www/wwwroot/catphp.imcat.dev/storage/logs/swoole-stderr.log
+
+# 워커 그레이스풀 셧다운 대기 시간
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

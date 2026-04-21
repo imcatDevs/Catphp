@@ -55,6 +55,22 @@ final class Sitemap
     }
 
     /**
+     * Swoole 요청 간 상태 초기화 (프레임워크 내부용)
+     *
+     * URL 엔트리 누적으로 인한 XML 폭주를 방지하기 위해
+     * `Swoole.php::handleRequest()` 시작부에서 호출.
+     */
+    public static function resetInstance(): void
+    {
+        if (self::$instance === null) {
+            return;
+        }
+        self::$instance->urls = [];
+        self::$instance->sitemaps = [];
+        self::$instance->isIndex = false;
+    }
+
+    /**
      * URL 엔트리 추가
      *
      * @param string      $loc        URL 경로 (base_url에 자동 결합)

@@ -151,7 +151,7 @@
             </div>
             <div id="searchResults">
                 <div class="list list--divided">
-                    <div class="list__item"><div class="list__content"><span class="list__title"><mark>CatPHP</mark> v1.0 출시</span><span class="list__subtitle">PHP 8.2+ 전용 경량 프레임워크 <mark>CatPHP</mark>의 첫 릴리즈입니다.</span></div></div>
+                    <div class="list__item"><div class="list__content"><span class="list__title"><mark>CatPHP</mark> v1.0 출시</span><span class="list__subtitle">PHP 8.1+ 호환 경량 프레임워크 <mark>CatPHP</mark>의 첫 릴리즈입니다.</span></div></div>
                     <div class="list__item"><div class="list__content"><span class="list__title"><mark>CatPHP</mark> 보안 도구 가이드</span><span class="list__subtitle">Auth, Encrypt, Guard 등 <mark>CatPHP</mark>의 보안 도구를 소개합니다.</span></div></div>
                     <div class="list__item"><div class="list__content"><span class="list__title"><mark>CatPHP</mark> vs 다른 프레임워크</span><span class="list__subtitle">Laravel, Slim과 비교한 <mark>CatPHP</mark>의 장단점 분석.</span></div></div>
                 </div>
@@ -174,7 +174,7 @@
             <p class="mb-3">SEO 메타 태그 빌더. title, description, Open Graph, Twitter Card, JSON-LD 구조화 데이터</p>
 
             <pre class="demo-code mb-3"><code><span class="hl-f">meta</span>()-&gt;<span class="hl-f">title</span>(<span class="hl-s">'CatPHP 블로그'</span>)
-     -&gt;<span class="hl-f">description</span>(<span class="hl-s">'PHP 8.2+ 경량 프레임워크'</span>)
+     -&gt;<span class="hl-f">description</span>(<span class="hl-s">'PHP 8.1+ 경량 프레임워크'</span>)
      -&gt;<span class="hl-f">og</span>(<span class="hl-s">'type'</span>, <span class="hl-s">'website'</span>)
      -&gt;<span class="hl-f">og</span>(<span class="hl-s">'image'</span>, <span class="hl-s">'https://catphp.dev/og.png'</span>)
      -&gt;<span class="hl-f">twitter</span>(<span class="hl-s">'card'</span>, <span class="hl-s">'summary_large_image'</span>);
@@ -185,7 +185,7 @@
 try {
     meta()->reset()
         ->title('CatPHP 데모')
-        ->description('PHP 8.2+ 전용 경량 프레임워크 데모')
+        ->description('PHP 8.1+ 호환 경량 프레임워크 데모')
         ->og('type', 'website')
         ->og('url', 'https://catphp.dev/demo');
     $metaHtml = meta()->render();
@@ -331,7 +331,7 @@ foreach ($tagSamples as [$name, $color, $count]): ?>
             <h6 class="mb-2">실행 결과</h6>
 <?php
 try {
-    $sample = 'CatPHP는 PHP 8.2 이상을 위한 경량 프레임워크입니다. 코어 파일 1개와 require 1회로 부팅되며, 51개의 도구를 제공합니다. PDO 기반 쿼리 빌더, Argon2id 해싱, Sodium 암호화, JWT 토큰, 파일 캐시, 이벤트 시스템 등 웹 개발에 필요한 핵심 기능을 모두 포함합니다. CatUI와 함께 사용하면 SPA 기반 관리자 패널을 빠르게 구축할 수 있습니다.';
+    $sample = 'CatPHP는 PHP 8.1 이상을 위한 경량 프레임워크입니다. 코어 파일 1개와 require 1회로 부팅되며, 51개의 도구를 제공합니다. PDO 기반 쿼리 빌더, Argon2id 해싱, Sodium 암호화, JWT 토큰, 파일 캐시, 이벤트 시스템 등 웹 개발에 필요한 핵심 기능을 모두 포함합니다. CatUI와 함께 사용하면 SPA 기반 관리자 패널을 빠르게 구축할 수 있습니다.';
     $readTime = text()->readingTime($sample);
     $excerpt = text()->excerpt($sample, 50);
     $wordCount = text()->wordCount($sample);

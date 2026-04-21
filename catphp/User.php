@@ -188,7 +188,7 @@ final class User
      *   - IP 기준 5분간 10회 실패 시 차단 (Rate 도구 연동)
      *   - IP 기준 30분간 50회 실패 시 Firewall 자동 밴
      */
-    public function attempt(string $email, #[\SensitiveParameter] string $password, string $emailColumn = 'email'): bool
+    public function attempt(string $email, string $password, string $emailColumn = 'email'): bool
     {
         // 브루트포스 방어: IP 기준 레이트 리미트 (5분/10회)
         if (!\rate()->limit('login', 300, 10)) {

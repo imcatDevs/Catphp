@@ -46,7 +46,7 @@
 ```php
 meta()
     ->title('CatPHP 프레임워크')
-    ->description('PHP 8.2+ 전용 경량 프레임워크')
+    ->description('PHP 8.1+ 호환 경량 프레임워크')
     ->canonical('https://example.com/');
 
 echo meta()->render();
@@ -57,8 +57,8 @@ echo meta()->render();
 ```html
 <title>CatPHP 프레임워크</title>
 <meta property="og:title" content="CatPHP 프레임워크">
-<meta name="description" content="PHP 8.2+ 전용 경량 프레임워크">
-<meta property="og:description" content="PHP 8.2+ 전용 경량 프레임워크">
+<meta name="description" content="PHP 8.1+ 호환 경량 프레임워크">
+<meta property="og:description" content="PHP 8.1+ 호환 경량 프레임워크">
 <link rel="canonical" href="https://example.com/">
 ```
 

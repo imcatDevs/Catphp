@@ -55,7 +55,7 @@ cli()->command('check:env',      '최적화 환경 체크',      function() {
     // ── 1. PHP 버전 ──
     $c->info('── PHP 런타임 ──');
     $ver = PHP_VERSION;
-    $check('PHP 버전', version_compare($ver, '8.2.0', '>='), $ver, "{$ver} (8.2+ 필수)", true);
+    $check('PHP 버전', version_compare($ver, '8.1.0', '>='), $ver, "{$ver} (8.1+ 필수)", true);
     $check('SAPI', PHP_SAPI === 'cli', PHP_SAPI, PHP_SAPI . ' (CLI 확인용)');
     $check('메모리 제한', ((int) ini_get('memory_limit')) >= 128 || ini_get('memory_limit') === '-1',
         ini_get('memory_limit'), ini_get('memory_limit') . ' (128M+ 권장)');

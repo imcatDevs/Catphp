@@ -140,6 +140,58 @@ final class Swoole
     }
 
     // ════════════════════════════════════════════════
+    // Swoole 컨텍스트 탐지 (Response/Json 직접 출력용)
+    // ════════════════════════════════════════════════
+
+    /**
+     * 현재 코루틴의 Swoole HTTP Response 객체 반환.
+     * Swoole HTTP 요청 컨텍스트에서만 non-null — FPM/CLI에서는 null.
+     *
+     * `Cat\Response`, `Cat\Json` 등이 이 메서드로 컨텍스트를 감지하여
+     * `echo` 대신 `$res->end()`를 호출하면 출력 버퍼 우회로 성능 향상.
+     */
+    public static function currentResponse(): ?object
+    {
+        if (!class_exists('\\Swoole\\Coroutine', false)) {
+            return null;
+        }
+        $cid = \Swoole\Coroutine::getCid();
+        if ($cid < 0) {
+            return null;
+        }
+        $ctx = \Swoole\Coroutine::getContext();
+        if ($ctx === null || !isset($ctx['swoole_response'])) {
+            return null;
+        }
+        return $ctx['swoole_response'];
+    }
+
+    /**
+     * 현재 코루틴의 Swoole HTTP Request 객체 반환 (없으면 null).
+     */
+    public static function currentRequest(): ?object
+    {
+        if (!class_exists('\\Swoole\\Coroutine', false)) {
+            return null;
+        }
+        $cid = \Swoole\Coroutine::getCid();
+        if ($cid < 0) {
+            return null;
+        }
+        $ctx = \Swoole\Coroutine::getContext();
+        if ($ctx === null || !isset($ctx['swoole_request'])) {
+            return null;
+        }
+        return $ctx['swoole_request'];
+    }
+
+    /** Swoole HTTP 요청 처리 중인지 여부 */
+    public static function inRequest(): bool
+    {
+        return self::currentResponse() !== null;
+    }
+
+    // ════════════════════════════════════════════════
     // 서버 타입 선택
     // ════════════════════════════════════════════════
 
@@ -318,15 +370,17 @@ final class Swoole
         $this->server->set($this->settings);
         $this->registerCallbacks();
 
-        echo "🐱 CatPHP Swoole Server\n";
-        echo "   Type: " . strtoupper($this->serverType) . "\n";
-        echo "   Listen: {$this->host}:{$this->port}\n";
-        echo "   Workers: " . ($this->settings['worker_num'] ?? swoole_cpu_num()) . "\n";
+        // 주의: `echo`는 PHP 내부 `headers_sent`를 true로 만들어 워커가 상속 시
+        // `header()` 호출 실패 원인이 된다. `fwrite(STDOUT)`로 우회.
+        fwrite(STDOUT, "🐱 CatPHP Swoole Server\n");
+        fwrite(STDOUT, "   Type: " . strtoupper($this->serverType) . "\n");
+        fwrite(STDOUT, "   Listen: {$this->host}:{$this->port}\n");
+        fwrite(STDOUT, "   Workers: " . ($this->settings['worker_num'] ?? swoole_cpu_num()) . "\n");
         if (($this->settings['task_worker_num'] ?? 0) > 0) {
-            echo "   Task Workers: " . $this->settings['task_worker_num'] . "\n";
+            fwrite(STDOUT, "   Task Workers: " . $this->settings['task_worker_num'] . "\n");
         }
-        echo "   PID File: " . ($this->settings['pid_file'] ?? 'none') . "\n";
-        echo "   Press Ctrl+C to stop\n\n";
+        fwrite(STDOUT, "   PID File: " . ($this->settings['pid_file'] ?? 'none') . "\n");
+        fwrite(STDOUT, "   Press Ctrl+C to stop\n\n");
 
         $this->server->start();
     }
@@ -858,6 +912,7 @@ final class Swoole
             'dispatch_mode'         => (int) \config('swoole.dispatch_mode', 2),
             'open_tcp_nodelay'      => (bool) \config('swoole.open_tcp_nodelay', true),
             'enable_coroutine'      => (bool) \config('swoole.enable_coroutine', true),
+            'task_enable_coroutine' => (bool) \config('swoole.task_enable_coroutine', true),
             'buffer_output_size'    => (int) \config('swoole.buffer_output_size', 2 * 1024 * 1024),
             'package_max_length'    => (int) \config('swoole.package_max_length', 2 * 1024 * 1024),
         ];
@@ -931,24 +986,36 @@ final class Swoole
 
         // ── 워커 시작 ──
         $server->on('WorkerStart', function ($svr, int $workerId) {
-            // 부트스트랩 콜백 실행 (라우트 정의 등)
-            if ($this->bootstrap !== null) {
-                ($this->bootstrap)($svr, $workerId);
-            }
+            // 태스크 워커는 요청 처리를 하지 않으므로 라우트/풀 초기화 불필요.
+            // (task_enable_coroutine=true면 task 핸들러는 자동 코루틴으로 실행됨)
+            $isTaskWorker = (bool) ($svr->taskworker ?? false);
 
-            // Hot Reload — inotify 기반 파일 감시 (워커 0에서만)
-            if ($workerId === 0 && (bool) \config('swoole.hot_reload', false)) {
-                $this->startHotReload($svr);
-            }
+            if (!$isTaskWorker) {
+                // 부트스트랩 콜백 실행 (라우트 정의 등)
+                if ($this->bootstrap !== null) {
+                    ($this->bootstrap)($svr, $workerId);
+                }
 
-            // 연결 풀 초기화 (워커별)
-            $dbPoolSize = (int) \config('swoole.pool.db', 0);
-            if ($dbPoolSize > 0) {
-                $this->createDbPool($dbPoolSize);
-            }
-            $redisPoolSize = (int) \config('swoole.pool.redis', 0);
-            if ($redisPoolSize > 0) {
-                $this->createRedisPool($redisPoolSize);
+                // Hot Reload — inotify 기반 파일 감시 (워커 0에서만)
+                if ($workerId === 0 && (bool) \config('swoole.hot_reload', false)) {
+                    $this->startHotReload($svr);
+                }
+
+                // 연결 풀 초기화 (HTTP 워커 전용)
+                // `\Swoole\Coroutine\Channel::push()`는 코루틴 안에서만 호출 가능하므로
+                // enable_coroutine이 켜진 HTTP 워커에서 go() 로 비동기 초기화.
+                $dbPoolSize    = (int) \config('swoole.pool.db', 0);
+                $redisPoolSize = (int) \config('swoole.pool.redis', 0);
+                if ($dbPoolSize > 0 || $redisPoolSize > 0) {
+                    \Swoole\Coroutine\go(function () use ($dbPoolSize, $redisPoolSize): void {
+                        if ($dbPoolSize > 0) {
+                            $this->createDbPool($dbPoolSize);
+                        }
+                        if ($redisPoolSize > 0) {
+                            $this->createRedisPool($redisPoolSize);
+                        }
+                    });
+                }
             }
 
             if (isset($this->events['workerStart'])) {
@@ -959,7 +1026,15 @@ final class Swoole
         // ── 워커 종료 ──
         $server->on('WorkerStop', function ($svr, int $workerId) {
             $this->clearAllTimers();
-            $this->destroyPools();
+
+            // destroyPools()는 Channel::pop() 사용 → 코루틴 안에서만 호출 가능.
+            // 태스크 워커는 풀을 만들지 않으므로 HTTP 워커에서만 실행.
+            $isTaskWorker = (bool) ($svr->taskworker ?? false);
+            if (!$isTaskWorker && !empty($this->pools)) {
+                \Swoole\Coroutine\go(function (): void {
+                    $this->destroyPools();
+                });
+            }
 
             if (isset($this->events['workerStop'])) {
                 ($this->events['workerStop'])($svr, $workerId);
@@ -1041,12 +1116,31 @@ final class Swoole
     private function handleRequest(\Swoole\Http\Request $req, \Swoole\Http\Response $res): void
     {
         try {
+            // ── 0. 싱글턴 상태 리셋 (요청 간 누수 방지) ──
+            // 상주 프로세스 환경에서 이전 요청의 상태가 잔류하면
+            // 응답 오염/SEO 누수/인증 우회 등 심각한 이슈 발생
+            \Cat\Response::resetInstance();
+            \Cat\Request::resetInstance();
+            \Cat\Meta::resetInstance();
+            \Cat\Auth::resetInstance();
+            \Cat\Sitemap::resetInstance();
+            \Cat\Session::resetInstance();
+
             // ── 1. 슈퍼글로벌 초기화 (요청 격리 — 보안) ──
             $_GET    = $req->get ?? [];
             $_POST   = $req->post ?? [];
             $_COOKIE = $req->cookie ?? [];
             $_FILES  = $req->files ?? [];
             $_SERVER = $this->buildServerVars($req);
+
+            // Swoole 응답 객체를 coroutine context에 저장 (Response/Json 직접 출력용)
+            if (class_exists('\\Swoole\\Coroutine', false) && \Swoole\Coroutine::getCid() >= 0) {
+                $ctx = \Swoole\Coroutine::getContext();
+                if ($ctx !== null) {
+                    $ctx['swoole_response'] = $res;
+                    $ctx['swoole_request']  = $req;
+                }
+            }
 
             // input() 캐시 초기화
             $inputData = array_merge($_GET, $_POST);
@@ -1092,20 +1186,23 @@ final class Swoole
 
             $res->end($body);
 
+        } catch (\Cat\SwooleSent) {
+            // 정상 종료 신호 — Response/Json이 이미 $res->end() 호출함
+            return;
         } catch (\Throwable $e) {
             // ── 에러 응답 ──
             $debug = (bool) \config('app.debug', false);
 
-            if (class_exists('Cat\\Log', false)) {
-                try {
-                    \logger()->error('Swoole Request Error: ' . $e->getMessage(), [
-                        'file' => $e->getFile(),
-                        'line' => $e->getLine(),
-                    ]);
-                } catch (\Throwable) {
-                    // 로거 실패 시 무시
-                }
-            }
+            // 직접 파일 기록 (Cat\Log가 로드 안 됐거나 실패할 수 있으므로 stderr 사용)
+            error_log(sprintf(
+                "[CatPHP ERROR] %s: %s at %s:%d\nURI: %s\n%s\n",
+                get_class($e),
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine(),
+                $_SERVER['REQUEST_URI'] ?? '',
+                $e->getTraceAsString(),
+            ));
 
             $res->status(500);
 
@@ -1140,6 +1237,17 @@ final class Swoole
                 }
             }
         } finally {
+            // 세션 변경사항 Redis 저장 (Redis 드라이버 전용, 비활성 시 no-op)
+            try {
+                if (class_exists('Cat\\Session', false)) {
+                    \Cat\Session::getInstance()->save();
+                }
+            } catch (\Throwable $e) {
+                if (class_exists('Cat\\Log', false)) {
+                    \logger()->error('Session save 실패: ' . $e->getMessage());
+                }
+            }
+
             // 출력 버퍼가 남아 있으면 정리
             while (ob_get_level() > 0) {
                 ob_end_clean();

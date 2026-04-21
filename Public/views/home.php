@@ -6,7 +6,7 @@
         <img src="/new-php-logo.svg" alt="PHP" style="height:48px;width:auto;">
     </div>
     <h1 class="display-4 fw-bold mb-2">CatPHP</h1>
-    <p class="lead" style="color:#94a3b8;">PHP 8.2+ 전용 경량 프레임워크</p>
+    <p class="lead" style="color:#94a3b8;">PHP 8.1+ 호환 경량 프레임워크</p>
     <p style="color:#64748b;" class="mb-3">코어 1파일 · require 1회 부팅 · 51개 도구 · 보안 기본 내장</p>
 
     <div class="d-flex justify-content-center gap-2 mb-4">
@@ -69,6 +69,6 @@ foreach ($groups as [$label, $color, $tools]): ?>
     </div>
 
     <div class="mt-4">
-        <p class="text-muted caption mb-0">&copy; <?= date('Y') ?> CatPHP — PHP 8.2+ · MIT</p>
+        <p class="text-muted caption mb-0">&copy; <?= date('Y') ?> CatPHP — PHP 8.1+ · MIT</p>
     </div>
 </div>

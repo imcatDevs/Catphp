@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [v1.1.0] — 2026-04-21
+
+### Changed
+
+- **호환성**: 최소 요구 PHP 버전을 `8.2`에서 **`8.1`** 로 하향 (PHP 8.1/8.2/8.3/8.4 전부 지원)
+- **cli.php**: `check:env` 명령의 PHP 버전 기준이 `8.1.0` 이상으로 변경
+
+### Removed
+
+- **Hash/Auth/Encrypt/Telegram/User**: PHP 8.2 전용 `#[\SensitiveParameter]` 속성 제거 (총 10곳)
+  - 해싱/암호화 기능 동작은 완전히 동일 (API 변경 없음)
+  - 운영 환경 `display_errors=Off` 시 영향 없음
+
 ## [v1.0.8] — 2026-03-30
 
 - v1.0.8 릴리즈

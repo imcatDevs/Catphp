@@ -26,11 +26,11 @@
     </div>
 
     <h6 class="mb-2">사용 예제</h6>
-    <pre class="demo-code mb-3"><code><span class="hl-v">$html</span> = <span class="hl-s">'&lt;p&gt;CatPHP는 PHP 8.2+ 전용 &lt;strong&gt;경량 프레임워크&lt;/strong&gt;입니다...'</span>;
+    <pre class="demo-code mb-3"><code><span class="hl-v">$html</span> = <span class="hl-s">'&lt;p&gt;CatPHP는 PHP 8.1+ 호환 &lt;strong&gt;경량 프레임워크&lt;/strong&gt;입니다...'</span>;
 
 <span class="hl-c">// 발췌문 (100자)</span>
 <span class="hl-f">text</span>()-&gt;<span class="hl-f">excerpt</span>(<span class="hl-v">$html</span>, <span class="hl-n">100</span>);
-<span class="hl-c">// → "CatPHP는 PHP 8.2+ 전용 경량 프레임워크입니다..."</span>
+<span class="hl-c">// → "CatPHP는 PHP 8.1+ 호환 경량 프레임워크입니다..."</span>
 
 <span class="hl-c">// 읽기 시간</span>
 <span class="hl-f">text</span>()-&gt;<span class="hl-f">readingTime</span>(<span class="hl-v">$longArticle</span>);  <span class="hl-c">// → "5분"</span>

@@ -50,3 +50,14 @@ npm-debug.log*
 
 # ─── Windsurf (개인) ───
 .windsurf/
+
+# ─── 원격 배포 SSH 키 (커밋 금지) ───
+RemoteSSh/
+*.pem
+*_id_ed25519
+*_id_rsa
+!*.pub
+
+# ─── 배포 아티팩트 ───
+*.tar.gz
+catphp-deploy*

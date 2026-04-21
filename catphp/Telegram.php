@@ -23,7 +23,6 @@ final class Telegram
     private ?array $keyboard = null;
 
     private function __construct(
-        #[\SensitiveParameter]
         private readonly string $botToken,
         private readonly string $defaultChatId,
     ) {}

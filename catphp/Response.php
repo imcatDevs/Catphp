@@ -34,6 +34,22 @@ final class Response
         return self::$instance ??= new self();
     }
 
+    /**
+     * Swoole 요청 간 상태 초기화 (프레임워크 내부용)
+     *
+     * 상주 프로세스 환경에서 statusCode/headers/cookies 잔존으로 인한
+     * 응답 오염을 방지하기 위해 `Swoole.php::handleRequest()` 시작부에서 호출.
+     */
+    public static function resetInstance(): void
+    {
+        if (self::$instance === null) {
+            return;
+        }
+        self::$instance->statusCode = 200;
+        self::$instance->headers = [];
+        self::$instance->cookies = [];
+    }
+
     // ── 상태 코드 ──
 
     /** HTTP 상태 코드 설정 (이뮤터블) */
@@ -328,25 +344,70 @@ final class Response
 
     // ── 내부 ──
 
-    /** 헤더 + 쿠키 적용 */
+    /**
+     * 헤더 + 쿠키 적용
+     *
+     * Swoole 컨텍스트: `$res->status()`, `$res->header()`, `$res->cookie()` 직접 호출.
+     * FPM/CLI: `http_response_code()`, `header()`, `setcookie()` 사용.
+     */
     private function applyHeaders(): void
     {
+        // Swoole 직접 출력 경로
+        if (class_exists('\\Cat\\Swoole', false)) {
+            $res = \Cat\Swoole::currentResponse();
+            if ($res !== null) {
+                $res->status($this->statusCode);
+                foreach ($this->headers as $name => $value) {
+                    $res->header($name, $value);
+                }
+                foreach ($this->cookies as $c) {
+                    $opts = $c['options'];
+                    $res->cookie(
+                        $c['name'],
+                        $c['value'],
+                        (int) ($opts['expires'] ?? 0),
+                        (string) ($opts['path'] ?? '/'),
+                        (string) ($opts['domain'] ?? ''),
+                        (bool) ($opts['secure'] ?? false),
+                        (bool) ($opts['httponly'] ?? true),
+                        (string) ($opts['samesite'] ?? 'Lax'),
+                    );
+                }
+                return;
+            }
+        }
+
+        // FPM/CLI 기본 경로
         if (!headers_sent()) {
             http_response_code($this->statusCode);
-
             foreach ($this->headers as $name => $value) {
                 header("{$name}: {$value}");
             }
-
             foreach ($this->cookies as $c) {
                 setcookie($c['name'], $c['value'], $c['options']);
             }
         }
     }
 
-    /** 응답 전송 */
+    /**
+     * 응답 전송
+     *
+     * Swoole 컨텍스트에서는 `$res->end()` 직접 호출 후 `SwooleSent` 예외로 핸들러 중단.
+     * FPM/CLI에서는 `echo` + `exit`.
+     */
     private function send(string $body): never
     {
+        // Swoole 직접 출력 경로
+        if (class_exists('\\Cat\\Swoole', false)) {
+            $res = \Cat\Swoole::currentResponse();
+            if ($res !== null) {
+                $this->applyHeaders();
+                $res->end($body);
+                throw new \Cat\SwooleSent();
+            }
+        }
+
+        // FPM/CLI 기본 경로
         $this->applyHeaders();
         echo $body;
         exit;

@@ -13,7 +13,7 @@ return [
     'cors'      => ['origins' => ['*'], 'methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 'headers' => ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-TOKEN'], 'max_age' => 86400],
     'upload'    => ['max_size' => '10M', 'allowed' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'zip']],
     'view'      => ['path' => __DIR__ . '/../Public/views'],
-    'session'   => ['lifetime' => 7200, 'path' => '/', 'secure' => true, 'httponly' => true, 'samesite' => 'Lax'],
+    'session'   => ['driver' => 'native', 'lifetime' => 7200, 'path' => '/', 'secure' => true, 'httponly' => true, 'samesite' => 'Lax', 'cookie' => 'CATPHP_SID', 'redis_prefix' => 'sess:'],
     'cookie'    => ['encrypt' => true, 'samesite' => 'Lax', 'secure' => false],
     'guard'     => ['auto_ban' => false, 'max_body_size' => '10M'],
     'telegram'  => ['bot_token' => '', 'chat_id' => '', 'admin_chat' => ''],
@@ -41,5 +41,5 @@ return [
     'backup'    => ['path' => __DIR__ . '/../storage/backup', 'keep_days' => 30, 'compress' => false],
     'webhook'   => ['secret' => '', 'timeout' => 10, 'retry' => 0, 'retry_delay' => 1, 'log' => false],
     'dbview'    => [],
-    'swoole'    => ['host' => '0.0.0.0', 'port' => 9501, 'mode' => 'process', 'worker_num' => 0, 'task_worker_num' => 4, 'max_request' => 10000, 'max_conn' => 10000, 'daemonize' => false, 'dispatch_mode' => 2, 'open_tcp_nodelay' => true, 'enable_coroutine' => true, 'log_file' => __DIR__ . '/../storage/logs/swoole.log', 'log_level' => 2, 'pid_file' => __DIR__ . '/../storage/swoole.pid', 'static_handler' => false, 'document_root' => '', 'hot_reload' => false, 'hot_reload_paths' => [], 'heartbeat_idle' => 600, 'heartbeat_check' => 60, 'ssl_cert' => '', 'ssl_key' => '', 'buffer_output_size' => 2097152, 'package_max_length' => 2097152, 'pool' => ['db' => 0, 'redis' => 0]],
+    'swoole'    => ['host' => '127.0.0.1', 'port' => 3005, 'mode' => 'process', 'worker_num' => 0, 'task_worker_num' => 4, 'max_request' => 10000, 'max_conn' => 10000, 'daemonize' => true, 'dispatch_mode' => 2, 'open_tcp_nodelay' => true, 'enable_coroutine' => true, 'log_file' => __DIR__ . '/../storage/logs/swoole.log', 'log_level' => 2, 'pid_file' => __DIR__ . '/../storage/swoole.pid', 'static_handler' => false, 'document_root' => '', 'hot_reload' => false, 'hot_reload_paths' => [], 'heartbeat_idle' => 600, 'heartbeat_check' => 60, 'ssl_cert' => '', 'ssl_key' => '', 'buffer_output_size' => 2097152, 'package_max_length' => 2097152, 'pool' => ['db' => 32, 'redis' => 32]],
 ];

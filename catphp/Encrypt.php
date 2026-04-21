@@ -14,7 +14,6 @@ final class Encrypt
     private static ?self $instance = null;
 
     private function __construct(
-        #[\SensitiveParameter]
         private string $key,
     ) {}
 

@@ -220,7 +220,7 @@ sudo systemctl reload php8.2-fpm
 
 ### 환경
 
-- [ ] PHP 8.2+ 설치
+- [ ] PHP 8.1+ 설치
 - [ ] 필수 확장 설치
 - [ ] OPcache 활성화
 - [ ] 데이터베이스 연결 확인

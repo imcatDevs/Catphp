@@ -52,6 +52,15 @@ final class Json
      */
     public function noContent(): never
     {
+        // Swoole 컨텍스트에서는 $res->end() 직접 호출
+        if (class_exists('\\Cat\\Swoole', false)) {
+            $res = \Cat\Swoole::currentResponse();
+            if ($res !== null) {
+                $res->status(204);
+                $res->end();
+                throw new \Cat\SwooleSent();
+            }
+        }
         http_response_code(204);
         exit;
     }
@@ -180,16 +189,32 @@ final class Json
 
     /**
      * JSON 전송 (내부)
+     *
+     * Swoole HTTP 컨텍스트에서는 `$res->end()` 직접 호출로 출력 버퍼 우회.
+     * FPM/CLI에서는 기존 `http_response_code()` + `header()` + `echo` 경로 사용.
      */
     public function send(int $statusCode, array $payload): never
     {
-        http_response_code($statusCode);
+        $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
 
+        // Swoole 컨텍스트 직접 출력 (FPM 대비 출력 버퍼 우회)
+        if (class_exists('\\Cat\\Swoole', false)) {
+            $res = \Cat\Swoole::currentResponse();
+            if ($res !== null) {
+                $res->status($statusCode);
+                $res->header('Content-Type', 'application/json; charset=utf-8');
+                $res->end($body);
+                // Swoole에서 exit 호출하면 워커 프로세스 종료 → 예외로 핸들러만 중단
+                throw new \Cat\SwooleSent();
+            }
+        }
+
+        // FPM/CLI 기본 경로
+        http_response_code($statusCode);
         if (!headers_sent()) {
             header('Content-Type: application/json; charset=utf-8');
         }
-
-        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        echo $body;
         exit;
     }
 }

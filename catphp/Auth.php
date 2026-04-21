@@ -31,7 +31,6 @@ final class Auth
     private ?array $apiPayload = null;
 
     private function __construct(
-        #[\SensitiveParameter]
         private readonly string $secret,
         private readonly int $ttl,
         private readonly string $passwordAlgo,
@@ -88,11 +87,24 @@ final class Auth
         );
     }
 
+    /**
+     * Swoole 요청 간 상태 초기화 (프레임워크 내부용)
+     *
+     * 이전 요청의 JWT 페이로드 캐시 제거로 인증 우회 방지.
+     * `Swoole.php::handleRequest()` 시작부에서 호출.
+     */
+    public static function resetInstance(): void
+    {
+        if (self::$instance === null) {
+            return;
+        }
+        self::$instance->apiPayload = null;
+    }
+
     // ── 비밀번호 ──
 
     /** 비밀번호 해싱 (Bcrypt 72바이트 제한 검증 포함) */
     public function hashPassword(
-        #[\SensitiveParameter]
         string $password
     ): string {
         if ($this->passwordAlgo === PASSWORD_BCRYPT && strlen($password) > 72) {
@@ -103,7 +115,6 @@ final class Auth
 
     /** 비밀번호 검증 */
     public function verifyPassword(
-        #[\SensitiveParameter]
         string $password,
         string $hash
     ): bool {

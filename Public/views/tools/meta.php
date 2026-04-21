@@ -32,7 +32,7 @@
     <h6 class="mb-2">사용 예제</h6>
     <pre class="demo-code mb-3"><code><span class="hl-c">// 페이지별 SEO 설정</span>
 <span class="hl-f">meta</span>()-&gt;<span class="hl-f">title</span>(<span class="hl-s">'CatPHP — 경량 PHP 프레임워크'</span>)
-    -&gt;<span class="hl-f">description</span>(<span class="hl-s">'PHP 8.2+ 전용 경량 프레임워크'</span>)
+    -&gt;<span class="hl-f">description</span>(<span class="hl-s">'PHP 8.1+ 호환 경량 프레임워크'</span>)
     -&gt;<span class="hl-f">canonical</span>(<span class="hl-s">'https://catphp.dev'</span>)
     -&gt;<span class="hl-f">og</span>(<span class="hl-s">'image'</span>, <span class="hl-s">'https://catphp.dev/og.png'</span>)
     -&gt;<span class="hl-f">twitter</span>(<span class="hl-s">'card'</span>, <span class="hl-s">'summary_large_image'</span>);

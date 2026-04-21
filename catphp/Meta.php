@@ -27,6 +27,25 @@ final class Meta
         return self::$instance ??= new self();
     }
 
+    /**
+     * Swoole 요청 간 상태 초기화 (프레임워크 내부용)
+     *
+     * 상주 프로세스 환경에서 title/description/og 누적으로 인한
+     * SEO 오염을 방지하기 위해 `Swoole.php::handleRequest()` 시작부에서 호출.
+     */
+    public static function resetInstance(): void
+    {
+        if (self::$instance === null) {
+            return;
+        }
+        self::$instance->titleStr = '';
+        self::$instance->descriptionStr = '';
+        self::$instance->canonicalUrl = '';
+        self::$instance->ogTags = [];
+        self::$instance->twitterTags = [];
+        self::$instance->jsonLdData = null;
+    }
+
     public function title(string $title): self
     {
         $this->titleStr = $title;
