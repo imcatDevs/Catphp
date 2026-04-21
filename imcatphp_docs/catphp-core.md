@@ -3,7 +3,7 @@
 CatPHP 프레임워크의 단일 진입점. `require` 1회로 오토로더, 설정 시스템, 도구 로더, 에러 핸들러, Shortcut 함수, 헬퍼 함수를 모두 부팅한다.
 
 - **경로**: `catphp/catphp.php`
-- **버전**: `CATPHP_VERSION` 상수 (`1.0.8`)
+- **버전**: `CATPHP_VERSION` 상수 (`1.1.0`)
 - **줄 수**: 632줄
 - **의존성**: 없음 (순수 PHP 8.1+)
 
@@ -57,7 +57,7 @@ Public/index.php (또는 cli.php)
 | 상수 | 값 | 용도 |
 | --- | --- | --- |
 | `CATPHP` | `true` | include 전용 파일 직접 접근 차단 가드 (`defined('CATPHP') \|\| exit;`) |
-| `CATPHP_VERSION` | `'1.0.8'` | 프레임워크 버전 |
+| `CATPHP_VERSION` | `'1.1.0'` | 프레임워크 버전 |
 
 ```php
 // views/*.php 파일 첫 줄에 사용

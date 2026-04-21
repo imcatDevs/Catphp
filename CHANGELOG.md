@@ -2,10 +2,31 @@
 
 ## [v1.1.0] — 2026-04-21
 
+### Added — Swoole 상주 프로세스 지원
+
+- **`server.php`**: Swoole 전용 진입점 신설 (FPM 대비 6~15배 성능)
+- **`routes/swoole.php`**: 라우트 정의 파일 (Public/index.php 에서 이관)
+- **`catphp/SwooleSent.php`**: Swoole 컨텍스트 정상 종료 신호 예외
+- **Session 다중 드라이버**: `native` / `redis` / `memory` — Swoole 자동 감지
+  - Flash/Csrf 는 `session()` API 만 사용하므로 무변경 호환
+  - Redis 드라이버는 요청 종료 시 자동 flush
+- **싱글턴 resetInstance()**: Response/Request/Meta/Auth/Sitemap/Session
+  - Swoole 요청 간 상태 누수 차단 (SEO/응답헤더/인증 우회 방지)
+- **Response/Json 직접 출력**: Swoole 컨텍스트에서 `$res->end()` 호출로 출력 버퍼 우회
+- **Swoole 브리지 개선**: WorkerStart 코루틴 래핑, coroutine context 주입, task 워커 분기
+- **배포 자동화**: `deploy/` — remote-deploy.sh, patch-*.php, systemd unit, nginx conf
+
 ### Changed
 
 - **호환성**: 최소 요구 PHP 버전을 `8.2`에서 **`8.1`** 로 하향 (PHP 8.1/8.2/8.3/8.4 전부 지원)
 - **cli.php**: `check:env` 명령의 PHP 버전 기준이 `8.1.0` 이상으로 변경
+- **config/app.php**: `session.driver` 옵션 추가 (기본 `native`), `swoole.pool` 기본값
+
+### Performance — catphp.imcat.dev 프로덕션 벤치마크
+
+- 정적 HTML: 500 → **3,113 RPS** (6.2배)
+- DB 쿼리 API: 200 → **3,069 RPS** (15.3배)
+- 8 프로세스로 ~226 MB 메모리 (상주)
 
 ### Removed
 
